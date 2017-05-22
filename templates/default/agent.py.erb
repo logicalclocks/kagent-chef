@@ -366,8 +366,8 @@ class Alert:
             logger.info("Sending Alert...")
             auth = (server_username, server_password)
 #            session = requests.Session()
-#            session.post(alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)        
-            requests.post(alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)        
+            session.post(alert_url, data=json.dumps(payload), headers=headers, verify=False)        
+#            requests.post(alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)        
         except:
             logger.error("Cannot access the REST service for alerts. Alert not sent.")
 
