@@ -36,6 +36,15 @@ module Kagent
       return node["private_ips"][0]
     end
 
+    def my_gateway_ip()
+      if node.attribute?("gateway_ips") == false || node["gateway_ips"].empty?      
+         Chef::Log.error "Could not find a gateway_ip for this host"
+         raise ArgumentError, "No gateway_ip found", node['host']
+      end
+      return node["gateway_ips"][0]
+    end
+
+
     def valid_cookbook(cookbook)
       if node.attribute?(cookbook) == false 
         Chef::Log.error "Invalid cookbook name: #{cookbook}"
