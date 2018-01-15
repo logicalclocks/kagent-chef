@@ -166,8 +166,8 @@ try:
     services.read(SERVICES_FILE)
 
     for s in services.sections():
-        if services.has_option(s, "role") :        
-            states[services.get(s, "role")] = {'status':'Stopped', 'start-time':''}
+        if services.has_option(s, "service") :        
+            states[services.get(s, "service")] = {'status':'Stopped', 'start-time':''}
 
 except Exception, e:
     print "Error in the services file. Check its formatting: {0}: {1}".format(SERVICE_FILE, e)
@@ -346,7 +346,7 @@ class Heartbeat():
                 
 class Alert:
     @staticmethod    
-    def send(cluster, service, role, time, status):
+    def send(cluster, group, service, time, status):
         global session
         if not logged_in:
            logger.info('Logging in to Hopsworks....')
@@ -360,15 +360,15 @@ class Alert:
                 payload["Time"] = time
                 payload["Plugin"] = "Monitoring"
                 payload["Type"] = "Role"
-                payload["TypeInstance"] = "{0}/{1}/{2}".format(cluster, service, role)
+                payload["TypeInstance"] = "{0}/{1}/{2}".format(cluster, group, service)
                 payload["DataSource"] = "Agent"
                 payload["CurrentValue"] = status
                 if status == True:
                     payload["Severity"] = "OK"
-                    payload["Message"] = "Role is running: {0}/{1}/{2}".format(cluster, service, role)
+                    payload["Message"] = "Service is running: {0}/{1}/{2}".format(cluster, group, service)
                 else:
                     payload["Severity"] = "FAILURE"
-                    payload["Message"] = "Role is not running: {0}/{1}/{2}".format(cluster, service, role)
+                    payload["Message"] = "Service is not running: {0}/{1}/{2}".format(cluster, group, service)
                     
                 logger.info("Sending Alert...")
                 #auth = (server_username, server_password)
@@ -415,31 +415,31 @@ class LoadInfo(object):
 class ExtProcess():  # external process
         
     @staticmethod        
-    def watch(cluster, service, role):
+    def watch(cluster, group, service):
         global states        
         while True:
             try:
-                section = Config().section_name(cluster, service, role)
-                if Service().alive(cluster,service,role) == True:
-                     if (states[role]['status'] == 'Stopped'):
-                       logger.info("Process started: {0}/{1}/{2}".format(cluster, service, role))
-                       Service().started(cluster, service, role)
+                section = Config().section_name(cluster, group, service)
+                if Service().alive(cluster,group,service) == True:
+                     if (states[service]['status'] == 'Stopped'):
+                       logger.info("Process started: {0}/{1}/{2}".format(cluster, group, service))
+                       Service().started(cluster, group, service)
                 else:
-                    raise Exception("Process is not running for {0}/{1}/{2}".format(cluster, service, role))
+                    raise Exception("Process is not running for {0}/{1}/{2}".format(cluster, group, service))
             except:  
-                logger.info("Proccess.watch: Process is not running: {0}/{1}/{2}".format(cluster, service, role))
-                if (states[role]['status'] == 'Started'):
-                    logger.info("Process failed: {0}/{1}/{2}".format(cluster, service, role))
-                    Service().failed(cluster, service, role)
+                logger.info("Proccess.watch: Process is not running: {0}/{1}/{2}".format(cluster, group, service))
+                if (states[service]['status'] == 'Started'):
+                    logger.info("Process failed: {0}/{1}/{2}".format(cluster, group, service))
+                    Service().failed(cluster, group, service)
             sleep(watch_interval)
 
 class Config(): 
 
-    def section_name(self, cluster, service, role=None):
-        if role == None:
-            return "{0}-{1}".format(cluster, service)
+    def section_name(self, cluster, group, service=None):
+        if service == None:
+            return "{0}-{1}".format(cluster, group)
         else:
-            return "{0}-{1}-{2}".format(cluster, service, role)   
+            return "{0}-{1}-{2}".format(cluster, group, service)   
         
     # select items so that the key does not contain 'file' or 'script'
     def read_all_for_heartbeat(self):
@@ -448,7 +448,7 @@ class Config():
         try:
             for s in services.sections():
                    item = {}
-                   item['status'] = Heartbeat.serviceKey(services.get(s, "role"), 'status')
+                   item['status'] = Heartbeat.serviceKey(services.get(s, "service"), 'status')
                    services_list.append(item)   
                    for key, val in services.items(s):
                        if (not 'file' in key) and (not 'script' in key) and (not 'command' in key):
@@ -481,8 +481,8 @@ class Config():
 class Service:
     
     # need to be completed. Set the status to Initialize?
-    def init(self, cluster, service, role):
-        section = Config().section_name(cluster, service, role)
+    def init(self, cluster, group, service):
+        section = Config().section_name(cluster, group, service)
         script = Config().get(section, "init-script")
         try:
             p = Popen(script, shell=True, close_fds=True)
@@ -496,16 +496,16 @@ class Service:
             return False
 
             
-    def start(self, cluster, service, role):
+    def start(self, cluster, group, service):
         script = BIN_DIR + "/start-service.sh"
         try:
-            p = Popen(['sudo',script,role],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = Popen(['sudo',script,service],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (output,err)=p.communicate()
             returncode = p.wait()
             logger.info("{0}".format(output))
             if not returncode == 0:
                 raise Exception("Start script returned a none-zero value")
-            Service().started(cluster, service, role)
+            Service().started(cluster, group, service)
             # wait for the alert to get returned to Hopsworks, before returning (as this will cause a correct refresh of the service's status)
             sleep(heartbeat_interval+1)
             return True
@@ -513,30 +513,30 @@ class Service:
             logger.error(err)
             return False
         
-    def stop(self, cluster, service, role):
+    def stop(self, cluster, group, service):
         script = BIN_DIR + "/stop-service.sh"
         global states        
         try:
-            subprocess.check_call(['sudo', script, role], close_fds=True)  # raises exception if not returncode == 0
+            subprocess.check_call(['sudo', script, service], close_fds=True)  # raises exception if not returncode == 0
             now = long(time.mktime(datetime.now().timetuple()))
-            states[role] = {'status':'Stopped', 'stop-time':now}
+            states[service] = {'status':'Stopped', 'stop-time':now}
             # wait for the alert to get returned to Hopsworks, before returning (as this will cause a correct refresh of the service's status)
-            Service().failed(cluster, service, role)
+            Service().failed(cluster, group, service)
             sleep(heartbeat_interval+1)
             return True
         except Exception as err:
             logger.error(err)
             return False
 
-    def restart(self, cluster, service, role):
+    def restart(self, cluster, group, service):
         script = BIN_DIR + "/restart-service.sh"
         try:
-            p = Popen(['sudo',script,role], close_fds=True)
+            p = Popen(['sudo',script,service], close_fds=True)
             p.wait()
             returncode = p.returncode
             if not returncode == 0:
                 raise Exception("Restart script returned a none-zero value")
-            Service().started(cluster, service, role)
+            Service().started(cluster, group, service)
             # wait for the alert to get returned to Hopsworks, before returning (as this will cause a correct refresh of the service's status)
             sleep(heartbeat_interval)
             return True
@@ -544,10 +544,10 @@ class Service:
             logger.error(err)
             return False
 
-    def alive(self, cluster, service, role):
+    def alive(self, cluster, group, service):
         script = BIN_DIR + "/status-service.sh"
         try:
-            p = Popen(['sudo',script,role], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            p = Popen(['sudo',script,service], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if (verbose == True):
                 with p.stdout:
                     for line in iter(p.stdout.readline, b''):
@@ -560,17 +560,17 @@ class Service:
             return False
         return True
 
-    def failed(self, cluster, service, role):
+    def failed(self, cluster, group, service):
         global states        
         now = long(time.mktime(datetime.now().timetuple()))
-        states[role] = {'status':'Stopped', 'start-time':now}
-        Alert.send(cluster, service, role, now, False)
+        states[service] = {'status':'Stopped', 'start-time':now}
+        Alert.send(cluster, group, service, now, False)
 
-    def started(self, cluster, service, role):
+    def started(self, cluster, group, service):
         global states        
         now = long(time.mktime(datetime.now().timetuple()))
-        states[role] = {'status':'Started', 'start-time':now}
-        Alert.send(cluster, service, role, now, True)
+        states[service] = {'status':'Started', 'start-time':now}
+        Alert.send(cluster, group, service, now, True)
 
 
 class MySQLConnector():
@@ -598,61 +598,61 @@ class CommandHandler():
         logger.info("{0}".format(resp))
         return resp
          
-    def init(self, cluster, service, role):
-        section = Config().section_name(cluster, service, role)
+    def init(self, cluster, group, service):
+        section = Config().section_name(cluster, group, service)
         if not services.has_section(section):
-            return CommandHandler().response(400, 'Role not installed.')
+            return CommandHandler().response(400, 'Service not installed.')
         else:
-            if Service().init(cluster, service, role) == True:
-                return CommandHandler().response(200, 'Role initialized.')
+            if Service().init(cluster, group, service) == True:
+                return CommandHandler().response(200, 'Service initialized.')
             else:
                 return CommandHandler().response(400, 'Error: Cannot initialize the service.')
     
-    def start(self, cluster, service, role):
+    def start(self, cluster, group, service):
         global states
-        section = Config().section_name(cluster, service, role)
+        section = Config().section_name(cluster, group, service)
         if not services.has_section(section):
-            return CommandHandler().response(400, 'Role not installed.')
-        elif states[role]['status'] == 'Started':
-            return CommandHandler().response(400, 'Role already started.')
+            return CommandHandler().response(400, 'Service not installed.')
+        elif states[service]['status'] == 'Started':
+            return CommandHandler().response(400, 'Service already started.')
         else:
-            res = Service().start(cluster, service, role)
+            res = Service().start(cluster, group, service)
             if res == False:
                 return CommandHandler().response(400, 'Error: Cannot start the service.')
             else:
-                return CommandHandler().response(200, "Role started.")
+                return CommandHandler().response(200, "Service started.")
 
-    def stop(self, cluster, service, role):
+    def stop(self, cluster, group, service):
         global states
-        section = Config().section_name(cluster, service, role)
+        section = Config().section_name(cluster, group, service)
         if not services.has_section(section):
-            return CommandHandler().response(400, 'Role not installed.')
-        elif not states[role]['status'] == 'Started':
-            return CommandHandler().response(400, 'Role is not running.')
+            return CommandHandler().response(400, 'Service not installed.')
+        elif not states[service]['status'] == 'Started':
+            return CommandHandler().response(400, 'Service is not running.')
         else:
-            if Service().stop(cluster, service, role) == True:
-                return CommandHandler().response(200, 'Role stopped.')
+            if Service().stop(cluster, group, service) == True:
+                return CommandHandler().response(200, 'Service stopped.')
             else:
                 return CommandHandler().response(400, 'Error: Cannot stop the service.')
 
-    def restart(self, cluster, service, role):
-        section = Config().section_name(cluster, service, role)
+    def restart(self, cluster, group, service):
+        section = Config().section_name(cluster, group, service)
         if not services.has_section(section):
-            return CommandHandler().response(400, 'Role not installed.')
+            return CommandHandler().response(400, 'Service not installed.')
         else:
-            res = Service().restart(cluster, service, role)
+            res = Service().restart(cluster, group, service)
             if res == False:
                 return CommandHandler().response(400, 'Error: Cannot restart the service.')
             else:
-                return CommandHandler().response(200, "Role started.")
+                return CommandHandler().response(200, "Service started.")
 
-    def read_log(self, cluster, service, role, lines):
+    def read_log(self, cluster, group, service, lines):
         try:
             lines = int(lines)
-            if role == None:
-                section = Config().section_name(cluster, service)
+            if service == None:
+                section = Config().section_name(cluster, group)
             else:
-                section = Config().section_name(cluster, service, role)                
+                section = Config().section_name(cluster, group, service)                
             log_file_name = Config().get(section, "stdout-file")
             log = Util().tail(log_file_name, lines)
             return CommandHandler().response(200, log)
@@ -670,9 +670,9 @@ class CommandHandler():
             logger.error(err)
             return CommandHandler().response(400, "Cannot read file.")
 
-    def read_config(self, cluster, service, role):
+    def read_config(self, cluster, group, service):
         try:
-            section = Config().section_name(cluster, service, role)
+            section = Config().section_name(cluster, group, service)
             config_file_name = Config().get(section, "config-file")
             with open(config_file_name) as config_file:
                 conf = "".join(str(x) for x in (list(config_file)))
@@ -682,9 +682,9 @@ class CommandHandler():
             logger.error(err)
             return CommandHandler().response(400, "Cannot read file.")
 
-    def info(self, cluster, service, role):
+    def info(self, cluster, group, service):
         try:
-            section = Config().section_name(cluster, service, role)
+            section = Config().section_name(cluster, group, service)
             resp = json.dumps(Config().get_section(section))
             return CommandHandler().response(200, resp)
         
@@ -696,12 +696,12 @@ class CommandHandler():
         res = MySQLConnector.read_ndbinfo(table)
         return CommandHandler().response(200, res)
                 
-    def execute(self, cluster, service, role, command, params):
+    def execute(self, cluster, group, service, command, params):
         try:
-            if role == None:
-                section = Config().section_name(cluster, service)
+            if service == None:
+                section = Config().section_name(cluster, group)
             else:    
-                section = Config().section_name(cluster, service, role)
+                section = Config().section_name(cluster, group, service)
             script = Config().get(section, "command-script")
             logger.info("Script name executing is: {0}".format(script))
             env = Config().get(section, "command-env")
@@ -903,14 +903,14 @@ if __name__ == '__main__':
 
     for s in services.sections():
         cluster = Config().get(s, "cluster")
-        service = Config().get(s, "service")       
-        if services.has_option(s, "role"):
-            role = Config().get(s, "role")             
-            my_thread = threading.Thread(target=ExtProcess.watch, args=(cluster, service, role))
+        group = Config().get(s, "group")       
+        if services.has_option(s, "service"):
+            service = Config().get(s, "service")             
+            my_thread = threading.Thread(target=ExtProcess.watch, args=(cluster, group, service))
             my_thread.setDaemon(True)
             my_thread.start()
         else:
-            logger.info("Not watching {0}/{1}".format(cluster, service))        
+            logger.info("Not watching {0}/{1}".format(cluster, group))        
 
 
 # send conda environment reports every env_report_freq_in_secs seconds
@@ -934,89 +934,89 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /ping')       
         return "Hops-Agent: Pong"
         
-    @get('/do/<cluster>/<service>/<role>/<command>')
-    def do(cluster, service, role, command):
-        logger.info('Incoming REST Request:  GET /do/{0}/{1}/{2}/{3}'.format(cluster, service, role, command))
+    @get('/do/<cluster>/<group>/<service>/<command>')
+    def do(cluster, group, service, command):
+        logger.info('Incoming REST Request:  GET /do/{0}/{1}/{2}/{3}'.format(cluster, group, service, command))
         if not Authentication().check():
             return Authentication().failed()
-        section = Config().section_name(cluster, service, role)
+        section = Config().section_name(cluster, group, service)
         logger.info("Section is {0}".format(section))
         if not services.has_section(section):
-            logger.error("Couldn't find command {0} in {1}/{2} in section {3}".format(command, service, role, section))
+            logger.error("Couldn't find command {0} in {1}/{2} in section {3}".format(command, group, service, section))
             return HTTPResponse(status=400, output='Invalid command.')            
 
+        groupInServicesFile = Config().get(section, "group")
         serviceInServicesFile = Config().get(section, "service")
-        roleInServicesFile = Config().get(section, "role")
         commandInServicesFile = Config().get(section, "{0}-script".format(command))
 
-        if (not service == serviceInServicesFile) or (not role == roleInServicesFile) or (not commandInServicesFile):
-            logger.error("Couldn't find command {0} in {1}/{2}".format(command, service, role))
+        if (not service == groupInServicesFile) or (not service == serviceInServicesFile) or (not commandInServicesFile):
+            logger.error("Couldn't find command {0} in {1}/{2}".format(command, group, service))
             return HTTPResponse(status=400, output='Invalid command.')            
         
         if command == "start":
-            return CommandHandler().start(cluster, service, role);
+            return CommandHandler().start(cluster, group, service);
         elif command == "stop":
-            return CommandHandler().stop(cluster, service, role);                
+            return CommandHandler().stop(cluster, group, service);                
         elif command == "init":
-            return CommandHandler().init(cluster, service, role); 
+            return CommandHandler().init(cluster, group, service); 
         else:
             return HTTPResponse(status=400, output='Invalid command.')        
 
-    @get('/restartRole/<cluster>/<service>/<role>')
-    def restartRole(cluster, service, role):
-        logger.info('Incoming REST Request:  GET /restartRole/{0}/{1}'.format(cluster, service, role))
+    @get('/restartService/<cluster>/<group>/<service>')
+    def restartService(cluster, group, service):
+        logger.info('Incoming REST Request:  GET /restartService/{0}/{1}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
         
-        if not services.has_section(Config().section_name(cluster, service, role)):
-            return HTTPResponse(status=400, output='Cluster/Service/Role not available.')
+        if not services.has_section(Config().section_name(cluster, group, service)):
+            return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
 
-        return CommandHandler().restart(cluster, service, role);
+        return CommandHandler().restart(cluster, group, service);
 
-    @get('/startRole/<cluster>/<service>/<role>')
-    def startRole(cluster, service, role):
-        logger.info('Incoming REST Request:  GET /startRole/{0}/{1}'.format(cluster, service, role))
+    @get('/startService/<cluster>/<group>/<service>')
+    def startService(cluster, group, service):
+        logger.info('Incoming REST Request:  GET /startService/{0}/{1}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
         
-        if not services.has_section(Config().section_name(cluster, service, role)):
-            return HTTPResponse(status=400, output='Cluster/Service/Role not available.')
+        if not services.has_section(Config().section_name(cluster, group, service)):
+            return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
 
-        return CommandHandler().start(cluster, service, role);
+        return CommandHandler().start(cluster, group, service);
 
-    @get('/stopRole/<cluster>/<service>/<role>')
-    def stopRole(cluster, service, role):
-        logger.info('Incoming REST Request:  GET /stopRole/{0}/{1}/{2}'.format(cluster, service, role))
+    @get('/stopService/<cluster>/<group>/<service>')
+    def stopService(cluster, group, service):
+        logger.info('Incoming REST Request:  GET /stopService/{0}/{1}/{2}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
         
-        if not services.has_section(Config().section_name(cluster, service, role)):
-            return HTTPResponse(status=400, output='Cluster/Service/Role not available.')
+        if not services.has_section(Config().section_name(cluster, group, service)):
+            return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
 
-        return CommandHandler().stop(cluster, service, role);
+        return CommandHandler().stop(cluster, group, service);
 
-    @get('/log/<cluster>/<service>/<role>/<lines>')
-    def log(cluster, service, role, lines):
-        logger.info('Incoming REST Request:  GET /log/{0}/{1}/{2}'.format(cluster, service, role, lines))
+    @get('/log/<cluster>/<group>/<service>/<lines>')
+    def log(cluster, group, service, lines):
+        logger.info('Incoming REST Request:  GET /log/{0}/{1}/{2}'.format(cluster, group, service, lines))
         if not Authentication().check():
             return Authentication().failed()
         
-        if not services.has_section(Config().section_name(cluster, service, role)):
-            return HTTPResponse(status=400, output='Cluster/Service/Role not available.')
+        if not services.has_section(Config().section_name(cluster, group, service)):
+            return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
 
-        return CommandHandler().read_log(cluster, service, role, lines);
+        return CommandHandler().read_log(cluster, group, service, lines);
 
 
-    @get('/log/<cluster>/<service>/<lines>')
-    def log(cluster, service, lines):
-        logger.info('Incoming REST Request:  GET /log/{0}/{1}'.format(cluster, service))
+    @get('/log/<cluster>/<group>/<lines>')
+    def log(cluster, group, lines):
+        logger.info('Incoming REST Request:  GET /log/{0}/{1}'.format(cluster, group))
         if not Authentication().check():
             return Authentication().failed()
         
-        if not services.has_section(Config().section_name(cluster, service)):
-            return HTTPResponse(status=400, output='Cluster/Service not available.')
+        if not services.has_section(Config().section_name(cluster, group)):
+            return HTTPResponse(status=400, output='Cluster/Group not available.')
 
-        return CommandHandler().read_log(cluster, service, None, lines);
+        return CommandHandler().read_log(cluster, group, None, lines);
 
 
     @get('/agentlog/<lines:int>')
@@ -1027,27 +1027,27 @@ if __name__ == '__main__':
                                     
         return CommandHandler().read_agent_log(lines);
 
-    @get('/config/<cluster>/<service>/<role>')
-    def config(cluster, service, role):
-        logger.info('Incoming REST Request:  GET /log/{0}/{1}/{2}'.format(cluster, service, role))
+    @get('/config/<cluster>/<group>/<service>')
+    def config(cluster, group, service):
+        logger.info('Incoming REST Request:  GET /log/{0}/{1}/{2}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
         
-        if not services.has_section(Config().section_name(cluster, service, role)):
-            return HTTPResponse(status=400, output='Cluster/Service/Role not available.')
+        if not services.has_section(Config().section_name(cluster, group, service)):
+            return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
             
-        return CommandHandler().read_config(cluster, service, role);
+        return CommandHandler().read_config(cluster, group, service);
 
-    @get('/info/<cluster>/<service>/<role>')
-    def info(cluster, service, role):
-        logger.info('Incoming REST Request:  GET /status/{0}/{1}'.format(cluster, service, role))
+    @get('/info/<cluster>/<group>/<service>')
+    def info(cluster, group, service):
+        logger.info('Incoming REST Request:  GET /status/{0}/{1}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
         
-        if not services.has_section(Config().section_name(cluster, service, role)):
-            return HTTPResponse(status=400, output='Cluster/Service/Role not available.')
+        if not services.has_section(Config().section_name(cluster, group, service)):
+            return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
             
-        return CommandHandler().info(cluster, service, role);
+        return CommandHandler().info(cluster, group, service);
 
     @get('/refresh')  # request heartbeat
     def refresh():
@@ -1065,9 +1065,9 @@ if __name__ == '__main__':
             
         return CommandHandler().read_ndbinfo(table)
     
-    @post('/execute/<state>/<cluster>/<service>/<role>/<command>')
-    def execute_hdfs(state, cluster, service, role, command):
-        logger.info('Incoming REST Request:  POST /execute/{0}/{1}/{2}/{3}/{4}'.format(state, cluster, service, role, command))
+    @post('/execute/<state>/<cluster>/<group>/<service>/<command>')
+    def execute_hdfs(state, cluster, group, service, command):
+        logger.info('Incoming REST Request:  POST /execute/{0}/{1}/{2}/{3}/{4}'.format(state, cluster, group, service, command))
         if not Authentication().check():
             return Authentication().failed()            
         if request.body.readlines():
@@ -1075,10 +1075,10 @@ if __name__ == '__main__':
         else:
             params = ""                        
         if state == "run" :
-            if role == "-":
-                return CommandHandler().execute(cluster, service, None, command, params);
+            if service == "-":
+                return CommandHandler().execute(cluster, group, None, command, params);
             else:       
-                return CommandHandler().execute(cluster, service, role, command, params);
+                return CommandHandler().execute(cluster, group, service, command, params);
         return CommandHandler().response(404, "Error")  
 
 
