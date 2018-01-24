@@ -774,7 +774,7 @@ class Conda():
                 msg = subprocess.check_output(['sudo', script, user, op, proj, channelUrl, lib, version])
                 logger.info("Lib op finished without errror.")
                 logger.info("{0}".format(msg))
-                conda_op = {'proj': proj, 'op': op, 'channelurl': channelUrl, 'lib': lib, 'version': version, 'status': 'INSTALLED', 'id': str(command_id) }                
+                conda_op = {'proj': proj, 'op': op, 'channelurl': channelUrl, 'lib': lib, 'version': version, 'status': 'SUCCESS', 'id': str(command_id) }                
             except subprocess.CalledProcessError, e:
                 logger.info("Execption in libOp {0}".format(e.output))
                 logger.info("Execption in libOp. Ret code: {0}".format(e.returncode))
@@ -799,7 +799,7 @@ class Conda():
         conda_op = {}        
         try:
             msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, hadoop_home])
-            conda_op = {'proj': proj, 'op': op, 'channelurl': 'default', 'lib': '', 'version': '', 'status': 'INSTALLED', 'id': str(command_id), 'arg': arg}            
+            conda_op = {'proj': proj, 'op': op, 'channelurl': 'default', 'lib': '', 'version': '', 'status': 'SUCCESS', 'id': str(command_id), 'arg': arg}            
         except subprocess.CalledProcessError, e:
             logger.info("Execption in envOp {0}".format(e.output))
             logger.info("Execption in envOp. Ret code: {0}".format(e.returncode))
