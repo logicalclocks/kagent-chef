@@ -224,3 +224,14 @@ if node["kagent"]["cleanup_downloads"] == 'true'
   end
 
 end
+
+if node["install"]["addhost"] == 'true'
+
+ bash "sync-anaconda-with-existing-cluster" do
+   user "root"
+   code <<-EOH
+     <%= node['kagent']['base_dir'] %>/bin/anaconda_sync.sh
+   EOH
+ end
+  
+end  

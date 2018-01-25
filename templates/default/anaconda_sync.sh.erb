@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+HOST=$(grep url <%= node['kagent']['base_dir'] %>/config.ini | sed -e 's/url[ \t]*=[ \t]*http:\/\///')
+
+cd <%= node['conda']['dir'] %>
+rm -rf anaconda*
+wget http://${HOST}/anaconda.tgz
+tar zxf anaconda.tgz
+ln -s anaconda-<%= node['conda']['python'] %>-<%= node['conda']['version'] %> anaconda
+chown -R <%= node['conda']['user'] %> anaconda
