@@ -63,6 +63,7 @@ if [ "$OP" == "CREATE" ] ; then
 #    su $EXEC_AS_USER -c "<%= node['conda']['base_dir'] %>/envs/${PROJECT}/bin/pip install --upgrade <%= node['conda']['base_dir'] %>/pkgs/tensorflow${GPU}-<%= node['tensorflow']['version'] %>-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
     # 'pip install tensorflow' include HDFS support. 'conda install tensorflow-gpu' does not!
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==<%= node['tensorflow']['version'] %>  --upgrade --force-reinstall"
+    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install horovod"
 
     if [ "$PY" == "36" ] ; then
         su $EXEC_AS_USER -c -l "export HADOOP_HOME=$HADOOP_DIR && ${CONDA_DIR}/envs/${PROJECT}/bin/pip install git+https://github.com/crs4/pydoop.git@develop"
