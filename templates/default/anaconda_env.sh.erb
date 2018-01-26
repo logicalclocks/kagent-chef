@@ -72,7 +72,7 @@ if [ "$OP" == "CREATE" ] ; then
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hopsfacets"
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hops"
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tfspark"
-    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tensorflow-serving-api"
+    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tensorflow-serving-api==<%= node['tensorflow']['version'] %>"
     if [ "$WITH_PYTHON_KERNEL" == "true" ] ; then    
       su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install ipykernel"
       su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/conda install pandas"
