@@ -106,7 +106,7 @@ try:
     env_report_freq_in_secs = config.getint('agent', 'env-report-freq-in-secs')
     conda_enabled = server_url + config.get('agent', 'conda')
     hadoop_home = config.get('agent', 'hadoop-home')
-    
+    has_gpu = config.has_gpu()
     group_name = config.get('agent', 'group-name')
 
 # TODO find public/private IP addresses 
@@ -272,6 +272,7 @@ class Heartbeat():
                 now = long(time.mktime(datetime.now().timetuple()))                
                 headers = {'content-type': 'application/json'}
                 payload = {}
+                payload["has-gpu"] = has_gpu
                 payload["host-id"] = host_id            
                 payload["agent-time"] = now
                 payload["load1"] = load_info.load1
@@ -477,6 +478,18 @@ class Config():
             config_mutex.release()
         return val                
 
+    def has_gpu(self):
+        try:
+            p = Popen(['which nvidia-smi'],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (output,err)=p.communicate()
+            returncode = p.wait()
+            logger.info("Checking for gpu: {0}".format(output))
+            if not returncode == 0:
+                return 0
+            return 1
+        except Exception as err:
+            logger.error(err)
+            return 0
 
 class Service:
     
