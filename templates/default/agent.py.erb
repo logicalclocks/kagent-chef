@@ -79,7 +79,7 @@ block_report = {}
 
 cores = multiprocessing.cpu_count()
 
-def has_gpu(self):
+def has_gpu():
     try:
         p = Popen(['which nvidia-smi'],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (output,err)=p.communicate()
