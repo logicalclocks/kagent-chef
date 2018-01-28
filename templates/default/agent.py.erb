@@ -79,6 +79,18 @@ block_report = {}
 
 cores = multiprocessing.cpu_count()
 
+def has_gpu(self):
+    try:
+        p = Popen(['which nvidia-smi'],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (output,err)=p.communicate()
+        returncode = p.wait()
+        if not returncode == 0:
+            return 0
+        return 1
+    except Exception as err:
+        return 2
+
+
 # reading config
 try:
     config = ConfigParser.ConfigParser()
@@ -106,7 +118,7 @@ try:
     env_report_freq_in_secs = config.getint('agent', 'env-report-freq-in-secs')
     conda_enabled = server_url + config.get('agent', 'conda')
     hadoop_home = config.get('agent', 'hadoop-home')
-    has_gpu = config.has_gpu()
+    has_gpu = has_gpu()
     group_name = config.get('agent', 'group-name')
 
 # TODO find public/private IP addresses 
@@ -477,19 +489,6 @@ class Config():
         finally:
             config_mutex.release()
         return val                
-
-    def has_gpu(self):
-        try:
-            p = Popen(['which nvidia-smi'],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (output,err)=p.communicate()
-            returncode = p.wait()
-            logger.info("Checking for gpu: {0}".format(output))
-            if not returncode == 0:
-                return 0
-            return 1
-        except Exception as err:
-            logger.error(err)
-            return 0
 
 class Service:
     

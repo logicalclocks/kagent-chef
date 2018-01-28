@@ -1,3 +1,10 @@
+#
+# param can be used to send values to a chef-solo node.
+# Typically, return values from recipes are downloaded from a node to the Karamel server host using param.rb.
+# That is, you acquire the return value(s) from a recipe using the param { action:add}. Then you pass the parameter
+# to the next recipe (on another node) as a chef attribute
+#
+
 require 'json'
 
 def deep_merge(h1, h2)
