@@ -119,14 +119,18 @@ elif [ "$OP" == "LIB_SYNC" ] ; then
     done
     
 elif [ "$OP" == "REMOVE" ] ; then
+    PROJECTUSERNAME=$PYTHON_VERSION
     exists    # If the env has already been removed, return OK
     if [ $? -ne 0 ] ; then
        echo "Cannot remove environment that doesn't exist"
        exit 0
     fi
     su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda-env remove -n $PROJECT -y -q"
-    if [ "${WITH_PYTHON_KERNEL}" == "true" ] ; then    
-	sudo jupyter-kernelspec remove -y python-${PROJECT} || 0
+    if [ "${WITH_PYTHON_KERNEL}" == "true" ] ; then
+	kernelsToDelete=$(sudo jupyter-kernelspec list | grep ${PROJECT} | sed -e 's/.*\/usr\/local\/share\/jupyter\/kernels\///g')
+	while read -r username; do
+           sudo jupyter-kernelspec remove -y -f python-${PROJECT}__${username} || 0
+	done <<< "$kernelsToDelete"
     fi
 
 else
