@@ -867,6 +867,7 @@ class Conda():
             user = data['user']
             proj = data['proj']
             command_id = data['id']
+            offline = ""
             logger.info("Command to execute: {0}/{1}/{2}".format(op,proj,command_id))
             if (conda_ongoing[proj] == False):
                 conda_ongoing[proj] = True
@@ -875,7 +876,7 @@ class Conda():
                 if 'arg' in data:
                     arg=data['arg']
                 if op == "REMOVE" or op == "CLONE" or op == "CREATE":
-                    self.envOp(user, command_id, op, proj, arg, "")
+                    self.envOp(user, command_id, op, proj, arg, offline)
                 if op == "LIB_SYNC":
                     arg=data['lib']
                     # open with 'w+' to overwrite the file if it exists
