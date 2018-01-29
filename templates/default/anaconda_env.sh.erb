@@ -128,8 +128,11 @@ elif [ "$OP" == "REMOVE" ] ; then
     su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda-env remove -n $PROJECT -y -q"
     if [ "${WITH_PYTHON_KERNEL}" == "true" ] ; then
 	kernelsToDelete=$(sudo jupyter-kernelspec list | grep ${PROJECT} | sed -e 's/.*\/usr\/local\/share\/jupyter\/kernels\///g')
+        echo "Kernels to delete:"
+        echo $kernelsToDelete
 	while read -r username; do
-           sudo jupyter-kernelspec remove -y -f python-${PROJECT}__${username} || 0
+           echo "Removing: python-${username}"
+           sudo jupyter-kernelspec remove -y -f python-${username} || 0
 	done <<< "$kernelsToDelete"
     fi
 
