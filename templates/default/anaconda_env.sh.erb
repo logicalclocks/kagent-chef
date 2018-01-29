@@ -130,10 +130,12 @@ elif [ "$OP" == "REMOVE" ] ; then
 	kernelsToDelete=$(sudo jupyter-kernelspec list | grep ${PROJECT} | sed -e 's/.*\/usr\/local\/share\/jupyter\/kernels\///g')
         echo "Kernels to delete:"
         echo $kernelsToDelete
-	while read -r username; do
-           echo "Removing: python-${username}"
-           sudo jupyter-kernelspec remove -y -f python-${username} || 0
-	done <<< "$kernelsToDelete"
+        if [ "$kernelsToDelete" != "" ] ; then
+	  while read -r username; do
+             echo "sudo jupyter-kernelspec remove -y -f python-${username}"
+             sudo jupyter-kernelspec remove -y -f python-${username} || 0
+	  done <<< "$kernelsToDelete"
+        fi
     fi
 
 else
