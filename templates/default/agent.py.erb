@@ -86,9 +86,11 @@ def has_gpu():
         returncode = p.wait()
         if not returncode == 0:
             return 0
-        return 1
+        process = subprocess.Popen("nvidia-smi -L", shell=True, stdout=subprocess.PIPE)        
+        stdout_list = process.communicate()[0].split('\n')
+        return len(stdout_list)-1
     except Exception as err:
-        return 2
+        return 0
 
 
 # reading config
@@ -284,7 +286,7 @@ class Heartbeat():
                 now = long(time.mktime(datetime.now().timetuple()))                
                 headers = {'content-type': 'application/json'}
                 payload = {}
-                payload["has-gpu"] = has_gpu
+                payload["num-gpus"] = has_gpu
                 payload["host-id"] = host_id            
                 payload["agent-time"] = now
                 payload["load1"] = load_info.load1
