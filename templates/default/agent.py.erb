@@ -21,6 +21,7 @@ from threading import Lock
 import threading
 import subprocess
 from subprocess import Popen
+from subprocess import CalledProcessError
 import os
 import sys
 import ConfigParser
@@ -47,6 +48,7 @@ var="~#@#@!#@!#!@#@!#"
 
 config_mutex = Lock()
 conda_mutex = Lock()
+system_commands_response_mutex = Lock()
 block_report_mutex = Lock()
 
 HTTP_OK = 200
@@ -69,6 +71,9 @@ states = {}
 # Conda install/remove/update/clone events
 global conda_list
 conda_list = []
+
+global system_commands_response
+system_commands_response = []
 
 global conda_ongoing
 conda_ongoing = defaultdict(lambda: False)
@@ -234,8 +239,9 @@ class Util():
 class Heartbeat():
     daemon_threads = True 
     def __init__(self):
+        systemCommandsProcessor = SystemCommandsProcessor()
         while True:    
-            Heartbeat.send()
+            Heartbeat.send(systemCommandsProcessor)
             time.sleep(heartbeat_interval) 
 
 
@@ -269,10 +275,11 @@ class Heartbeat():
             return ob
 
     @staticmethod
-    def send():
+    def send(systemCommandsProcessor):
         global logged_in
         global session
         global conda_list
+        global system_commands_response
         global block_report
         if not logged_in:
            logger.info('Logging in to Hopsworks....')
@@ -299,9 +306,11 @@ class Heartbeat():
                 payload["hostname"] = hostname
 
                 conda_mutex.acquire()
-                if bool(conda_list):
-                    payload["commands-reply"] = {"condaCommands": conda_list, "systemCommands": []}
-                    logger.debug(json.dumps(payload, indent=2))                    
+                system_commands_response_mutex.acquire()
+                if bool(conda_list) or bool(system_commands_response):
+                    payload["commands-reply"] = {"condaCommands": conda_list, "systemCommands": system_commands_response}
+                    logger.debug(json.dumps(payload, indent=2))
+                system_commands_response_mutex.release()
                 conda_mutex.release()                
 
                 block_report_mutex.acquire()
@@ -334,14 +343,24 @@ class Heartbeat():
                     conda_mutex.acquire()
                     conda_list = []
                     conda_mutex.release()
+                    system_commands_response_mutex.acquire()
+                    system_commands_response = []
+                    system_commands_response_mutex.release()
                 else:
                     # Clear the list of conda ops to upload if the rest call is successful
                     conda_mutex.acquire()
                     conda_list = []
                     conda_mutex.release()
+
+                    system_commands_response_mutex.acquire()
+                    system_commands_response = []
+                    system_commands_response_mutex.release()
+                    
                     theResponse = resp.json()
                     try:
                         Conda().commands(theResponse['condaCommands'])
+                        
+                        systemCommandsProcessor.process(theResponse['systemCommands'])
                     except Exception as err:
                         logger.info("No commands to execute")
                         for data in theResponse['condaCommands']:
@@ -358,7 +377,41 @@ class Heartbeat():
                 conda_list = []
                 conda_mutex.release()
 
-                
+
+class SystemCommandsProcessor:
+    def process(self, system_commands):
+        global system_commands_response
+        if system_commands is None:
+            return
+        for command in system_commands:
+            logger.debug("System command {0}".format(command))
+            op = command['op']
+
+            if op == 'SERVICE_KEY_ROTATION':
+                self._service_key_rotation(command)
+            else:
+                logger.error("Unknown OP {0} for system command {1}".format(op, command))
+
+    def _service_key_rotation(self, command):
+        global system_commands_response
+
+        try:
+            logger.debug("Calling certificate rotation script")
+            subprocess.check_call(["sudo", "<%= node[:kagent][:certs_dir] %>/csr.py", "--rotate"])
+            command['status'] = 'FINISHED'
+            logger.info("Successfully rotated service certificates")
+        except (CalledProcessError, e):
+            logger.error("Error while calling csr.py script: {0}".format(e))
+            command['status'] = 'FAILED'
+        except (Exception, e):
+            logger.error("General error while rotating certificates {0}".format(e))
+            command['status'] = 'FAILED'
+    
+        system_commands_response_mutex.acquire()
+        system_commands_response.append(command)
+        system_commands_response_mutex.release()
+
+        
 class Alert:
     @staticmethod    
     def send(cluster, group, service, time, status):
@@ -857,7 +910,6 @@ class Conda():
         block_report = report
         block_report_mutex.release()
 
-    
     def commands(self, conda_commands):
         global conda_ongoing
         if (conda_commands is None):

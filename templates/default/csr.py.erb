@@ -148,6 +148,26 @@ class Host:
         self._conf = conf
         self._certificate = certificate
 
+    def rotate_key(self, session):
+        """Public method to perform key rotation"""
+        self._rotate_key_internal(session)
+
+    def _rotate_key_internal(self, session):
+        self._login(session)
+        payload = {}
+        payload["csr"] = self._certificate.csr_req
+        payload["agent-password"] = self._conf.agent_password
+        payload["host-id"] = self._conf.host_id
+        LOG.info("Rotating service key")
+        LOG.debug("Rotation url is {0}".format(self._conf.rotate_url))
+        response = session.post(self._conf.rotate_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
+
+        if (response.status_code != requests.codes.ok):
+            raise Exception('Could not rotate service certificate Status code: {0} Reason: {1}'
+                            .format(response.status_code, response.text))
+        json_response = json.loads(response.content)
+        self._extract_crypto_material(json_response)
+    
     def register_host(self, session):
         """Public method to register a new host and sign its CSR"""
         registered = False
@@ -230,6 +250,7 @@ class Config:
             self._config.read(self._configFile)
             self.server_url = self._config.get('server', 'url')
             self.register_url = self.server_url + self._config.get('server', 'path-register')
+            self.rotate_url = self.server_url + self._config.get('server', 'path-rotate')
             self.login_url = self.server_url + self._config.get('server', 'path-login')
             self.server_username = self._config.get('server', 'username')
             self.server_password = self._config.get('server', 'password')
@@ -323,10 +344,10 @@ if __name__ == '__main__':
     file(config.agent_pidfile, 'w').write(agent_pid)
     LOG.info("Hops CSR-agent PID: {0}".format(agent_pid))
 
+    cert = Certificate(config)
     if args.initialize:
         LOG.debug("Initializing")
-        cert = Certificate(config)
-
+        
         if cert.keystoresExist():
             LOG.warning("Keystores already exist, aborting initializing")
             sys.exit(2)
@@ -337,11 +358,21 @@ if __name__ == '__main__':
         with requests.Session() as session:
             try:
                 h.register_host(session)
-                subprocess.call("<%= node[:kagent][:base_dir] %>/keystore.sh")
+                subprocess.check_call("<%= node[:kagent][:base_dir] %>/keystore.sh")
             except Exception, e:
                 LOG.error("Error while registering host: {0}".format(e))
                 raise e
             
     elif args.rotate:
-        LOG.warning("Key rotation not implemented yet!")
+        LOG.debug("Key rotation")
+
+        cert.create_csr()
+        h = Host(config, cert)
+        with requests.Session() as session:
+            try:
+                h.rotate_key(session)
+                subprocess.call("<%= node[:kagent][:base_dir] %>/keystore.sh")
+            except Exception, e:
+                LOG.error("Error while rotating key: {0}".format(e))
+                raise e
     

@@ -219,6 +219,13 @@ template "#{node["kagent"]["base_dir"]}/agent.py" do
             })
 end
 
+## Touch cssr script log file as kagent user, so agent.py can write to it
+file "#{node["kagent"]["base_dir"]}/csr.log" do
+  mode '0750'
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  action :touch
+end
 
 template"#{node["kagent"]["certs_dir"]}/csr.py" do
   source "csr.py.erb"
@@ -325,7 +332,8 @@ template "/etc/sudoers.d/kagent" do
                 :status => "#{node["kagent"]["base_dir"]}/bin/status-service.sh",
                 :startall => "#{node["kagent"]["base_dir"]}/bin/start-all-local-services.sh",
                 :stopall => "#{node["kagent"]["base_dir"]}/bin/shutdown-all-local-services.sh",
-                :statusall => "#{node["kagent"]["base_dir"]}/bin/status-all-local-services.sh"                
+                :statusall => "#{node["kagent"]["base_dir"]}/bin/status-all-local-services.sh",
+                :rotate_service_key => "#{node[:kagent][:certs_dir]}/csr.py"
               })
   action :create
 end  

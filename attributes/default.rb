@@ -30,6 +30,7 @@ default["kagent"]["dashboard"]["api"]["register"]  = "ca/agentservice/register"
 default["kagent"]["dashboard"]["api"]["login"]     = "api/auth/login"
 default["kagent"]["dashboard"]["api"]["heartbeat"] = "api/agentresource/heartbeat"
 default["kagent"]["dashboard"]["api"]["alert"]     = "api/agentresource/alert"
+default["kagent"]["dashboard"]["api"]["rotate"]    = "ca/agentservice/rotate"
 
 # Username/Password for the dashboard connecting to Hopsworks
 default["kagent"]["dashboard"]["user"]             = "agent@hops.io"
