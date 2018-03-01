@@ -293,7 +293,7 @@ class Heartbeat():
                 payload["load5"] = load_info.load5
                 payload["load15"] = load_info.load15
                 payload["disk-used"] = disk_info.used
-                payload['memory-used'] = memory_info.used - memory_info.cached - memory_info.buffers
+                payload['memory-used'] = memory_info.used
                 payload["services"] = services_list            
                 payload["group-name"] = group_name
                 payload["hostname"] = hostname
