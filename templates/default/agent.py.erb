@@ -19,6 +19,7 @@ import multiprocessing
 import thread
 from threading import Lock
 import threading
+import Queue
 import subprocess
 from subprocess import Popen
 from subprocess import CalledProcessError
@@ -48,7 +49,6 @@ var="~#@#@!#@!#!@#@!#"
 
 config_mutex = Lock()
 conda_mutex = Lock()
-system_commands_response_mutex = Lock()
 block_report_mutex = Lock()
 
 HTTP_OK = 200
@@ -61,19 +61,9 @@ LOG_FILE = "<%= node[:kagent][:base_dir] %>/agent.log"
 CERT_FILE = "<%= node[:kagent][:certs_dir] %>/pub.pem"
 CA_FILE = "<%= node[:kagent][:certs_dir] %>/ca_pub.pem"
 KEY_FILE = "<%= node[:kagent][:certs_dir] %>/priv.key"
-SERVER_KEYSTORE = "<%= @kstore %>"
-SERVER_TRUSTSTORE = "<%= @tstore %>"
-CLIENT_TRUSTSTORE = "<%= node[:kagent][:keystore_dir] %>/node_client_truststore.jks"
 
 global states
 states = {}
-
-# Conda install/remove/update/clone events
-global conda_list
-conda_list = []
-
-global system_commands_response
-system_commands_response = []
 
 global conda_ongoing
 conda_ongoing = defaultdict(lambda: False)
@@ -238,10 +228,16 @@ class Util():
 
 class Heartbeat():
     daemon_threads = True 
-    def __init__(self):
-        systemCommandsProcessor = SystemCommandsProcessor()
+    def __init__(self, commands_queue, system_commands_status, system_commands_status_mutex,
+                 conda_commands_status, conda_commands_status_mutex):
+        self._commands_queue = commands_queue
+        self._system_commands_status = system_commands_status
+        self._system_commands_status_mutex = system_commands_status_mutex
+        self._conda_commands_status = conda_commands_status
+        self._conda_commands_status_mutex = conda_commands_status_mutex
+        
         while True:    
-            Heartbeat.send(systemCommandsProcessor)
+            self.send()
             time.sleep(heartbeat_interval) 
 
 
@@ -274,18 +270,16 @@ class Heartbeat():
                 ob = ob[key]
             return ob
 
-    @staticmethod
-    def send(systemCommandsProcessor):
+    def send(self):
         global logged_in
         global session
-        global conda_list
-        global system_commands_response
         global block_report
         if not logged_in:
            logger.info('Logging in to Hopsworks....')
            Heartbeat.login()
         else:
             try:
+                logger.debug("Creating heartbeat reply...")
                 disk_info = DiskInfo() 
                 memory_info = MemoryInfo()
                 load_info = LoadInfo()
@@ -305,13 +299,30 @@ class Heartbeat():
                 payload["group-name"] = group_name
                 payload["hostname"] = hostname
 
-                conda_mutex.acquire()
-                system_commands_response_mutex.acquire()
-                if bool(conda_list) or bool(system_commands_response):
-                    payload["commands-reply"] = {"condaCommands": conda_list, "systemCommands": system_commands_response}
-                    logger.debug(json.dumps(payload, indent=2))
-                system_commands_response_mutex.release()
-                conda_mutex.release()                
+                commands_status = {}
+                
+                self._system_commands_status_mutex.acquire()
+                system_commands_response = []
+                system_status_to_delete = []
+                for k, v in self._system_commands_status.iteritems():
+                    system_commands_response.append(v)
+                    system_status_to_delete.append(k)
+                self._system_commands_status_mutex.release()
+                commands_status["systemCommands"] = system_commands_response
+
+                self._conda_commands_status_mutex.acquire()
+                conda_commands_response = []
+                conda_status_to_delete = []
+                for k, v in self._conda_commands_status.iteritems():
+                    conda_commands_response.append(v)
+                    conda_status_to_delete.append(k)
+                self._conda_commands_status_mutex.release()
+                commands_status["condaCommands"] = conda_commands_response
+
+                
+                payload["commands-reply"] = commands_status
+
+                logger.debug("Commands reply payload: {0}".format(json.dumps(payload["commands-reply"], indent=2)))
 
                 block_report_mutex.acquire()
                 if bool(block_report):
@@ -334,33 +345,47 @@ class Heartbeat():
                 payload['memory-capacity'] = memory_info.total                            
                 logger.info("Sending heartbeat...")
                 resp = session.post(heartbeat_url, data=json.dumps(payload), headers=headers, verify=False)
+                logger.info("Received heartbeat response")
                 block_report_mutex.acquire()
                 block_report = {}
                 block_report_mutex.release()
                 if not resp.status_code == HTTP_OK:
-                    raise Exception('Heartbeat could not be sent (Status code: {0})'.format(resp.status_code))
                     logged_in = False
-                    conda_mutex.acquire()
-                    conda_list = []
-                    conda_mutex.release()
-                    system_commands_response_mutex.acquire()
-                    system_commands_response = []
-                    system_commands_response_mutex.release()
+                    raise Exception('Heartbeat could not be sent (Status code: {0})'.format(resp.status_code))
                 else:
-                    # Clear the list of conda ops to upload if the rest call is successful
-                    conda_mutex.acquire()
-                    conda_list = []
-                    conda_mutex.release()
+                    # Cleanup successfully sent status to Hopsworks
+                    self._system_commands_status_mutex.acquire()
+                    for command_id in system_status_to_delete:
+                        del self._system_commands_status[command_id]
+                    self._system_commands_status_mutex.release()
 
-                    system_commands_response_mutex.acquire()
-                    system_commands_response = []
-                    system_commands_response_mutex.release()
-                    
-                    theResponse = resp.json()
-                    try:
-                        Conda().commands(theResponse['condaCommands'])
+                    self._conda_commands_status_mutex.acquire()
+                    for command_id in conda_status_to_delete:
+                        del self._conda_commands_status[command_id]
+                    self._conda_commands_status_mutex.release()
                         
-                        systemCommandsProcessor.process(theResponse['systemCommands'])
+                    theResponse = resp.json()
+                    logger.debug("Response from heartbeat is: {0}".format(theResponse))
+                    try:
+                        system_commands = theResponse['systemCommands']
+                        for command in system_commands:
+                            c = Command('SYSTEM_COMMAND', command)
+                            logger.debug("Adding SYSTEM command with ID {0} and status {1} to Handler Queue".format(command['id'], command['status']))
+                            commands_queue.put(c)
+                            command['status'] = 'ONGOING'
+                            self._system_commands_status_mutex.acquire()
+                            self._system_commands_status[command['id']] = command
+                            self._system_commands_status_mutex.release()
+                        
+                        conda_commands = theResponse['condaCommands']
+                        for command in conda_commands:
+                            c = Command('CONDA_COMMAND', command)
+                            logger.debug("Adding CONDA command with ID {0} and status {1} to Handler Queue".format(command['id'], command['status']))
+                            commands_queue.put(c)
+                            command['status'] = 'ONGOING'
+                            self._conda_commands_status_mutex.acquire()
+                            self._conda_commands_status[command['id']] = command
+                            self._conda_commands_status_mutex.release()
                     except Exception as err:
                         logger.info("No commands to execute")
                         for data in theResponse['condaCommands']:
@@ -373,45 +398,190 @@ class Heartbeat():
                 block_report_mutex.acquire()
                 block_report = {}
                 block_report_mutex.release()
-                conda_mutex.acquire()
-                conda_list = []
-                conda_mutex.release()
 
 
-class SystemCommandsProcessor:
-    def process(self, system_commands):
-        global system_commands_response
-        if system_commands is None:
+class CondaCommandsHandler:
+    def __init__(self, conda_commands_status, conda_commands_status_mutex):
+        self._conda_commands_status = conda_commands_status
+        self._conda_commands_status_mutex = conda_commands_status_mutex
+        
+    def handle(self, command):
+        global conda_ongoing
+        if (command is None):
             return
-        for command in system_commands:
-            logger.debug("System command {0}".format(command))
-            op = command['op']
-
-            if op == 'SERVICE_KEY_ROTATION':
-                self._service_key_rotation(command)
+        logger.debug("Handling Conda command: {0}".format(json.dumps(command, indent=2)))
+        op = command['op'].upper()
+        user = command['user']
+        proj = command['proj']
+        command_id = command['id']
+        offline = ""
+        logger.info("Command to execute: {0}/{1}/{2}".format(op, proj, command_id))
+        if (conda_ongoing[proj] == False):
+            conda_ongoing[proj] = True
+            logger.info("Executing Command {0}/{1}/{2}".format(user, op, proj))
+            arg = ""
+            if 'arg' in command:
+                arg = command['arg']
+            if op == "REMOVE" or op == "CLONE" or op == "CREATE":
+                self._envOp(command, arg, offline)
+            elif op == "LIB_SYNC":
+                arg = command['lib']
+                # open with 'w+' to overwrite the file if it exists
+                with io.open('/tmp/' + proj + '_server.json', 'w+', encoding='utf-8') as outfile:
+                    json.dumps(arg, outfile, ensure_ascii=False)                    
+                self._envOp(command, arg, "")                    
+            elif op == "INSTALL" or op == "UNINSTALL" or op == "UPGRADE":  # Conda package  commands (install, uninstall, upgrade)
+                self._libOp(command)
             else:
-                logger.error("Unknown OP {0} for system command {1}".format(op, command))
+                logger.error("Unkown command OP: {0} Ignoring...".format(op))
+        else:
+            logger.warn("Conda busy executing a command for project: {0}".format(proj))
+
+
+    def _envOp(self, command, arg, offline):
+        global conda_ongoing
+        if not arg:
+            arg=""
+        user = command['user']
+        command_id = command['id']
+        op = command['op'].upper()
+        proj = command['proj']
+
+        script = BIN_DIR + "/anaconda_env.sh"
+        logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6}".format(script, user, op, proj, arg, offline, hadoop_home))
+        msg=""
+        try:
+            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, hadoop_home])
+            command['status'] = 'SUCCESS'
+            command['arg'] = arg
+        except subprocess.CalledProcessError as e:
+            logger.info("Execption in envOp {0}".format(e.output))
+            logger.info("Execption in envOp. Ret code: {0}".format(e.returncode))
+            msg = e.output
+            truncated = (msg[:250] + '...') if len(msg) > 255 else msg
+            command['status'] = 'FAILED'
+            command['arg'] = truncated
+        finally:
+            if command_id != -1:
+                self._conda_commands_status_mutex.acquire()
+                logger.debug("Adding status {0} for command ID {1} - {2}".format(command['status'], command_id, command))
+                self._conda_commands_status[command_id] = command
+                self._conda_commands_status_mutex.release()
+            conda_ongoing[proj] = False
+        return msg
+
+    def _libOp(self, command):
+        def target(command):
+            global conda_ongoing
+            user = command['user']
+            command_id = command['id']
+            op = command['op'].upper()
+            proj = command['proj']
+            version = command['version']
+            channelUrl = command['channelUrl']
+            installType = command['installType']
+            lib = command['lib']
+            if not channelUrl:
+                channelUrl="default"
+            if not version:
+                version=""
+            script = BIN_DIR + "/conda.sh"
+
+            try:
+                command_str = "sudo {0} {1} {2} {3} {4} {5} {6} {7}".format(script, user, op, proj, channelUrl, installType, lib, version)
+                logger.info("Executing libOp command {0}".format(command_str))                                            
+                msg = subprocess.check_output(['sudo', script, user, op, proj, channelUrl, installType, lib, version])
+                logger.info("Lib op finished without error.")
+                logger.info("{0}".format(msg))
+                command['status'] = 'SUCCESS'
+            except subprocess.CalledProcessError as e:
+                logger.info("Exception in libOp {0}".format(e.output))
+                logger.info("Exception in libOp. Ret code: {0}".format(e.returncode))
+                command['status'] = 'FAILED'
+            finally:
+                conda_ongoing[proj] = False                
+                if command_id != -1:
+                    self._conda_commands_status_mutex.acquire()
+                    logger.debug("Adding status {0} for command ID {1} - {2}".format(command['status'], command_id, command))
+                    self._conda_commands_status[command_id] = command
+                    self._conda_commands_status_mutex.release()
+
+        thread = threading.Thread(target=target, args=(command,))
+        thread.start()
+
+        
+class SystemCommandsHandler:
+    def __init__(self, system_commands_status, system_commands_status_mutex):
+        self._system_commands_status = system_commands_status
+        self._system_commands_status_mutex = system_commands_status_mutex
+        
+    def handle(self, command):
+        if command is None:
+            return
+        logger.debug("Handling System command: {0}".format(command))
+        op = command['op']
+
+        if op == 'SERVICE_KEY_ROTATION':
+            self._service_key_rotation(command)
+        else:
+            logger.error("Unknown OP {0} for system command {1}".format(op, command))
 
     def _service_key_rotation(self, command):
-        global system_commands_response
-
         try:
             logger.debug("Calling certificate rotation script")
             subprocess.check_call(["sudo", "<%= node[:kagent][:certs_dir] %>/csr.py", "--rotate"])
             command['status'] = 'FINISHED'
             logger.info("Successfully rotated service certificates")
-        except (CalledProcessError, e):
+        except CalledProcessError as e:
             logger.error("Error while calling csr.py script: {0}".format(e))
             command['status'] = 'FAILED'
-        except (Exception, e):
+        except Exception as e:
             logger.error("General error while rotating certificates {0}".format(e))
             command['status'] = 'FAILED'
-    
-        system_commands_response_mutex.acquire()
-        system_commands_response.append(command)
-        system_commands_response_mutex.release()
 
-        
+        self._system_commands_status_mutex.acquire()
+        logger.debug("Adding status {0} for command ID {1} - {2}".format(command['status'], command['id'], command))
+        self._system_commands_status[command['id']] = command
+        self._system_commands_status_mutex.release()
+
+
+class Command:
+    def __init__(self, command_type, command):
+        self._command_type = command_type
+        self._command = command
+
+    def get_command_type(self):
+        return self._command_type
+
+    def get_command(self):
+        return self._command
+
+class Handler(threading.Thread):
+    def __init__(self, commands_queue, systemCommandsHandler, condaCommandsHandler,
+                 group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        threading.Thread.__init__(self, group=group, target=target, name=name, verbose=verbose)
+        self.args = args
+        self.kwargs = kwargs
+        self._commands_queue = commands_queue
+        self._systemCommandsHandler = systemCommandsHandler
+        self._condaCommandsHandler = condaCommandsHandler
+        return
+
+    def run(self):
+        logger.info("Starting commands handling thread")
+        while (True):
+            c = self._commands_queue.get(block=True)
+            logger.debug("Handling command {0}".format(c.get_command()))
+            command_type = c.get_command_type()
+            command = c.get_command()
+
+            if (command_type == 'CONDA_COMMAND'):
+                logger.info("Conda command")
+                self._condaCommandsHandler.handle(command)
+            elif (command_type == 'SYSTEM_COMMAND'):
+                logger.info("System command")
+                self._systemCommandsHandler.handle(command)
+                
 class Alert:
     @staticmethod    
     def send(cluster, group, service, time, status):
@@ -825,62 +995,6 @@ class SSLCherryPy(ServerAdapter):
 
 
 class Conda():
-    def libOp(self, user, command_id, op, proj, channelUrl, installType, lib, version):
-        def target(user, command_id, op, proj, channelUrl, installType, lib, version):
-            global conda_ongoing
-            if not channelUrl:
-                channelUrl="default"
-            if not version:
-                version=""
-            global conda_list
-            script = BIN_DIR + "/conda.sh"
-            conda_op = {}
-            try:
-                command = "sudo {0} {1} {2} {3} {4} {5} {6} {7}".format(script, user, op, proj, channelUrl, installType, lib, version)
-                logger.info("{0}".format(command))                                            
-                msg = subprocess.check_output(['sudo', script, user, op, proj, channelUrl, installType, lib, version])
-                logger.info("Lib op finished without error.")
-                logger.info("{0}".format(msg))
-                conda_op = {'proj': proj, 'op': op, 'channelurl': channelUrl, 'installtype': installType, 'lib': lib, 'version': version, 'status': 'SUCCESS', 'id': str(command_id) }
-            except subprocess.CalledProcessError, e:
-                logger.info("Exception in libOp {0}".format(e.output))
-                logger.info("Exception in libOp. Ret code: {0}".format(e.returncode))
-                conda_op = {'proj': proj, 'op': op, 'channelurl': channelUrl, 'installtype': installType, 'lib': lib, 'version': version, 'status': 'FAILED', 'id':  str(command_id) }
-            finally:
-                conda_ongoing[proj] = False                
-                if command_id != -1:                
-                    conda_mutex.acquire()                     
-                    conda_list.append(conda_op)                                           
-                    conda_mutex.release()                
-
-        thread = threading.Thread(target=target, args=(user, command_id, op, proj, channelUrl, installType, lib, version,))
-        thread.start()
-            
-    def envOp(self, user, command_id, op, proj, arg, offline):
-        global conda_ongoing
-        if not arg:
-            arg=""
-        script = BIN_DIR + "/anaconda_env.sh"
-        logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6}".format(script, user, op, proj, arg, offline, hadoop_home))
-        msg=""
-        conda_op = {}        
-        try:
-            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, hadoop_home])
-            conda_op = {'proj': proj, 'op': op, 'channelurl': 'default', 'lib': '', 'version': '', 'status': 'SUCCESS', 'id': str(command_id), 'arg': arg}            
-        except subprocess.CalledProcessError, e:
-            logger.info("Execption in envOp {0}".format(e.output))
-            logger.info("Execption in envOp. Ret code: {0}".format(e.returncode))
-            msg = e.output
-            truncated = (msg[:250] + '...') if len(msg) > 255 else msg
-            conda_op = {'proj': proj, 'op': op, 'channelurl': 'default', 'lib': '', 'version': '', 'status': 'FAILED', 'id':  str(command_id), 'arg': truncated}
-        finally:
-            conda_mutex.acquire()
-            if command_id != -1:
-                conda_list.append(conda_op)                   
-            conda_mutex.release()
-            conda_ongoing[proj] = False
-        return msg
-
     def blockReport(self):
         global block_report
         script = BIN_DIR + "/anaconda_env.sh"
@@ -910,44 +1024,6 @@ class Conda():
         block_report = report
         block_report_mutex.release()
 
-    def commands(self, conda_commands):
-        global conda_ongoing
-        if (conda_commands is None):
-            return;
-        logger.info("Commands to execute: {0}".format(len(conda_commands)))
-        for data in conda_commands:
-            logger.info(json.dumps(data, indent=2))            
-            op = data['op'].upper()
-            user = data['user']
-            proj = data['proj']
-            command_id = data['id']
-            offline = ""
-            logger.info("Command to execute: {0}/{1}/{2}".format(op,proj,command_id))
-            if (conda_ongoing[proj] == False):
-                conda_ongoing[proj] = True
-                logger.info("Executing Command {0}/{1}/{2}".format(user,op,proj))
-                arg=""
-                if 'arg' in data:
-                    arg=data['arg']
-                if op == "REMOVE" or op == "CLONE" or op == "CREATE":
-                    self.envOp(user, command_id, op, proj, arg, offline)
-                elif op == "LIB_SYNC":
-                    arg=data['lib']
-                    # open with 'w+' to overwrite the file if it exists
-                    with io.open('/tmp/' + proj + '_server.json', 'w+', encoding='utf-8') as outfile:
-                        json.dumps(arg, outfile, ensure_ascii=False)                    
-                    self.envOp(user, command_id, op, proj, arg, "")                    
-                elif op == "INSTALL" or op == "UNINSTALL" or op == "UPGRADE":  # Conda package  commands (install, uninstall, upgrade)
-                    version = data['version']
-                    channelUrl = data['channelUrl']
-                    installType = data['installType']
-                    lib = data['lib']
-                    self.libOp(user, command_id, op, proj, channelUrl, installType, lib, version)
-                else:
-                    logger.error("Unkown command OP: {0} Ignoring...".format(op))
-            else:
-                logger.warn("Conda busy executing a command for project: {0}".format(proj))
-
                             
 if __name__ == '__main__':
     
@@ -966,8 +1042,23 @@ if __name__ == '__main__':
     logger.info("Hops Kagent PID: {0}".format(agent_pid))
     logger.setLevel(Util().logging_level(logging_level))
 
-    # Heartbeat, process watch (alerts) and REST API are available after the agent registers successfully 
-    hb_thread = threading.Thread(target=Heartbeat, args=())
+    # Heartbeat, process watch (alerts) and REST API are available after the agent registers successfully
+    commands_queue = Queue.Queue(maxsize=100)
+    
+    system_commands_status = {}
+    system_commands_status_mutex = Lock()
+    system_commands_handler = SystemCommandsHandler(system_commands_status, system_commands_status_mutex)
+
+    conda_commands_status = {}
+    conda_commands_status_mutex = Lock()
+    conda_commands_handler = CondaCommandsHandler(conda_commands_status, conda_commands_status_mutex)
+    
+    commands_handler = Handler(commands_queue, system_commands_handler, conda_commands_handler)
+    commands_handler.setDaemon(True)
+    commands_handler.start()
+    
+    hb_thread = threading.Thread(target=Heartbeat, args=(commands_queue, system_commands_status, system_commands_status_mutex,
+                                                         conda_commands_status, conda_commands_status_mutex))
     hb_thread.setDaemon(True)
     hb_thread.start()
 

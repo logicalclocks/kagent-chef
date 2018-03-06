@@ -213,10 +213,6 @@ template "#{node["kagent"]["base_dir"]}/agent.py" do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode 0710
-  variables({
-              :kstore => "#{node["kagent"]["keystore_dir"]}/#{my_hostname}__kstore.jks",
-              :tstore => "#{node["kagent"]["keystore_dir"]}/#{my_hostname}__tstore.jks"
-            })
 end
 
 ## Touch cssr script log file as kagent user, so agent.py can write to it
