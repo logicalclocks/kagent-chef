@@ -276,6 +276,8 @@ class Heartbeat():
            logger.info('Logging in to Hopsworks....')
            Heartbeat.login()
         else:
+            system_status_to_delete = []
+            conda_status_to_delete = []
             try:
                 logger.debug("Creating heartbeat reply...")
                 disk_info = DiskInfo() 
@@ -296,27 +298,35 @@ class Heartbeat():
                 payload["services"] = services_list            
                 payload["group-name"] = group_name
                 payload["hostname"] = hostname
-
+                    
                 commands_status = {}
                 
                 self._system_commands_status_mutex.acquire()
                 system_commands_response = []
-                system_status_to_delete = []
+                # Append command status to response
                 for k, v in self._system_commands_status.iteritems():
                     system_commands_response.append(v)
-                    system_status_to_delete.append(k)
+                    system_status_to_delete.append(v)
+
+                # Remove status from local statuses state
+                for command_to_delete in system_status_to_delete:
+                    del self._system_commands_status[command_to_delete['id']]
                 self._system_commands_status_mutex.release()
                 commands_status["systemCommands"] = system_commands_response
 
                 self._conda_commands_status_mutex.acquire()
                 conda_commands_response = []
-                conda_status_to_delete = []
+                # Append command status to response
                 for k, v in self._conda_commands_status.iteritems():
                     conda_commands_response.append(v)
-                    conda_status_to_delete.append(k)
+                    conda_status_to_delete.append(v)
+
+                # Remove status from local statuses state
+                for command_to_delete in conda_status_to_delete:
+                    del self._conda_commands_status[command_to_delete['id']]
+                    
                 self._conda_commands_status_mutex.release()
                 commands_status["condaCommands"] = conda_commands_response
-
                 
                 payload["commands-reply"] = commands_status
 
@@ -348,20 +358,22 @@ class Heartbeat():
                 block_report = {}
                 block_report_mutex.release()
                 if not resp.status_code == HTTP_OK:
+                    # Put back deleted statuses if command ID does not exist in order to be re-send
+                    self._conda_commands_status_mutex.acquire()
+                    for restore_command in conda_status_to_delete:
+                        if restore_command['id'] not in self._conda_commands_status:
+                            self._conda_commands_status[restore_command['id']] = restore_command
+                    self._conda_commands_status_mutex.release()
+
+                    self._system_commands_status_mutex.acquire()
+                    for restore_command in system_status_to_delete:
+                        if restore_command['id'] not in self._system_commands_status:
+                            self._system_commands_status[restore_command['id']] = restore_command
+                    self._system_commands_status_mutex.release()
+                    
                     logged_in = False
                     raise Exception('Heartbeat could not be sent (Status code: {0})'.format(resp.status_code))
                 else:
-                    # Cleanup successfully sent status to Hopsworks
-                    self._system_commands_status_mutex.acquire()
-                    for command_id in system_status_to_delete:
-                        del self._system_commands_status[command_id]
-                    self._system_commands_status_mutex.release()
-
-                    self._conda_commands_status_mutex.acquire()
-                    for command_id in conda_status_to_delete:
-                        del self._conda_commands_status[command_id]
-                    self._conda_commands_status_mutex.release()
-                        
                     theResponse = resp.json()
                     logger.debug("Response from heartbeat is: {0}".format(theResponse))
                     try:
@@ -469,44 +481,40 @@ class CondaCommandsHandler:
         return msg
 
     def _libOp(self, command):
-        def target(command):
-            global conda_ongoing
-            user = command['user']
-            command_id = command['id']
-            op = command['op'].upper()
-            proj = command['proj']
-            version = command['version']
-            channelUrl = command['channelUrl']
-            installType = command['installType']
-            lib = command['lib']
-            if not channelUrl:
-                channelUrl="default"
-            if not version:
-                version=""
-            script = BIN_DIR + "/conda.sh"
+        global conda_ongoing
+        user = command['user']
+        command_id = command['id']
+        op = command['op'].upper()
+        proj = command['proj']
+        version = command['version']
+        channelUrl = command['channelUrl']
+        installType = command['installType']
+        lib = command['lib']
+        if not channelUrl:
+            channelUrl="default"
+        if not version:
+            version=""
+        script = BIN_DIR + "/conda.sh"
 
-            try:
-                command_str = "sudo {0} {1} {2} {3} {4} {5} {6} {7}".format(script, user, op, proj, channelUrl, installType, lib, version)
-                logger.info("Executing libOp command {0}".format(command_str))                                            
-                msg = subprocess.check_output(['sudo', script, user, op, proj, channelUrl, installType, lib, version])
-                logger.info("Lib op finished without error.")
-                logger.info("{0}".format(msg))
-                command['status'] = 'SUCCESS'
-            except subprocess.CalledProcessError as e:
-                logger.info("Exception in libOp {0}".format(e.output))
-                logger.info("Exception in libOp. Ret code: {0}".format(e.returncode))
-                command['status'] = 'FAILED'
-            finally:
-                conda_ongoing[proj] = False                
-                if command_id != -1:
-                    self._conda_commands_status_mutex.acquire()
-                    logger.debug("Adding status {0} for command ID {1} - {2}".format(command['status'], command_id, command))
-                    self._conda_commands_status[command_id] = command
-                    self._conda_commands_status_mutex.release()
-
-        thread = threading.Thread(target=target, args=(command,))
-        thread.start()
-
+        try:
+            command_str = "sudo {0} {1} {2} {3} {4} {5} {6} {7}".format(script, user, op, proj, channelUrl, installType, lib, version)
+            logger.info("Executing libOp command {0}".format(command_str))                                            
+            msg = subprocess.check_output(['sudo', script, user, op, proj, channelUrl, installType, lib, version])
+            logger.info("Lib op finished without error.")
+            logger.info("{0}".format(msg))
+            command['status'] = 'SUCCESS'
+        except subprocess.CalledProcessError as e:
+            logger.info("Exception in libOp {0}".format(e.output))
+            logger.info("Exception in libOp. Ret code: {0}".format(e.returncode))
+            command['status'] = 'FAILED'
+        finally:
+            conda_ongoing[proj] = False                
+            if command_id != -1:
+                self._conda_commands_status_mutex.acquire()
+                logger.debug("Adding status {0} for command ID {1} - {2}".format(command['status'], command_id, command))
+                self._conda_commands_status[command_id] = command
+                self._conda_commands_status_mutex.release()
+                    
         
 class SystemCommandsHandler:
     def __init__(self, system_commands_status, system_commands_status_mutex):
