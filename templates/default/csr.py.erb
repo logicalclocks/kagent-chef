@@ -148,16 +148,17 @@ class Host:
         self._conf = conf
         self._certificate = certificate
 
-    def rotate_key(self, session):
+    def rotate_key(self, session, command_id):
         """Public method to perform key rotation"""
-        self._rotate_key_internal(session)
+        self._rotate_key_internal(session, command_id)
 
-    def _rotate_key_internal(self, session):
+    def _rotate_key_internal(self, session, command_id):
         self._login(session)
         payload = {}
         payload["csr"] = self._certificate.csr_req
         payload["agent-password"] = self._conf.agent_password
         payload["host-id"] = self._conf.host_id
+        payload["id"] = command_id
         LOG.info("Rotating service key")
         LOG.debug("Rotation url is {0}".format(self._conf.rotate_url))
         response = session.post(self._conf.rotate_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
@@ -325,11 +326,15 @@ def setup_logging(max_log_size, logLevel):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Register host with Hopsworks and get certificate.')
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-i', '--initialize', action='store_true',
-                       help="Register and generate certificate for a new host")
-    group.add_argument('-r', '--rotate', action='store_true',
-                       help="Perform a key rotation")
+
+    parser.add_argument("operation", help="Operation to perform")
+    subparsers = parser.add_subparsers(dest='operation', help="Modes of operation")
+
+    parser_i = subparsers.add_parser('initialize', help="Register with Hopsworks")
+
+    parser_r = subparsers.add_parser('rotate', help="Perform certificate rotation")
+    parser_r.add_argument("-c", "--commandid", help="Command ID from Hopsworks", default="-1")
+
     args = parser.parse_args()
     
     config = Config(CONFIG_FILE)
@@ -345,7 +350,7 @@ if __name__ == '__main__':
     LOG.info("Hops CSR-agent PID: {0}".format(agent_pid))
 
     cert = Certificate(config)
-    if args.initialize:
+    if args.operation == "initialize":
         LOG.debug("Initializing")
         
         if cert.keystoresExist():
@@ -363,14 +368,14 @@ if __name__ == '__main__':
                 LOG.error("Error while registering host: {0}".format(e))
                 raise e
             
-    elif args.rotate:
+    elif args.operation == "rotate":
         LOG.debug("Key rotation")
 
         cert.create_csr()
         h = Host(config, cert)
         with requests.Session() as session:
             try:
-                h.rotate_key(session)
+                h.rotate_key(session, args.commandid)
                 subprocess.call("<%= node[:kagent][:base_dir] %>/keystore.sh")
             except Exception, e:
                 LOG.error("Error while rotating key: {0}".format(e))

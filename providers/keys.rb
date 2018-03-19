@@ -7,7 +7,7 @@ action :csr do
     code <<-EOF
       set -eo pipefail
       export PYTHON_EGG_CACHE=/tmp
-      #{node["kagent"]["certs_dir"]}/csr.py --initialize
+      #{node["kagent"]["certs_dir"]}/csr.py operation initialize
   EOF
     not_if { ::File.exists?( "#{node["kagent"]["keystore_dir"]}/node_client_truststore.jks" ) }
   end

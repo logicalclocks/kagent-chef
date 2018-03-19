@@ -535,7 +535,7 @@ class SystemCommandsHandler:
     def _service_key_rotation(self, command):
         try:
             logger.debug("Calling certificate rotation script")
-            subprocess.check_call(["sudo", "<%= node[:kagent][:certs_dir] %>/csr.py", "--rotate"])
+            subprocess.check_call(["sudo", "<%= node[:kagent][:certs_dir] %>/csr.py", "operation", "rotate", "-c", str(command['id'])])
             command['status'] = 'FINISHED'
             logger.info("Successfully rotated service certificates")
         except CalledProcessError as e:
