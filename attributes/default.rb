@@ -124,3 +124,7 @@ default["tensorflow"]["py36_gpu"]["url"]           = node["download_url"] + "/te
 default["tensorflow"]["py27"]["url"]               = node["download_url"] + "/tensorflow-" + node["tensorflow"]["version"] + "-cp27-cp27mu-manylinux1_x86_64.whl"
 default["tensorflow"]["py27_gpu"]["url"]           = node["download_url"] + "/tensorflow_gpu-" + node["tensorflow"]["version"] + "-cp27-cp27mu-manylinux1_x86_64.whl"
 
+
+default['mml']['version']                          = "0.11"
+# https://mmlspark.azureedge.net/pip/mmlspark-0.11-py2.py3-none-any.whl
+default["mml"]["url"]                              = node["download_url"] + "/mmlspark-" + node['mml']['version'] + "-py2.py3-none-any.whl"
