@@ -65,12 +65,10 @@ if [ "$OP" == "CREATE" ] ; then
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tfspark"
     if [ "$WITH_PYTHON_KERNEL" == "true" ] ; then    
       su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install ipykernel"
-      #su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/conda install pandas"
-      #su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/conda install numpy"
     fi
 
     # Install a custom build of tensorflow with this line.
-    #    su $EXEC_AS_USER -c "<%= node['conda']['base_dir'] %>/envs/${PROJECT}/bin/pip install --upgrade <%= node['conda']['base_dir'] %>/pkgs/tensorflow${GPU}-<%= node['tensorflow']['version'] %>-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
+    #su $EXEC_AS_USER -c "<%= node['conda']['base_dir'] %>/envs/${PROJECT}/bin/pip install --upgrade <%= node['conda']['base_dir'] %>/pkgs/tensorflow${GPU}-<%= node['tensorflow']['version'] %>-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
     # 'pip install tensorflow' include HDFS support. 'conda install tensorflow-gpu' does not!
 
     # If cuda is installed, and there is a GPU, install TF with GPUs
@@ -86,8 +84,9 @@ if [ "$OP" == "CREATE" ] ; then
         fi
     fi
 
-    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==<%= node['tensorflow']['version'] %>  --upgrade --force-reinstall"
-
+#    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==<%= node['tensorflow']['version'] %>  --upgrade --force-reinstall"
+    su $EXEC_AS_USER -c "<%= node['conda']['base_dir'] %>/envs/${PROJECT}/bin/pip install --force-reinstall --upgrade <%= node['conda']['base_dir'] %>/pkgs/tensorflow${GPU}-<%= node['tensorflow']['version'] %>-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
+    
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install horovod"
 
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hops"
