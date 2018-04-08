@@ -54,17 +54,17 @@ if [ "$OP" == "CREATE" ] ; then
     export PY=$(echo $PYTHON_VERSION | sed 's/\.//g')
 
     if [ "$PY" == "36" ] ; then
-        su $EXEC_AS_USER -c "export HADOOP_HOME=$HADOOP_DIR && ${CONDA_DIR}/envs/${PROJECT}/bin/pip install git+https://github.com/crs4/pydoop.git@develop"
+        su $EXEC_AS_USER -c "export HADOOP_HOME=$HADOOP_DIR && yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install git+https://github.com/crs4/pydoop.git@develop"
     else  # python 2.7
-	    su $EXEC_AS_USER -c "export HADOOP_HOME=$HADOOP_DIR && ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade pydoop"
+	    su $EXEC_AS_USER -c "export HADOOP_HOME=$HADOOP_DIR && yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade pydoop"
 	    # Tensorflow serving only works with Python2
-        su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tensorflow-serving-api"
+        su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tensorflow-serving-api"
     fi
 
-    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hopsfacets"
-    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tfspark"
+    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hopsfacets"
+    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tfspark"
     if [ "$WITH_PYTHON_KERNEL" == "true" ] ; then    
-      su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install ipykernel"
+      su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install ipykernel"
     fi
 
     # Install a custom build of tensorflow with this line.
@@ -77,13 +77,14 @@ if [ "$OP" == "CREATE" ] ; then
         nvidia-smi -L | grep -i gpu
     	if [ $? -eq 0 ] ; then
             GPU="-gpu"
-            su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip uninstall tensorflow"
+            su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip uninstall tensorflow"
     	    if [ $? -ne 0 ] ; then
                 echo "Problem uninstalling tensorflow to prepare for gpu version"
             fi
         fi
     fi
 
+<<<<<<< HEAD
 #    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==<%= node['tensorflow']['version'] %>  --upgrade --force-reinstall"
     su $EXEC_AS_USER -c "<%= node['conda']['base_dir'] %>/envs/${PROJECT}/bin/pip install --force-reinstall --upgrade <%= node['conda']['base_dir'] %>/pkgs/tensorflow${GPU}-<%= node['tensorflow']['version'] %>-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
     
@@ -92,6 +93,13 @@ if [ "$OP" == "CREATE" ] ; then
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hops"
 
     su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install node['mml']['url']"
+=======
+    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==<%= node['tensorflow']['version'] %>  --upgrade --force-reinstall"
+
+    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install horovod"
+
+    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hops"
+>>>>>>> de73b41f39cb99cb278a6b52dfed9b00d1d86dfa
     
 elif [ "$OP" == "LIST_ENVS" ] ; then
   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env list --json > /tmp/conda_envs.json"    
