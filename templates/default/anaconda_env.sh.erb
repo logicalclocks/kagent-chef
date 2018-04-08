@@ -93,7 +93,7 @@ if [ "$OP" == "CREATE" ] ; then
 
     su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install horovod"
 
-    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install <%= node['mml']['url']" %>
+    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install <%= node['mml']['url'] %>
     
 elif [ "$OP" == "LIST_ENVS" ] ; then
   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env list --json > /tmp/conda_envs.json"    
