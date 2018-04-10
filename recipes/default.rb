@@ -5,6 +5,15 @@ if node["kagent"]["password"].empty? == false
  agent_password = "password = #{node["kagent"]["password"]}"
 end
 
+bash "pip_backports_workaround" do
+  user "root"
+  code <<-EOF
+    pip uninstall backports.functools_lru_cache
+    pip install backports.functools_lru_cache
+   EOF
+end
+
+
 case node[:platform]
 when "ubuntu"
  if node[:platform_version].to_f <= 14.04
