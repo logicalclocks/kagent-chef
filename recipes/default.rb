@@ -230,7 +230,7 @@ if node["install"]["addhost"] == 'true'
  bash "sync-anaconda-with-existing-cluster" do
    user "root"
    code <<-EOH
-     <%= node['kagent']['base_dir'] %>/bin/anaconda_sync.sh
+     #{node['kagent']['base_dir']}/bin/anaconda_sync.sh
    EOH
  end
   
@@ -295,7 +295,7 @@ for python in python_versions
     yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install ipykernel"
 
     # Install a custom build of tensorflow with this line.
-    #<%= node['conda']['base_dir'] %>/envs/${PROJECT}/bin/pip install --upgrade <%= node['conda']['base_dir'] %>/pkgs/tensorflow${GPU}-<%= node['tensorflow']['version'] %>-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
+    ##{node['conda']['base_dir']}/envs/${PROJECT}/bin/pip install --upgrade #{node['conda']['base_dir']}/pkgs/tensorflow${GPU}-#{node['tensorflow']['version']}-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
 
 
     # If cuda is installed, and there is a GPU, install TF with GPUs
@@ -311,13 +311,13 @@ for python in python_versions
         fi
     fi
 
-    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==<%= node['tensorflow']['version'] %>  --upgrade --force-reinstall
+    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==#{node['tensorflow']['version']}  --upgrade --force-reinstall
     
     yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hops
 
     yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install horovod
 
-    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install <%= node['mml']['url'] %>
+    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install #{node['mml']['url']}
 
  EOF
   end
