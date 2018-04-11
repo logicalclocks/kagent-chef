@@ -37,61 +37,14 @@ if [ "$OP" == "CREATE" ] ; then
        PYTHON_VERSION=${PYTHON_VERSION::-1} # removes the 'X' at the end of the version
        WITH_PYTHON_KERNEL="false"
     fi
-    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda create -n $PROJECT python=$PYTHON_VERSION -y -q $OFFLINE"
-
-    SYMBOLIC_LINK_HADOOP="$(dirname "$HADOOP_DIR")/hadoop"
-
-    if [ -L $SYMBOLIC_LINK_HADOOP ]; then
-       HADOOP_DIR=$SYMBOLIC_LINK_HADOOP
-    fi
-
-    echo "Hadoop dir is $HADOOP_DIR"
-    #export HADOOP_CONF_DIR=${HADOOP_DIR}/hadoop/etc
-    export HADOOP_HOME=$HADOOP_DIR
-
-    parentdir="$(dirname "$dir")"
-
-    export PY=$(echo $PYTHON_VERSION | sed 's/\.//g')
-
-    su $EXEC_AS_USER -c "export HADOOP_HOME=$HADOOP_DIR && yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --pre --upgrade pydoop"
-
+    PY=$(echo $PYTHON_VERSION | sed 's/\.//g')
+    
     if [ "$PY" == "27" ] ; then
-        su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tensorflow-serving-api"
+      su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python27 -y -q $OFFLINE"
+    else
+      su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python36 -y -q $OFFLINE"	
     fi
 
-    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hopsfacets"
-    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tfspark"
-    if [ "$WITH_PYTHON_KERNEL" == "true" ] ; then    
-      su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install ipykernel"
-    fi
-
-    # Install a custom build of tensorflow with this line.
-    #su $EXEC_AS_USER -c "<%= node['conda']['base_dir'] %>/envs/${PROJECT}/bin/pip install --upgrade <%= node['conda']['base_dir'] %>/pkgs/tensorflow${GPU}-<%= node['tensorflow']['version'] %>-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
-    # 'pip install tensorflow' include HDFS support. 'conda install tensorflow-gpu' does not!
-
-    # If cuda is installed, and there is a GPU, install TF with GPUs
-    GPU=
-    if [ -f /usr/local/cuda/version.txt ]  ; then
-        nvidia-smi -L | grep -i gpu
-    	if [ $? -eq 0 ] ; then
-            GPU="-gpu"
-            su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip uninstall tensorflow"
-    	    if [ $? -ne 0 ] ; then
-                echo "Problem uninstalling tensorflow to prepare for gpu version"
-            fi
-        fi
-    fi
-
-#    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==<%= node['tensorflow']['version'] %>  --upgrade --force-reinstall"
-#    su $EXEC_AS_USER -c "<%= node['conda']['base_dir'] %>/envs/${PROJECT}/bin/pip install --force-reinstall --upgrade <%= node['conda']['base_dir'] %>/pkgs/tensorflow${GPU}-<%= node['tensorflow']['version'] %>-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
-    
-    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install tensorflow${GPU}==<%= node['tensorflow']['version'] %>  --upgrade --force-reinstall"
-    
-    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hops"
-
-    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install horovod"
-
-    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install <%= node['mml']['url'] %>"
     
 elif [ "$OP" == "LIST_ENVS" ] ; then
   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env list --json > /tmp/conda_envs.json"    

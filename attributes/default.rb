@@ -7,7 +7,7 @@ default["install"]["addhost"]                      = "false"
 
 
 # Default values for configuration parameters
-default["kagent"]["version"]                       = "0.1.0"
+default["kagent"]["version"]                       = "0.2.0"
 default["kagent"]["user"]                          = node["install"]["user"].empty? ? "kagent" : node["install"]["user"]
 default["kagent"]["group"]                         = node["install"]["user"].empty? ? "kagent" : node["install"]["user"]
 default["kagent"]["certs_group"]                   = "certs"
