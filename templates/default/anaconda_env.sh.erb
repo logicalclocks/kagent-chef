@@ -53,9 +53,9 @@ if [ "$OP" == "CREATE" ] ; then
 
     export PY=$(echo $PYTHON_VERSION | sed 's/\.//g')
 
-    su $EXEC_AS_USER -c "export HADOOP_HOME=$HADOOP_DIR && yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade pydoop"    
-    if [ "$PY" != "36" ] ; then
-        # Tensorflow serving only works with Python2
+    su $EXEC_AS_USER -c "export HADOOP_HOME=$HADOOP_DIR && yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --pre --upgrade pydoop"
+
+    if [ "$PY" == "27" ] ; then
         su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tensorflow-serving-api"
     fi
 
@@ -91,7 +91,7 @@ if [ "$OP" == "CREATE" ] ; then
 
     su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install horovod"
 
-    su $EXEC_AS_USER -c "${CONDA_DIR}/envs/${PROJECT}/bin/pip install <%= node['mml']['url'] %>"
+    su $EXEC_AS_USER -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install <%= node['mml']['url'] %>"
     
 elif [ "$OP" == "LIST_ENVS" ] ; then
   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env list --json > /tmp/conda_envs.json"    
