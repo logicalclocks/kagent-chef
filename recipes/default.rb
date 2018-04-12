@@ -268,9 +268,9 @@ for python in python_versions
     user node['conda']['user']
     code <<-EOF
 
-    CONDA_DIR=#{node["conda"]["base_dir"]}
-    PY=$(echo #{python} | sed 's/\\\.//')
-    PROJECT=python${PY}
+    export CONDA_DIR=#{node['conda']['base_dir']}
+    export PY=$(echo #{python} | sed 's/\\\.//')
+    export PROJECT=python${PY}
 
     ${CONDA_DIR}/bin/conda info --envs | grep "^python${PY}"
     if [ $? -eq 0 ] ; then 
@@ -280,11 +280,10 @@ for python in python_versions
     ${CONDA_DIR}/bin/conda create -n $PROJECT python=#{python} -y -q
 
 
-    HADOOP_DIR="#{node['kagent']['dir']}/hadoop"
+    export HADOOP_HOME=#{node['kagent']['dir']}/hadoop
+    export HADOOP_VERSION=2.7.3
 
-    export HADOOP_HOME=$HADOOP_DIR
-
-    export HADOOP_HOME=$($HADOOP_DIR && yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --pre --upgrade pydoop)
+    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --pre --upgrade pydoop
 
     if [ "$PY" == "27" ] ; then
         yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tensorflow-serving-api
@@ -292,7 +291,7 @@ for python in python_versions
 
     yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hopsfacets
     yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade tfspark
-    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install ipykernel"
+    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade ipykernel
 
     # Install a custom build of tensorflow with this line.
     ##{node['conda']['base_dir']}/envs/${PROJECT}/bin/pip install --upgrade #{node['conda']['base_dir']}/pkgs/tensorflow${GPU}-#{node['tensorflow']['version']}-cp${PY}-cp${PY}mu-manylinux1_x86_64.whl"
@@ -315,9 +314,9 @@ for python in python_versions
     
     yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade hops
 
-    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install horovod
+    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade horovod
 
-    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install #{node['mml']['url']}
+    yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --upgrade #{node['mml']['url']}
 
  EOF
   end
