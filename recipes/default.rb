@@ -269,7 +269,7 @@ for python in python_versions
     code <<-EOF
 
     CONDA_DIR=#{node["conda"]["base_dir"]}
-    PY=$(echo "#{python}" | sed 's/\.//g')
+    PY=$(echo #{python} | sed 's/\\\.//')
     PROJECT=python${PY}
 
     ${CONDA_DIR}/bin/conda info --envs | grep "^python${PY}"
