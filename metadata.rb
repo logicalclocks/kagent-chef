@@ -12,12 +12,10 @@ source_url       "https://github.com/karamelchef/kagent-chef"
   supports os
 end
 
-depends 'poise-python'
 depends 'openssl'
 depends 'sudo'
 depends 'hostsfile'
 depends 'ntp'
-depends 'poise-python'
 depends 'conda'
 depends 'magic_shell'
 

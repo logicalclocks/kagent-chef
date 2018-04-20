@@ -20,9 +20,11 @@ when "debian"
     mode '0644'
   end
 
-#  package "python-openssl" eo
-#  action :install
-#  end
+  package "python2.7" 
+  package "python-pip" 
+  package "python2.7-dev" 
+  package "python2.7-lxml" 
+  package "python-openssl"
 
 when "rhel"
   package "epel-release"
@@ -31,7 +33,7 @@ when "rhel"
   package "gcc"
   package "gcc-c++"
   package "kernel-devel" 
-  package "openssl" 
+  package "openssl"
   package "openssl-devel"
   package "openssl-libs" 
   package "python" 
@@ -51,7 +53,7 @@ end
 
 
 #installs python 2
-include_recipe "poise-python"
+# include_recipe "poise-python"
 # The openssl::upgrade recipe doesn't install openssl-dev/libssl-dev, needed by python-ssl
 # Now using packages in ubuntu/centos.
 #include_recipe "openssl::upgrade"
@@ -99,9 +101,7 @@ elsif platform?("centos","redhat","fedora")
     action :install
   end
 else
-  python_package "MySQL-python" do
-    action :install
-  end
+  Chef::Log.warn "Needs to install python mysql libs - this Linux distribution is not supported. Only debian/ubuntu and rhel/centos supported."
 end
 
 bash "install_python" do
@@ -118,22 +118,6 @@ bash "install_python" do
   pip install --upgrade pexpect
   pip install --upgrade wsgiserver
  EOF
-end
-
-# ubuntu python-mysqldb package install only works if we first run "apt-get update; apt-get upgrade"
-if platform?("ubuntu", "debian") 
-  package "python-mysqldb" do
-   options "--force-yes"
-   action :install
-  end
-elsif platform?("centos","redhat","fedora")
-  package "MySQL-python" do
-    action :install
-  end
-else
-  python_package "MySQL-python" do
-    action :install
-  end
 end
 
 bash "make_gemrc_file" do
