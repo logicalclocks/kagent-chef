@@ -42,6 +42,11 @@ action :generate do
 end
 
 
+
+#
+# Add this code in the cookbook/recipe that is returning its public key - to be added to the
+# authorized_keys of another user
+#
 action :return_publickey do
  homedir = "#{new_resource.homedir}"
  contents = ::IO.read("#{homedir}/.ssh/id_rsa.pub")
@@ -75,6 +80,10 @@ action :return_publickey do
  end
 end
 
+#
+# Add this LWRP in the recipe of a user that wants to add the public_key (id_rsa.pub) of an
+# upstream user to its authorized_keys file
+#
 action :get_publickey do
   homedir = "#{new_resource.homedir}"
   cb = "#{new_resource.cb_name}" 
