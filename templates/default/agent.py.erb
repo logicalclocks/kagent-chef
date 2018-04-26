@@ -131,10 +131,10 @@ try:
         try:
             self.hostname = socket.gethostbyaddr(eth0_ip)[0]
         except socket.herror:
-        try:
-            self.hostname = socket.gethostname()
-        except socket.herror:
-            self.hostname = "localhost"
+            try:
+                self.hostname = socket.gethostname()
+            except socket.herror:
+                self.hostname = "localhost"
 
     if (config.has_option("agent", "host-id")):
         host_id = config.get("agent", "host-id")
