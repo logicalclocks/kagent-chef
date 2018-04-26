@@ -9,7 +9,7 @@ username = <%= node[:kagent][:dashboard][:user] %>
 password = <%= node[:kagent][:dashboard][:password] %>
 
 [agent]
-host-id = <%= node['hostname'] %>
+host-id = <%= @hostname %>
 restport = <%= node[:kagent][:port] %>
 heartbeat-interval = <%= node[:kagent][:heartbeat_interval] %>
 watch-interval = <%= node[:kagent][:watch_interval] %>
@@ -26,3 +26,4 @@ env-report-freq-in-secs = <%= node[:kagent][:env_report_freq_in_secs] %>
 conda = <%= node[:kagent][:conda_enabled] %>
 hadoop-home = <%= @hops_dir %>/hadoop
 <%= @agent_password %>
+
