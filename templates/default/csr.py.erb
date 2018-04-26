@@ -290,9 +290,15 @@ class Config:
                 self.public_ip = self.eth0_ip
             else:
                 self.private_ip = self.eth0_ip
-                
-            self.hostname = socket.gethostbyaddr(self.eth0_ip)[0]
 
+            try:
+                self.hostname = socket.gethostbyaddr(self.eth0_ip)[0]
+            except socket.herror:
+                try:
+                    self.hostname = socket.gethostname()
+                except socket.herror:
+                    self.hostname = "localhost"
+                    
             if (self._config.has_option("agent", "host-id")):
                 self.host_id = self._config.get("agent", "host-id")
             else:
