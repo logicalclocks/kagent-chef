@@ -50,6 +50,10 @@ attribute "kagent/enabled",
           :description => "Kagent enabled: default 'true'. Set to 'false' to disable it.",
           :type => 'string'
 
+attribute "kagent/dns",
+          :description => "Default 'false'. Set to 'true' to use fully qualified domain names for kagent hosts in Hopsworks.",
+          :type => 'string'
+
 attribute "kagent/hostid",
           :description => " One-time password used when registering the host",
           :type => 'string'
