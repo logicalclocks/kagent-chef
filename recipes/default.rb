@@ -164,8 +164,15 @@ if private_ip.eql? "127.0.0.1"
   hostname="localhost"
 end  
 
-if node["kagent"].attribute?("hostname") 
- hostname = node["kagent"]["hostname"]
+if node["kagent"].attribute?("hostname")
+   if node["kagent"]["hostname"].empty? == false
+      hostname = node["kagent"]["hostname"]
+   end
+end
+
+Chef::Log.info "Hostname to register kagent in config.ini is: #{hostname}"
+if hostname.empty?
+  raise "Hostname in kagent/config.ini cannot be empty"
 end
 
 
