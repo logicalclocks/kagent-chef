@@ -154,16 +154,20 @@ template "#{node["kagent"]["base_dir"]}/keystore.sh" do
 end
 
 # Default to hostname found in /etc/hosts, but allow user to override it.
-
+# First with DNS. Highest priority if user supplies the actual hostname
+hostname = node['hostname']  
 if node['kagent']['dns'].eql? "true"
   hostname = node['fqdn']
-else
-  hostname = node['hostname']  
 end
+
+if private_ip.eql? "127.0.0.1"
+  hostname="localhost"
+end  
 
 if node["kagent"].attribute?("hostname") 
  hostname = node["kagent"]["hostname"]
 end
+
 
 hops_dir=node['install']['dir']
 if node.attribute?("hops") && node["hops"].attribute?("dir") 
@@ -176,10 +180,6 @@ end
 
 
 
-theHostname=node['fqdn']
-if private_ip.eql? "127.0.0.1"
-  theHostname="localhost"
-end  
 #
 # use :create_if_missing, as if there is a failure during/after the csr.py program,
 # you will get a failure. csr.py adds a password entry to the [agent] section. 
@@ -194,10 +194,9 @@ template "#{node["kagent"]["base_dir"]}/config.ini" do
   variables({
               :rest_url => "http://#{dashboard_endpoint}/",
               :rack => '/default',
-              :hostname => theHostname,
+              :hostname => hostname,
               :public_ip => public_ip,
               :private_ip => private_ip,
-              :hostname => hostname,
               :network_if => network_if,
               :hops_dir => hops_dir,
               :agent_password => agent_password
