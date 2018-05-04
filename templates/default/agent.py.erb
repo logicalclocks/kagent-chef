@@ -49,7 +49,6 @@ var="~#@#@!#@!#!@#@!#"
 
 config_mutex = Lock()
 conda_mutex = Lock()
-block_report_mutex = Lock()
 
 HTTP_OK = 200
 
@@ -67,10 +66,6 @@ states = {}
 
 global conda_ongoing
 conda_ongoing = defaultdict(lambda: False)
-
-global block_report
-block_report = {}
-
 
 cores = multiprocessing.cpu_count()
 
@@ -111,7 +106,6 @@ try:
     mysql_socket = config.get('agent', 'mysql-socket')          
     network_interface = config.get('agent', 'network-interface')          
     group_name = config.get('agent', 'group-name')          
-    env_report_freq_in_secs = config.getint('agent', 'env-report-freq-in-secs')
     conda_enabled = server_url + config.get('agent', 'conda')
     hadoop_home = config.get('agent', 'hadoop-home')
     group_name = config.get('agent', 'group-name')
@@ -277,7 +271,6 @@ class Heartbeat():
     def send(self):
         global logged_in
         global session
-        global block_report
         if not logged_in:
            logger.info('Logging in to Hopsworks....')
            Heartbeat.login()
@@ -338,12 +331,6 @@ class Heartbeat():
 
                 logger.debug("Commands reply payload: {0}".format(json.dumps(payload["commands-reply"], indent=2)))
 
-                block_report_mutex.acquire()
-                if bool(block_report):
-                    logger.info("Sending a block report...")
-                    payload["block-report"] = block_report
-                block_report_mutex.release()
-                
                 if (public_ip != None):
                     payload["public-ip"] = public_ip                      
                 else:
@@ -360,9 +347,6 @@ class Heartbeat():
                 logger.info("Sending heartbeat...")
                 resp = session.post(heartbeat_url, data=json.dumps(payload), headers=headers, verify=False)
                 logger.info("Received heartbeat response")
-                block_report_mutex.acquire()
-                block_report = {}
-                block_report_mutex.release()
                 if not resp.status_code == HTTP_OK:
                     # Put back deleted statuses if command ID does not exist in order to be re-send
                     self._conda_commands_status_mutex.acquire()
@@ -411,10 +395,6 @@ class Heartbeat():
             except Exception as err:
                 logger.error("{0}. Retrying in {1} seconds...".format(err, heartbeat_interval))
                 logged_in = False
-                block_report_mutex.acquire()
-                block_report = {}
-                block_report_mutex.release()
-
 
 class CondaCommandsHandler:
     def __init__(self, conda_commands_status, conda_commands_status_mutex):
@@ -440,12 +420,6 @@ class CondaCommandsHandler:
                 arg = command['arg']
             if op == "REMOVE" or op == "CLONE" or op == "CREATE":
                 self._envOp(command, arg, offline)
-            elif op == "LIB_SYNC":
-                arg = command['lib']
-                # open with 'w+' to overwrite the file if it exists
-                with io.open('/tmp/' + proj + '_server.json', 'w+', encoding='utf-8') as outfile:
-                    json.dumps(arg, outfile, ensure_ascii=False)                    
-                self._envOp(command, arg, "")                    
             elif op == "INSTALL" or op == "UNINSTALL" or op == "UPGRADE":  # Conda package  commands (install, uninstall, upgrade)
                 self._libOp(command)
             else:
@@ -1003,47 +977,13 @@ class SSLCherryPy(ServerAdapter):
             server.stop()
 
 
-class Conda():
-    def blockReport(self):
-        global block_report
-        script = BIN_DIR + "/anaconda_env.sh"
-        try:
-            msg = subprocess.check_output(['sudo', script, "<%= node['conda']['user'] %>", "LIST_ENVS", "", ""])
-        except Exception as err:
-            res=1
-            logger.warn("Could not list conda environments to do a block report. Err: ".format(err))
-            return
-        with open('/tmp/conda_envs.json') as envs_file:    
-            envsDict = json.load(envs_file)
-        envs = envsDict['envs']
-        report = {}
-        for i, val in enumerate(envs):
-            val = os.path.basename(val)
-            msg = subprocess.check_output(['sudo', script, 'glassfish', "LIST", val, ""])
-            with open('/tmp/' + val + '__conda_list.json') as libs_file:    
-                arrayLibs = json.load(libs_file)
-                report[val]=arrayLibs
-        logger.info(json.dumps(report, indent=2))
-
-        # The above code building up a block report could take a long time to execute, meaning
-        # that partially written block-reports get sent up. We want to make them available for heartbeats
-        # only at the very end of building up the state needed.
-
-        block_report_mutex.acquire()
-        block_report = report
-        block_report_mutex.release()
-
-                            
 if __name__ == '__main__':
     
     if len(sys.argv) > 1:
         if (sys.argv[1] == "-v" or sys.argv[1] == "-verbose" or sys.argv[1] == "--verbose"):
             verbose=True
-        elif (sys.argv[1] == "-sync"):
-            Conda().blockReport()
         else:
-            print "usage: <prog> [-v|-verbose|-sync]"
-            print "-sync will try to sync up anaconda libraries with those already installed for all projects"
+            print "usage: <prog> [-v|-verbose]"
             sys.exit()
 
     agent_pid = str(os.getpid())
@@ -1081,16 +1021,6 @@ if __name__ == '__main__':
             my_thread.start()
         else:
             logger.info("Not watching {0}/{1}".format(cluster, group))        
-
-
-# send conda environment reports every env_report_freq_in_secs seconds
-    if conda_enabled == "true":
-        @setInterval(env_report_freq_in_secs)
-        def startBlockReporting():
-           Conda().blockReport()
-
-        stop = startBlockReporting() # start timer
-
 
 
 # The REST code uses a CherryPy webserver, but Bottle for the REST endpoints

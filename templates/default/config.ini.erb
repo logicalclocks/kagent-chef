@@ -22,8 +22,6 @@ mysql-socket = <%= node[:ndb][:mysql_socket] %>
 hostname = <%= @hostname %>
 network-interface = <%= @network_if %>
 group-name = <%= node[:kagent][:group_name] %>
-env-report-freq-in-secs = <%= node[:kagent][:env_report_freq_in_secs] %>
-conda = <%= node[:kagent][:conda_enabled] %>
 hadoop-home = <%= @hops_dir %>/hadoop
 <%= @agent_password %>
 

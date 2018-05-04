@@ -86,10 +86,6 @@ attribute "kagent/dashboard/password",
           :description => "kagent password to register with server",
           :type => "string"
 
-attribute "kagent/env_report_freq_in_secs",
-          :description => "How often the kagent sends a full report of its conda environments for synchronization",
-          :type => "string"
-
 attribute "ndb/mysql_port",
           :description => "Port for the mysql server",
           :type => "string"
