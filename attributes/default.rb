@@ -44,7 +44,7 @@ default["kagent"]["certificate_file"]              = "server.pem"
 
 # dashboard ip:port endpoint
 default["kagent"]["dashboard"]["ip"]               = "10.0.2.15"
-default["kagent"]["dashboard"]["port"]             = "8080"  
+default["kagent"]["dashboard"]["port"]             = "8080"
 default["kagent"]["dashboard_app"]                 = "hopsworks-api"
 default["kagent"]["ca_app"]                        = "hopsworks-ca"
 
@@ -74,7 +74,7 @@ default["kagent"]["hostid"]                        = 100
 default["kagent"]["hostname"]                      =
 
 default["kagent"]["password"]                      = ""
-  
+
 default["kagent"]["keystore_dir"] 		   = node["kagent"]["certs_dir"] + "/keystores"
 
 default["kagent"]["dns"]                           = "false"

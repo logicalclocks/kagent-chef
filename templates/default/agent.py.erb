@@ -7,7 +7,7 @@ Install:
  Cherrypy:    easy_install cherrypy
  Netifaces:   easy_install netifaces
  IPy:         easy_install ipy
- pyOpenSSL:   apt-get install python-openssl 
+ pyOpenSSL:   apt-get install python-openssl
  MySQLdb:     apt-get install python-mysqldb
  pexpect:     apt-get install python-pexpect
 '''
@@ -28,7 +28,7 @@ import sys
 import ConfigParser
 import requests
 import logging.handlers
-import json 
+import json
 from OpenSSL import crypto
 import socket
 from os.path import exists, join
@@ -36,7 +36,7 @@ import MySQLdb
 from bottle import Bottle, run, get, post, request, HTTPResponse, server_names, ServerAdapter, response
 from cheroot import wsgi
 from cheroot.ssl.builtin import BuiltinSSLAdapter
-import netifaces 
+import netifaces
 from IPy import IP
 import pexpect
 import re
@@ -76,7 +76,7 @@ def count_num_gpus():
         returncode = p.wait()
         if not returncode == 0:
             return 0
-        process = subprocess.Popen("nvidia-smi -L", shell=True, stdout=subprocess.PIPE)        
+        process = subprocess.Popen("nvidia-smi -L", shell=True, stdout=subprocess.PIPE)
         stdout_list = process.communicate()[0].split('\n')
         return len(stdout_list)-1
     except Exception as err:
@@ -92,31 +92,31 @@ try:
     heartbeat_url = server_url + config.get('server', 'path-heartbeat')
     alert_url = server_url + config.get('server', 'path-alert')
 
-        
+
     server_username = config.get('server', 'username')
     server_password = config.get('server', 'password')
 
     logging_level = config.get('agent', 'logging-level').upper()
-    max_log_size = config.getint('agent', 'max-log-size')    
-    password = config.get('agent', 'password')          
+    max_log_size = config.getint('agent', 'max-log-size')
+    password = config.get('agent', 'password')
     agent_pidfile = config.get('agent', 'pid-file')
     agent_restport = config.getint('agent', 'restport')
     heartbeat_interval = config.getfloat('agent', 'heartbeat-interval')
     watch_interval = config.getfloat('agent', 'watch-interval')
-    mysql_socket = config.get('agent', 'mysql-socket')          
-    network_interface = config.get('agent', 'network-interface')          
-    group_name = config.get('agent', 'group-name')          
+    mysql_socket = config.get('agent', 'mysql-socket')
+    network_interface = config.get('agent', 'network-interface')
+    group_name = config.get('agent', 'group-name')
     hadoop_home = config.get('agent', 'hadoop-home')
 
-# TODO find public/private IP addresses 
+# TODO find public/private IP addresses
     public_ip = None
-    private_ip = None 
-    eth0_ip = netifaces.ifaddresses(network_interface)[netifaces.AF_INET][0]['addr'] 
+    private_ip = None
+    eth0_ip = netifaces.ifaddresses(network_interface)[netifaces.AF_INET][0]['addr']
     if (IP(eth0_ip).iptype() == "PUBLIC"):
         public_ip = eth0_ip
     else:
         private_ip = eth0_ip
-    
+
     if (config.has_option("agent", "hostname")):
         hostname = config.get("agent", "hostname")
     else:
@@ -133,7 +133,7 @@ try:
     else:
         host_id = hostname
 
-    
+
 except Exception, e:
     print "Exception while reading {0}: {1}".format(CONFIG_FILE, e)
     sys.exit(1)
@@ -142,7 +142,7 @@ except Exception, e:
 try:
     os.remove(LOG_FILE + '.1')
 except:
-    pass    
+    pass
 with open(LOG_FILE, 'w'):  # clear log file
     pass
 logger = logging.getLogger('agent')
@@ -171,13 +171,13 @@ try:
     services.read(SERVICES_FILE)
 
     for s in services.sections():
-        if services.has_option(s, "service") :        
+        if services.has_option(s, "service") :
             states[services.get(s, "service")] = {'status':'Stopped', 'start-time':''}
 
 except Exception, e:
     print "Error in the services file. Check its formatting: {0}: {1}".format(SERVICE_FILE, e)
     logger.error("Exception while reading {0} file: {1}".format(SERVICES_FILE, e))
-    sys.exit(1)     
+    sys.exit(1)
 
 
 logged_in = False
@@ -201,7 +201,7 @@ def setInterval(interval):
 
 
 class Util():
-    
+
     def logging_level(self, level):
         return {
                 'INFO': logging.INFO,
@@ -216,14 +216,14 @@ class Util():
     def tail(file_name, n):
         stdin, stdout = os.popen2("tail -n {0} {1}".format(n, file_name))
         stdin.close()
-        lines = stdout.readlines(); 
+        lines = stdout.readlines();
         stdout.close()
         log = "".join(str(x) for x in lines)
         return log
 
 
 class Heartbeat():
-    daemon_threads = True 
+    daemon_threads = True
     def __init__(self, commands_queue, system_commands_status, system_commands_status_mutex,
                  conda_commands_status, conda_commands_status_mutex):
         self._commands_queue = commands_queue
@@ -231,10 +231,10 @@ class Heartbeat():
         self._system_commands_status_mutex = system_commands_status_mutex
         self._conda_commands_status = conda_commands_status
         self._conda_commands_status_mutex = conda_commands_status_mutex
-        
-        while True:    
+
+        while True:
             self.send()
-            time.sleep(heartbeat_interval) 
+            time.sleep(heartbeat_interval)
 
 
     @staticmethod
@@ -277,27 +277,27 @@ class Heartbeat():
             conda_status_to_delete = []
             try:
                 logger.debug("Creating heartbeat reply...")
-                disk_info = DiskInfo() 
+                disk_info = DiskInfo()
                 memory_info = MemoryInfo()
                 load_info = LoadInfo()
                 services_list = Config().read_all_for_heartbeat()
-                now = long(time.mktime(datetime.now().timetuple()))                
+                now = long(time.mktime(datetime.now().timetuple()))
                 headers = {'content-type': 'application/json'}
                 payload = {}
                 payload["num-gpus"] = count_num_gpus()
-                payload["host-id"] = host_id            
+                payload["host-id"] = host_id
                 payload["agent-time"] = now
                 payload["load1"] = load_info.load1
                 payload["load5"] = load_info.load5
                 payload["load15"] = load_info.load15
                 payload["disk-used"] = disk_info.used
                 payload['memory-used'] = memory_info.used
-                payload["services"] = services_list            
+                payload["services"] = services_list
                 payload["group-name"] = group_name
                 payload["hostname"] = hostname
-                    
+
                 commands_status = {}
-                
+
                 self._system_commands_status_mutex.acquire()
                 system_commands_response = []
                 # Append command status to response
@@ -321,27 +321,27 @@ class Heartbeat():
                 # Remove status from local statuses state
                 for command_to_delete in conda_status_to_delete:
                     del self._conda_commands_status[command_to_delete['id']]
-                    
+
                 self._conda_commands_status_mutex.release()
                 commands_status["condaCommands"] = conda_commands_response
-                
+
                 payload["commands-reply"] = commands_status
 
                 logger.debug("Commands reply payload: {0}".format(json.dumps(payload["commands-reply"], indent=2)))
 
                 if (public_ip != None):
-                    payload["public-ip"] = public_ip                      
+                    payload["public-ip"] = public_ip
                 else:
                     payload["public-ip"] = ""
 
                 if (private_ip != None):
-                    payload["private-ip"] = private_ip 
+                    payload["private-ip"] = private_ip
                 else:
                     payload["private-ip"] = ""
 
                 payload["cores"] = cores
-                payload["disk-capacity"] = disk_info.capacity    
-                payload['memory-capacity'] = memory_info.total                            
+                payload["disk-capacity"] = disk_info.capacity
+                payload['memory-capacity'] = memory_info.total
                 logger.info("Sending heartbeat...")
                 resp = session.post(heartbeat_url, data=json.dumps(payload), headers=headers, verify=False)
                 logger.info("Received heartbeat response")
@@ -358,7 +358,7 @@ class Heartbeat():
                         if restore_command['id'] not in self._system_commands_status:
                             self._system_commands_status[restore_command['id']] = restore_command
                     self._system_commands_status_mutex.release()
-                    
+
                     logged_in = False
                     raise Exception('Heartbeat could not be sent (Status code: {0})'.format(resp.status_code))
                 else:
@@ -374,7 +374,7 @@ class Heartbeat():
                             self._system_commands_status_mutex.acquire()
                             self._system_commands_status[command['id']] = command
                             self._system_commands_status_mutex.release()
-                        
+
                         conda_commands = theResponse['condaCommands']
                         for command in conda_commands:
                             c = Command('CONDA_COMMAND', command)
@@ -388,8 +388,8 @@ class Heartbeat():
                         logger.info("No commands to execute")
                         for data in theResponse['condaCommands']:
                             proj = data['proj']
-                            conda_ongoing[proj] = False                            
-                        
+                            conda_ongoing[proj] = False
+
             except Exception as err:
                 logger.error("{0}. Retrying in {1} seconds...".format(err, heartbeat_interval))
                 logged_in = False
@@ -398,7 +398,7 @@ class CondaCommandsHandler:
     def __init__(self, conda_commands_status, conda_commands_status_mutex):
         self._conda_commands_status = conda_commands_status
         self._conda_commands_status_mutex = conda_commands_status_mutex
-        
+
     def handle(self, command):
         global conda_ongoing
         if (command is None):
@@ -483,19 +483,19 @@ class CondaCommandsHandler:
             logger.info("Exception in libOp. Ret code: {0}".format(e.returncode))
             command['status'] = 'FAILED'
         finally:
-            conda_ongoing[proj] = False                
+            conda_ongoing[proj] = False
             if command_id != -1:
                 self._conda_commands_status_mutex.acquire()
                 logger.debug("Adding status {0} for command ID {1} - {2}".format(command['status'], command_id, command))
                 self._conda_commands_status[command_id] = command
                 self._conda_commands_status_mutex.release()
-                    
-        
+
+
 class SystemCommandsHandler:
     def __init__(self, system_commands_status, system_commands_status_mutex):
         self._system_commands_status = system_commands_status
         self._system_commands_status_mutex = system_commands_status_mutex
-        
+
     def handle(self, command):
         if command is None:
             return
@@ -562,9 +562,9 @@ class Handler(threading.Thread):
             elif (command_type == 'SYSTEM_COMMAND'):
                 logger.info("System command")
                 self._systemCommandsHandler.handle(command)
-                
+
 class Alert:
-    @staticmethod    
+    @staticmethod
     def send(cluster, group, service, time, status):
         global session
         if not logged_in:
@@ -574,7 +574,7 @@ class Alert:
             try:
                 headers = {'content-type': 'application/json'}
                 payload = {}
-                payload["Provider"] = "Agent"            
+                payload["Provider"] = "Agent"
                 payload["host-id"] = host_id
                 payload["Time"] = time
                 payload["Plugin"] = "Monitoring"
@@ -588,17 +588,17 @@ class Alert:
                 else:
                     payload["Severity"] = "FAILURE"
                     payload["Message"] = "Service is not running: {0}/{1}/{2}".format(cluster, group, service)
-                    
+
                 logger.info("Sending Alert...")
                 #auth = (server_username, server_password)
                 #            session = requests.Session()
-                #            session.post(alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)        
+                #            session.post(alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)
                 #requests.post(alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)
                 session.post(alert_url, data=json.dumps(payload), headers=headers, verify=False)
             except:
                 logger.error("Cannot access the REST service for alerts. Alert not sent.")
 
-            
+
 class MemoryInfo(object):
     def __init__(self):
         process = subprocess.Popen("free", shell=True, stdout=subprocess.PIPE)
@@ -629,13 +629,13 @@ class LoadInfo(object):
         self.load1 = os.getloadavg()[0]
         self.load5 = os.getloadavg()[1]
         self.load15 = os.getloadavg()[2]
-        
+
 
 class ExtProcess():  # external process
-        
-    @staticmethod        
+
+    @staticmethod
     def watch(cluster, group, service):
-        global states        
+        global states
         while True:
             try:
                 section = Config().section_name(cluster, group, service)
@@ -645,38 +645,38 @@ class ExtProcess():  # external process
                        Service().started(cluster, group, service)
                 else:
                     raise Exception("Process is not running for {0}/{1}/{2}".format(cluster, group, service))
-            except:  
+            except:
                 logger.info("Proccess.watch: Process is not running: {0}/{1}/{2}".format(cluster, group, service))
                 if (states[service]['status'] == 'Started'):
                     logger.info("Process failed: {0}/{1}/{2}".format(cluster, group, service))
                     Service().failed(cluster, group, service)
             sleep(watch_interval)
 
-class Config(): 
+class Config():
 
     def section_name(self, cluster, group, service=None):
         if service == None:
             return "{0}-{1}".format(cluster, group)
         else:
-            return "{0}-{1}-{2}".format(cluster, group, service)   
-        
+            return "{0}-{1}-{2}".format(cluster, group, service)
+
     # select items so that the key does not contain 'file' or 'script'
     def read_all_for_heartbeat(self):
-        config_mutex.acquire()       
-        services_list = []     
+        config_mutex.acquire()
+        services_list = []
         try:
             for s in services.sections():
                    item = {}
                    item['status'] = Heartbeat.serviceKey(services.get(s, "service"), 'status')
-                   services_list.append(item)   
+                   services_list.append(item)
                    for key, val in services.items(s):
                        if (not 'file' in key) and (not 'script' in key) and (not 'command' in key):
                            item[key] = val
-                       services_list.append(item)                
+                       services_list.append(item)
         finally:
             config_mutex.release()
         return services_list
-        
+
     def get_section(self, section):
         config_mutex.acquire()
         items = {}
@@ -686,18 +686,18 @@ class Config():
         finally:
             config_mutex.release()
         return items
-    
+
     def get(self, section, option):
         config_mutex.acquire()
         val = ""
-        try:         
+        try:
             val = services.get(section, option)
         finally:
             config_mutex.release()
-        return val                
+        return val
 
 class Service:
-    
+
     # need to be completed. Set the status to Initialize?
     def init(self, cluster, group, service):
         section = Config().section_name(cluster, group, service)
@@ -713,7 +713,7 @@ class Service:
             logger.error(err)
             return False
 
-            
+
     def start(self, cluster, group, service):
         script = BIN_DIR + "/start-service.sh"
         try:
@@ -730,10 +730,10 @@ class Service:
         except Exception as err:
             logger.error(err)
             return False
-        
+
     def stop(self, cluster, group, service):
         script = BIN_DIR + "/stop-service.sh"
-        global states        
+        global states
         try:
             subprocess.check_call(['sudo', script, service], close_fds=True)  # raises exception if not returncode == 0
             now = long(time.mktime(datetime.now().timetuple()))
@@ -779,13 +779,13 @@ class Service:
         return True
 
     def failed(self, cluster, group, service):
-        global states        
+        global states
         now = long(time.mktime(datetime.now().timetuple()))
         states[service] = {'status':'Stopped', 'start-time':now}
         Alert.send(cluster, group, service, now, False)
 
     def started(self, cluster, group, service):
-        global states        
+        global states
         now = long(time.mktime(datetime.now().timetuple()))
         states[service] = {'status':'Started', 'start-time':now}
         Alert.send(cluster, group, service, now, True)
@@ -796,26 +796,26 @@ class MySQLConnector():
     def read(database, table):
         try:
             db = MySQLdb.connect(unix_socket=mysql_socket, db=database)
-            cur = db.cursor()            
+            cur = db.cursor()
             query = "SELECT * FROM {0}".format(table)
-            cur.execute(query)    
+            cur.execute(query)
             return json.dumps(cur.fetchall())
         except Exception as err:
             logger.error("Could not access {0} table from {1}: {2}".format(table, database, err))
-            return json.dumps(["Error", "Error: Could not access {0} table from {1}.".format(table, database)])     
-            
+            return json.dumps(["Error", "Error: Could not access {0} table from {1}.".format(table, database)])
+
     @staticmethod
     def read_ndbinfo(table):
         return MySQLConnector.read("ndbinfo", table)
-    
-    
+
+
 class CommandHandler():
 
     def response(self, code, msg):
         resp = HTTPResponse(status=code, output=msg)
         logger.info("{0}".format(resp))
         return resp
-         
+
     def init(self, cluster, group, service):
         section = Config().section_name(cluster, group, service)
         if not services.has_section(section):
@@ -825,7 +825,7 @@ class CommandHandler():
                 return CommandHandler().response(200, 'Service initialized.')
             else:
                 return CommandHandler().response(400, 'Error: Cannot initialize the service.')
-    
+
     def start(self, cluster, group, service):
         global states
         section = Config().section_name(cluster, group, service)
@@ -870,11 +870,11 @@ class CommandHandler():
             if service == None:
                 section = Config().section_name(cluster, group)
             else:
-                section = Config().section_name(cluster, group, service)                
+                section = Config().section_name(cluster, group, service)
             log_file_name = Config().get(section, "stdout-file")
             log = Util().tail(log_file_name, lines)
             return CommandHandler().response(200, log)
-        
+
         except Exception as err:
             logger.error(err)
             return CommandHandler().response(400, "Cannot read file.")
@@ -883,7 +883,7 @@ class CommandHandler():
         try:
             log = Util().tail(LOG_FILE, lines)
             return CommandHandler().response(200, log)
-        
+
         except Exception as err:
             logger.error(err)
             return CommandHandler().response(400, "Cannot read file.")
@@ -895,7 +895,7 @@ class CommandHandler():
             with open(config_file_name) as config_file:
                 conf = "".join(str(x) for x in (list(config_file)))
             return CommandHandler().response(200, conf)
-        
+
         except Exception as err:
             logger.error(err)
             return CommandHandler().response(400, "Cannot read file.")
@@ -905,7 +905,7 @@ class CommandHandler():
             section = Config().section_name(cluster, group, service)
             resp = json.dumps(Config().get_section(section))
             return CommandHandler().response(200, resp)
-        
+
         except Exception as err:
             logger.error(err)
             return CommandHandler().response(400, "Cannot read file.")
@@ -913,12 +913,12 @@ class CommandHandler():
     def read_ndbinfo(self, table):
         res = MySQLConnector.read_ndbinfo(table)
         return CommandHandler().response(200, res)
-                
+
     def execute(self, cluster, group, service, command, params):
         try:
             if service == None:
                 section = Config().section_name(cluster, group)
-            else:    
+            else:
                 section = Config().section_name(cluster, group, service)
             script = Config().get(section, "command-script")
             logger.info("Script name executing is: {0}".format(script))
@@ -935,11 +935,11 @@ class CommandHandler():
 # TODO: shell=True is insecure when using untrusted input
 # as an attacker can input "hdfs dfs -ls / ; rm -rf /"
             p = Popen(command , shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            out, err = p.communicate()        
+            out, err = p.communicate()
             return CommandHandler().response(200, out)
         except Exception as err:
             logger.error(err)
-            return CommandHandler().response(400, "Could not execute.")                
+            return CommandHandler().response(400, "Could not execute.")
 
 
     def refresh(self):
@@ -951,7 +951,7 @@ class Authentication():
     def check(self):
         result = False
         try:
-            inPassword = request.params['password']  
+            inPassword = request.params['password']
             if (inPassword == password):
                 return True
         except Exception:
@@ -960,23 +960,23 @@ class Authentication():
         if result == False:
             logger.info("Authentication failed: Invalid password: {0}".format(password))
         return result
-    
+
     def failed(self):
         return HTTPResponse(status=400, output="Invalid password")
 
 
-class SSLCherryPy(ServerAdapter):  
-    def run(self, handler):  
+class SSLCherryPy(ServerAdapter):
+    def run(self, handler):
         server = wsgi.Server((self.host, self.port), handler)
         server.ssl_adapter = BuiltinSSLAdapter(CERT_FILE, KEY_FILE)
-        try:  
-            server.start()  
-        finally:  
+        try:
+            server.start()
+        finally:
             server.stop()
 
 
 if __name__ == '__main__':
-    
+
     if len(sys.argv) > 1:
         if (sys.argv[1] == "-v" or sys.argv[1] == "-verbose" or sys.argv[1] == "--verbose"):
             verbose=True
@@ -991,7 +991,7 @@ if __name__ == '__main__':
 
     # Heartbeat, process watch (alerts) and REST API are available after the agent registers successfully
     commands_queue = Queue.Queue(maxsize=100)
-    
+
     system_commands_status = {}
     system_commands_status_mutex = Lock()
     system_commands_handler = SystemCommandsHandler(system_commands_status, system_commands_status_mutex)
@@ -999,11 +999,11 @@ if __name__ == '__main__':
     conda_commands_status = {}
     conda_commands_status_mutex = Lock()
     conda_commands_handler = CondaCommandsHandler(conda_commands_status, conda_commands_status_mutex)
-    
+
     commands_handler = Handler(commands_queue, system_commands_handler, conda_commands_handler)
     commands_handler.setDaemon(True)
     commands_handler.start()
-    
+
     hb_thread = threading.Thread(target=Heartbeat, args=(commands_queue, system_commands_status, system_commands_status_mutex,
                                                          conda_commands_status, conda_commands_status_mutex))
     hb_thread.setDaemon(True)
@@ -1011,27 +1011,26 @@ if __name__ == '__main__':
 
     for s in services.sections():
         cluster = Config().get(s, "cluster")
-        group = Config().get(s, "group")       
+        group = Config().get(s, "group")
         if services.has_option(s, "service"):
-            service = Config().get(s, "service")             
+            service = Config().get(s, "service")
             my_thread = threading.Thread(target=ExtProcess.watch, args=(cluster, group, service))
             my_thread.setDaemon(True)
             my_thread.start()
         else:
             logger.info("Not watching {0}/{1}".format(cluster, group))        
 
-
 # The REST code uses a CherryPy webserver, but Bottle for the REST endpoints
 # WSGI server for SSL
 # For a a tutorial on the REST code below, see http://bottlepy.org/docs/dev/tutorial.html
 
-    server_names['sslcherrypy'] = SSLCherryPy  
+    server_names['sslcherrypy'] = SSLCherryPy
     app = Bottle()
     @get('/ping')
     def ping():
-        logger.info('Incoming REST Request:  GET /ping')       
+        logger.info('Incoming REST Request:  GET /ping')
         return "Hops-Agent: Pong"
-        
+
     @get('/do/<cluster>/<group>/<service>/<command>')
     def do(cluster, group, service, command):
         logger.info('Incoming REST Request:  GET /do/{0}/{1}/{2}/{3}'.format(cluster, group, service, command))
@@ -1041,7 +1040,7 @@ if __name__ == '__main__':
         logger.info("Section is {0}".format(section))
         if not services.has_section(section):
             logger.error("Couldn't find command {0} in {1}/{2} in section {3}".format(command, group, service, section))
-            return HTTPResponse(status=400, output='Invalid command.')            
+            return HTTPResponse(status=400, output='Invalid command.')
 
         groupInServicesFile = Config().get(section, "group")
         serviceInServicesFile = Config().get(section, "service")
@@ -1049,23 +1048,23 @@ if __name__ == '__main__':
 
         if (not service == groupInServicesFile) or (not service == serviceInServicesFile) or (not commandInServicesFile):
             logger.error("Couldn't find command {0} in {1}/{2}".format(command, group, service))
-            return HTTPResponse(status=400, output='Invalid command.')            
-        
+            return HTTPResponse(status=400, output='Invalid command.')
+
         if command == "start":
             return CommandHandler().start(cluster, group, service);
         elif command == "stop":
-            return CommandHandler().stop(cluster, group, service);                
+            return CommandHandler().stop(cluster, group, service);
         elif command == "init":
-            return CommandHandler().init(cluster, group, service); 
+            return CommandHandler().init(cluster, group, service);
         else:
-            return HTTPResponse(status=400, output='Invalid command.')        
+            return HTTPResponse(status=400, output='Invalid command.')
 
     @get('/restartService/<cluster>/<group>/<service>')
     def restartService(cluster, group, service):
         logger.info('Incoming REST Request:  GET /restartService/{0}/{1}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
-        
+
         if not services.has_section(Config().section_name(cluster, group, service)):
             return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
 
@@ -1076,7 +1075,7 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /startService/{0}/{1}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
-        
+
         if not services.has_section(Config().section_name(cluster, group, service)):
             return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
 
@@ -1087,7 +1086,7 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /stopService/{0}/{1}/{2}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
-        
+
         if not services.has_section(Config().section_name(cluster, group, service)):
             return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
 
@@ -1098,7 +1097,7 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /log/{0}/{1}/{2}'.format(cluster, group, service, lines))
         if not Authentication().check():
             return Authentication().failed()
-        
+
         if not services.has_section(Config().section_name(cluster, group, service)):
             return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
 
@@ -1110,7 +1109,7 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /log/{0}/{1}'.format(cluster, group))
         if not Authentication().check():
             return Authentication().failed()
-        
+
         if not services.has_section(Config().section_name(cluster, group)):
             return HTTPResponse(status=400, output='Cluster/Group not available.')
 
@@ -1122,7 +1121,7 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /agentlog/{0}'.format(lines))
         if not Authentication().check():
             return Authentication().failed()
-                                    
+
         return CommandHandler().read_agent_log(lines);
 
     @get('/config/<cluster>/<group>/<service>')
@@ -1130,10 +1129,10 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /log/{0}/{1}/{2}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
-        
+
         if not services.has_section(Config().section_name(cluster, group, service)):
             return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
-            
+
         return CommandHandler().read_config(cluster, group, service);
 
     @get('/info/<cluster>/<group>/<service>')
@@ -1141,10 +1140,10 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /status/{0}/{1}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
-        
+
         if not services.has_section(Config().section_name(cluster, group, service)):
             return HTTPResponse(status=400, output='Cluster/Group/Service not available.')
-            
+
         return CommandHandler().info(cluster, group, service);
 
     @get('/refresh')  # request heartbeat
@@ -1152,7 +1151,7 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /refresh')
         if not Authentication().check():
             return Authentication().failed()
-             
+
         return CommandHandler().refresh();
 
     @get('/mysql/ndbinfo/<table>')
@@ -1160,27 +1159,27 @@ if __name__ == '__main__':
         logger.info('Incoming REST Request:  GET /mysql/ndbinfo/{0}'.format(table))
         if not Authentication().check():
             return Authentication().failed()
-            
+
         return CommandHandler().read_ndbinfo(table)
-    
+
     @post('/execute/<state>/<cluster>/<group>/<service>/<command>')
     def execute_hdfs(state, cluster, group, service, command):
         logger.info('Incoming REST Request:  POST /execute/{0}/{1}/{2}/{3}/{4}'.format(state, cluster, group, service, command))
         if not Authentication().check():
-            return Authentication().failed()            
+            return Authentication().failed()
         if request.body.readlines():
             params =  request.body.readlines()[0]
         else:
-            params = ""                        
+            params = ""
         if state == "run" :
             if service == "-":
                 return CommandHandler().execute(cluster, group, None, command, params);
-            else:       
+            else:
                 return CommandHandler().execute(cluster, group, service, command, params);
-        return CommandHandler().response(404, "Error")  
+        return CommandHandler().response(404, "Error")
 
 
-    
+
     @get('/conda/<user>/<command_id>/<op>/<proj>/<lib>')
     def conda(user,command_id,op,proj,lib):
         logger.info('Incoming REST Request:  GET /conda/{0}/{1}/{2}'.format(op, proj, lib))
@@ -1192,14 +1191,14 @@ if __name__ == '__main__':
             msg = Conda().conda(user,command_id, op, proj, channelurl, lib, version)
             resp = HTTPResponse(status=HTTP_OK, output=msg)
             logger.info("{0}".format(resp))
-            return resp            
+            return resp
         except Exception as err:
-            logger.error("{0}".format(err))            
-            return CommandHandler().response(400, "Error")  
+            logger.error("{0}".format(err))
+            return CommandHandler().response(400, "Error")
 
     # Normal client sets 'channel' to 'defaults' for http://conda.anaconda.org/ or 'system' to get system packages
     # curl -k -X GET https://10.0.2.15:8090/create/project?password=blah
-    # curl -k -X GET https://10.0.2.15:8090/clone/projectSrc/projectDest?password=blah    
+    # curl -k -X GET https://10.0.2.15:8090/clone/projectSrc/projectDest?password=blah
     @get('/anaconda/<user>/<command_id>/<op>/<proj>/<arg>')
     def anaconda(user, command_id, op, proj, arg):
         logger.info('Incoming REST Request:  GET /anaconda/{0}/{1}/{2}'.format(user, op, proj))
@@ -1213,10 +1212,10 @@ if __name__ == '__main__':
             msg = Conda()._envOp(user, command_id, op, proj, arg, "")
             resp = HTTPResponse(status=HTTP_OK, output=msg)
             logger.info("{0}".format(resp))
-            return resp            
+            return resp
         except Exception as err:
-            logger.error("{0}".format(err))            
-            return CommandHandler().response(400, "Error")  
+            logger.error("{0}".format(err))
+            return CommandHandler().response(400, "Error")
 
     logger.info("RESTful service started.")
     run(host='0.0.0.0', port=agent_restport, server='sslcherrypy')
