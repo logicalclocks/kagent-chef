@@ -13,6 +13,7 @@ PROJECT=$3
 PYTHON_VERSION=$4
 OFFLINE=$5
 HADOOP_DIR=$6
+YML=$7
 
 CLONE=
 CONDA_DIR=<%= node["conda"]["base_dir"] %>
@@ -20,6 +21,11 @@ WITH_PYTHON_KERNEL=<%= @jupyter_python %>
 
 if [ "$OP" == "CLONE" ] ; then
    CLONE="--clone $4"
+fi
+
+if [ "$OP" == "YML" ] ; then
+
+   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env create -f environment.yml"
 fi
 
 function exists() {
