@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -lt 6  ]; then
+if [ $# -lt 7  ]; then
     echo "<user> <op> <proj> <arg> <offline> <hadoop_home>"
     echo "incorrect usage."
     echo "<arg> is the python version for 'create' and the source env for 'clone'."
@@ -24,8 +24,15 @@ if [ "$OP" == "CLONE" ] ; then
 fi
 
 if [ "$OP" == "YML" ] ; then
+   TEMPFILE=$(mktemp --suffix=.yml file-XXXXXXXXXXXX)
+   function finish {
+       rm -rf ${TEMPFILE}
+   }
+   trap finish EXIT
 
-   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env create -f environment.yml"
+   echo ${YML} > ${TEMPFILE}
+
+   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env create -f ${TEMPFILE} --name ${PROJECT}"
 fi
 
 function exists() {
