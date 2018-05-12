@@ -32,7 +32,7 @@ if [ "$OP" == "YML" ] ; then
 
    echo ${YML} > ${TEMPFILE}
 
-   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env create -f ${TEMPFILE} --name ${PROJECT}"
+   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env create -f ${TEMPFILE} -n ${PROJECT}"
 fi
 
 function exists() {
