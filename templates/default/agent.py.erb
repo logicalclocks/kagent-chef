@@ -42,6 +42,7 @@ import pexpect
 import re
 from collections import defaultdict
 import io
+import tempfile
 
 global mysql_process
 mysql_process = None
@@ -434,9 +435,12 @@ class CondaCommandsHandler:
         command_id = command['id']
         op = command['op'].upper()
         proj = command['proj']
-        yml = "''"
+        yml = ""
         if 'environmentYml' in command:
-            yml = "'{}'".format(command['environmentYml'])
+            temp = tempfile.NamedTemporaryFile(suffix='.yml', delete=True)
+            yml = temp.name
+            temp.write(command['environmentYml'])
+            os.chmod(temp.name, 0604)
 
         script = BIN_DIR + "/anaconda_env.sh"
         logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6} {7}".format(script, user, op, proj, arg, offline, hadoop_home, yml))

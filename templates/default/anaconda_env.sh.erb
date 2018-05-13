@@ -24,15 +24,16 @@ if [ "$OP" == "CLONE" ] ; then
 fi
 
 if [ "$OP" == "YML" ] ; then
-   TEMPFILE=$(mktemp --suffix=.yml file-XXXXXXXXXXXX)
-   function finish {
-       rm -rf ${TEMPFILE}
-   }
-   trap finish EXIT
-
-   echo ${YML} > ${TEMPFILE}
-
-   su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env create -f ${TEMPFILE} -n ${PROJECT}"
+   echo "I are here"
+   su $EXEC_AS_USER <<-EOF
+        TEMPFILE=$(mktemp --suffix=.yml file-XXXXXXXXXXXX)
+        function finish {
+        rm -rf ${TEMPFILE}
+        }
+        trap finish EXIT
+        echo "$YML" > ${TEMPFILE}
+        ${CONDA_DIR}/bin/conda env create -f ${TEMPFILE} -n ${PROJECT}
+EOF
 fi
 
 function exists() {
