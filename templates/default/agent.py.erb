@@ -409,7 +409,7 @@ class CondaCommandsHandler:
         user = command['user']
         proj = command['proj']
         command_id = command['id']
-        offline = ""
+        offline = "''"
         logger.info("Command to execute: {0}/{1}/{2}".format(op, proj, command_id))
         if (conda_ongoing[proj] == False):
             conda_ongoing[proj] = True
@@ -441,6 +441,7 @@ class CondaCommandsHandler:
             tempfile_fd = tempfile.NamedTemporaryFile(suffix='.yml', delete=True)
             arg = tempfile_fd.name
             tempfile_fd.write(command['environmentYml'])
+            tempfile_fd.flush()
             os.chmod(tempfile_fd.name, 0604)
 
         script = BIN_DIR + "/anaconda_env.sh"
@@ -451,8 +452,8 @@ class CondaCommandsHandler:
             command['status'] = 'SUCCESS'
             command['arg'] = arg
         except subprocess.CalledProcessError as e:
-            logger.info("Execption in envOp {0}".format(e.output))
-            logger.info("Execption in envOp. Ret code: {0}".format(e.returncode))
+            logger.info("Exception in envOp {0}".format(e.output))
+            logger.info("Exception in envOp. Ret code: {0}".format(e.returncode))
             command['status'] = 'FAILED'
         finally:
             if command['op'] == 'YML' and tempfile_fd != None:

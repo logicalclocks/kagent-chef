@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -lt 7  ]; then
+if [ $# -lt 6  ]; then
     echo "<user> <op> <proj> <arg> <offline> <hadoop_home>"
     echo "incorrect usage."
     echo "<arg> is the python version for 'create', the source env for 'clone' and the path to yml file for 'yml'."
@@ -22,16 +22,17 @@ if [ "$OP" == "CLONE" ] ; then
    CLONE="--clone $4"
 fi
 
-if [ "$OP" == "YML" ] ; then
-   su $EXEC_AS_USER -c "export HADOOP_HOME=${HADOOP_DIR}; ${CONDA_DIR}/bin/conda env create -f ${ARG} -n ${PROJECT}"
-fi
-
 function exists() {
     su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda info --envs | grep '^${PROJECT} '"
     return $?
 }
 
-if [ "$OP" == "CREATE" ] ; then
+if [ "$OP" == "YML" ] ; then
+   su $EXEC_AS_USER -c "export HADOOP_HOME=${HADOOP_DIR}; ${CONDA_DIR}/bin/conda env create -f ${ARG} -n ${PROJECT}"
+   exit $?
+fi
+
+elif [ "$OP" == "CREATE" ] ; then
     exists
     if [ $? -eq 0 ] ; then 
        exit 0
