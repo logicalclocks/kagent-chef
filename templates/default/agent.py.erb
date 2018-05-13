@@ -437,7 +437,7 @@ class CondaCommandsHandler:
         proj = command['proj']
 
         tempfile_fd = None
-        if command['op'] === 'YML':
+        if command['op'] == 'YML':
             tempfile_fd = tempfile.NamedTemporaryFile(suffix='.yml', delete=True)
             arg = tempfile_fd.name
             tempfile_fd.write(command['environmentYml'])
@@ -455,7 +455,7 @@ class CondaCommandsHandler:
             logger.info("Execption in envOp. Ret code: {0}".format(e.returncode))
             command['status'] = 'FAILED'
         finally:
-            if command['op'] === 'YML' and tempfile_fd != None:
+            if command['op'] == 'YML' and tempfile_fd != None:
                 tempfile_fd.close()
             if command_id != -1:
                 self._conda_commands_status_mutex.acquire()
