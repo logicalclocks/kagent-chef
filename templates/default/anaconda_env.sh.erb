@@ -30,7 +30,6 @@ function exists() {
 if [ "$OP" == "YML" ] ; then
    su $EXEC_AS_USER -c "export HADOOP_HOME=${HADOOP_DIR}; ${CONDA_DIR}/bin/conda env create -f ${ARG} -n ${PROJECT}"
    exit $?
-fi
 
 elif [ "$OP" == "CREATE" ] ; then
     exists
@@ -44,7 +43,7 @@ elif [ "$OP" == "CREATE" ] ; then
     fi
     PY=$(echo $ARG | sed 's/\.//g')
     
-    if [ "$PY" == "27" ] ; then
+    if [ "$ARG" == "27" ] ; then
       su $EXEC_AS_USER -c "nice -n -20 ${CONDA_DIR}/bin/conda create -n $PROJECT --clone python27 -y -q $OFFLINE"
     else
       su $EXEC_AS_USER -c "nice -n -20 ${CONDA_DIR}/bin/conda create -n $PROJECT --clone python36 -y -q $OFFLINE"	

@@ -409,7 +409,7 @@ class CondaCommandsHandler:
         user = command['user']
         proj = command['proj']
         command_id = command['id']
-        offline = "''"
+        offline = ""
         logger.info("Command to execute: {0}/{1}/{2}".format(op, proj, command_id))
         if (conda_ongoing[proj] == False):
             conda_ongoing[proj] = True
