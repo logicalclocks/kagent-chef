@@ -435,25 +435,29 @@ class CondaCommandsHandler:
         command_id = command['id']
         op = command['op'].upper()
         proj = command['proj']
-        yml = ""
-        if 'environmentYml' in command:
-            temp = tempfile.NamedTemporaryFile(suffix='.yml', delete=True)
-            yml = temp.name
-            temp.write(command['environmentYml'])
-            os.chmod(temp.name, 0604)
+
+        tempfile_fd = None
+        if command['op'] == 'YML':
+            tempfile_fd = tempfile.NamedTemporaryFile(suffix='.yml', delete=True)
+            arg = tempfile_fd.name
+            tempfile_fd.write(command['environmentYml'])
+            tempfile_fd.flush()
+            os.chmod(tempfile_fd.name, 0604)
 
         script = BIN_DIR + "/anaconda_env.sh"
-        logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6} {7}".format(script, user, op, proj, arg, offline, hadoop_home, yml))
+        logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6}".format(script, user, op, proj, arg, offline, hadoop_home))
         msg=""
         try:
-            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, hadoop_home, yml], stderr=subprocess.STDOUT)
+            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, hadoop_home], stderr=subprocess.STDOUT)
             command['status'] = 'SUCCESS'
             command['arg'] = arg
         except subprocess.CalledProcessError as e:
-            logger.info("Execption in envOp {0}".format(e.output))
-            logger.info("Execption in envOp. Ret code: {0}".format(e.returncode))
+            logger.info("Exception in envOp {0}".format(e.output))
+            logger.info("Exception in envOp. Ret code: {0}".format(e.returncode))
             command['status'] = 'FAILED'
         finally:
+            if command['op'] == 'YML' and tempfile_fd != None:
+                tempfile_fd.close()
             if command_id != -1:
                 self._conda_commands_status_mutex.acquire()
                 logger.debug("Adding status {0} for command ID {1} - {2}".format(command['status'], command_id, command))
