@@ -3,14 +3,14 @@
 if [ $# -lt 6  ]; then
     echo "<user> <op> <proj> <arg> <offline> <hadoop_home>"
     echo "incorrect usage."
-    echo "<arg> is the python version for 'create' and the source env for 'clone'."
+    echo "<arg> is the python version for 'create', the source env for 'clone' and the path to yml file for 'yml'."
  exit 1
 fi
 
 EXEC_AS_USER=$1
 OP=$2
 PROJECT=$3
-PYTHON_VERSION=$4
+ARG=$4
 OFFLINE=$5
 HADOOP_DIR=$6
 
@@ -27,17 +27,21 @@ function exists() {
     return $?
 }
 
-if [ "$OP" == "CREATE" ] ; then
+if [ "$OP" == "YML" ] ; then
+   su $EXEC_AS_USER -c "export HADOOP_HOME=${HADOOP_DIR}; ${CONDA_DIR}/bin/conda env create -f ${ARG} -n ${PROJECT}"
+   exit $?
+
+elif [ "$OP" == "CREATE" ] ; then
     exists
     if [ $? -eq 0 ] ; then 
        exit 0
     fi
 
-    if [[ $PYTHON_VERSION =~ .*X ]] ; then
-       PYTHON_VERSION=${PYTHON_VERSION::-1} # removes the 'X' at the end of the version
+    if [[ $ARG =~ .*X ]] ; then
+       ARG=${ARG::-1} # removes the 'X' at the end of the version
        WITH_PYTHON_KERNEL="false"
     fi
-    PY=$(echo $PYTHON_VERSION | sed 's/\.//g')
+    PY=$(echo $ARG | sed 's/\.//g')
     
     if [ "$PY" == "27" ] ; then
       su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python27 -y -q $OFFLINE"
@@ -84,7 +88,7 @@ elif [ "$OP" == "LIB_SYNC" ] ; then
     done
     
 elif [ "$OP" == "REMOVE" ] ; then
-    PROJECTUSERNAME=$PYTHON_VERSION
+    PROJECTUSERNAME=$ARG
     exists    # If the env has already been removed, return OK
     if [ $? -ne 0 ] ; then
        echo "Cannot remove environment that doesn't exist"
