@@ -214,7 +214,7 @@ end
   notifies :restart, "service[#{service_name}]", :delayed
 end
 
-if node["kagent"]["test"] == false || node['install']['upgrade'] == "false"
+if node["kagent"]["test"] == false && node['install']['upgrade'] == "false"
     kagent_keys "sign-certs" do
        action :csr
     end

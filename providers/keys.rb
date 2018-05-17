@@ -9,7 +9,7 @@ action :csr do
       export PYTHON_EGG_CACHE=/tmp
       #{node["kagent"]["certs_dir"]}/csr.py operation initialize
   EOF
-    not_if { ::File.exists?( "#{node["kagent"]["keystore_dir"]}/node_client_truststore.jks" ) }
+    not_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key" ) }
   end
 
 
