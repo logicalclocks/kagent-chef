@@ -108,6 +108,12 @@ elif [ "$OP" == "REMOVE" ] ; then
         fi
     fi
 
+elif [ "$OP" == "CLEAN" ] ; then
+    su <%= node['conda']['user'] %> -c "<%= node['conda']['base_dir'] %>/bin/conda clean --all -y"
+    
+elif [ "$OP" == "UPDATE" ] ; then
+    su <%= node['conda']['user'] %> -c "<%= node['conda']['base_dir'] %>/bin/conda update conda -y"
+    
 else
     exit -1
 fi
