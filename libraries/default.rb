@@ -124,6 +124,10 @@ module Kagent
       hostnames
     end
 
+    def previous_version()
+      node['install']['versions'].split(',')[-1]
+    end
+    
     def set_my_hostname()
       my_ip = my_private_ip()
       my_dns_name = my_dns_name()
