@@ -61,7 +61,7 @@ elif [ "$OP" == "CLONE" ] ; then
 
 elif [ "$OP" == "LIB_SYNC" ] ; then
 
-    su <%= node['conda']['user'] %> -c "<%= node['conda']['base_dir'] %>/bin/conda list -n $1 --json > /tmp/${1}.json"
+    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda list -n $1 --json > /tmp/${1}.json"
     if [ $? -ne 0 ] ; then
 	echo "Problem listing conda libraries for project $1"
 	exit 2
@@ -83,7 +83,7 @@ elif [ "$OP" == "LIB_SYNC" ] ; then
 	# If i cannot find the library installed locally, install it in this project
 	grep $i /tmp/${1}.libs
 	if [ $? -ne 0 ] ; then
-	    su <%= node['conda']['user'] %> -c "<%= node['conda']['base_dir'] %>/bin/conda install -n $1 -q -y $2 $i"
+	    su <%= node['conda']['user'] %> -c "${CONDA_DIR}/bin/conda install -n $1 -q -y $2 $i"
 	fi
     done
     
@@ -109,11 +109,9 @@ elif [ "$OP" == "REMOVE" ] ; then
     fi
 
 elif [ "$OP" == "CLEAN" ] ; then
-    su <%= node['conda']['user'] %> -c "<%= node['conda']['base_dir'] %>/bin/conda clean --all -y"
-    
+    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda clean --all -y"
 elif [ "$OP" == "UPDATE" ] ; then
-    su <%= node['conda']['user'] %> -c "<%= node['conda']['base_dir'] %>/bin/conda update conda -y"
-    
+    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda update conda -y"
 else
     exit -1
 fi
