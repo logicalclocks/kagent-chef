@@ -3,7 +3,7 @@ require 'inifile'
 service_name = "kagent"
 
 agent_password = ""
-if File.exists("#{node["kagent"]["base_dir"]}/config.ini")
+if ::File.exists?("#{node["kagent"]["base_dir"]}/config.ini")
   ini_file = IniFile.load("#{node["kagent"]["base_dir"]}/config.ini", :comment => ';#')
   if ini_file.has_section?("agent")
     agent_password = ini_file["agent"]["password"]
