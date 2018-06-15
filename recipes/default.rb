@@ -3,7 +3,7 @@ require 'inifile'
 service_name = "kagent"
 
 agent_password = ""
-if ::File.exists("#{node["kagent"]["base_dir"]}/config.ini")
+if File.exists("#{node["kagent"]["base_dir"]}/config.ini")
   ini_file = IniFile.load("#{node["kagent"]["base_dir"]}/config.ini", :comment => ';#')
   if ini_file.has_section?("agent")
     agent_password = ini_file["agent"]["password"]
@@ -267,11 +267,16 @@ end
 
 if node["install"]["addhost"] == 'true'
 
+  #
+  # This code will wipe out the existing anaconda installation and replace it with one from the hopsworks server - using rsync.
+  # You should remove the anaconda base_dir (/srv/hops/anaconda/anaconda) and set the attribute install/addhost='true' for this to run.
+  #
  bash "sync-anaconda-with-existing-cluster" do
    user "root"
    code <<-EOH
      #{node['kagent']['base_dir']}/bin/anaconda_sync.sh
    EOH
+   not_if { File.directory?("#{node['conda']['base_dir']}") }
  end
   
 end  
