@@ -417,7 +417,7 @@ class CondaCommandsHandler:
             arg = ""
             if 'arg' in command:
                 arg = command['arg']
-            if op == "REMOVE" or op == "CLONE" or op == "CREATE" or op == "YML":
+            if op == "REMOVE" or op == "CLONE" or op == "CREATE" or op == "YML" or op == "CLEAN":
                 self._envOp(command, arg, offline)
             elif op == "INSTALL" or op == "UNINSTALL" or op == "UPGRADE":  # Conda package  commands (install, uninstall, upgrade)
                 self._libOp(command)
