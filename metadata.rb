@@ -134,6 +134,14 @@ attribute "install/addhost",
           :description => "Indicates that this host will be added to an existing Hops cluster.",
           :type => "string"
 
+attribute "install/version",
+          :description => "Hopsworks version.",
+          :type => "string"
+
+attribute "install/versions",
+          :description => "Comma-separated list of previous versions of Hopsworks.",
+          :type => "string"
+
 attribute "hops/yarn/user",
           :description => "Yarn user for conda",
           :type => "string"
