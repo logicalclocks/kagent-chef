@@ -27,19 +27,24 @@ from OpenSSL import crypto
 from os.path import join, exists
 
 from kagent_utils import KConfig
+from kagent_utils import StateStoreFactory
+from kagent_utils import CryptoMaterialState
 
 class Certificate:
     """Class representing X509 certificate for host"""
     
-    def __init__(self, config):
+    def __init__(self, config, state_store):
         self._config = config
+        self._state_store = state_store
         self._private_key = None
         self._certificate = None
-        self._ca_certificate = None        
+        self._ca_certificate = None
         
     def create_csr(self):
         """Generates a cryptographic key-pair and a CSR"""
 
+        crypto_material_state = state_store.get_crypto_material_state()
+        
         LOG.info("Creating Certificate Signing Request")
         pKey = self._generate_key()
         # Create CSR
@@ -48,7 +53,7 @@ class Certificate:
         csr.get_subject().ST = "Sweden"
         csr.get_subject().L = "Stockholm"
         csr.get_subject().O = "Hopsworks"
-        csr.get_subject().OU = "LC"
+        csr.get_subject().OU = str(crypto_material_state.get_version() + 1)
 
         # CN should be the hostname of the server
         _hostname = self._getHostname()
@@ -130,10 +135,11 @@ class Host:
                      'User-Agent': 'hops-csr'}
     json_headers = {'User-Agent': 'Agent', 'content-type': 'application/json'}
     
-    def __init__(self, conf, certificate):
+    def __init__(self, conf, certificate, state_store):
         LOG.debug("Creating new host")
         self._conf = conf
         self._certificate = certificate
+        self._state_store = state_store
 
     def rotate_key(self, session, command_id):
         """Public method to perform key rotation"""
@@ -153,6 +159,9 @@ class Host:
         if (response.status_code != requests.codes.ok):
             raise Exception('Could not rotate service certificate Status code: {0} Reason: {1}'
                             .format(response.status_code, response.text))
+
+        self._store_new_crypto_state()
+        
         json_response = json.loads(response.content)
         self._extract_crypto_material(json_response)
     
@@ -181,12 +190,20 @@ class Host:
             raise Exception('Could not register: Unknown host id or internal error on the dashboard (Status code: {0} - {1}).'
                             .format(response.status_code, response.text))
 
+        self._store_new_crypto_state()
+        
         json_response = json.loads(response.content)
         self._extract_crypto_material(json_response)
         
         hadoopHome = json_response["hadoopHome"]
         self._conf.set_conf_value('agent', 'hadoop-home', hadoopHome)
         self._conf.dump_to_file()
+
+    def _store_new_crypto_state(self):
+        previous_crypto_version = self._state_store.get_crypto_material_state().get_version()
+        new_crypto_material_state = CryptoMaterialState()
+        new_crypto_material_state.set_version(previous_crypto_version + 1)
+        self._state_store.store_crypto_material_state(new_crypto_material_state)
 
     def _extract_crypto_material(self, json_response):
         """Extract crypto material from the response from hopsworks-ca and write them locally"""
@@ -253,7 +270,12 @@ if __name__ == '__main__':
     file(config.agent_pidfile, 'w').write(agent_pid)
     LOG.info("Hops CSR-agent PID: {0}".format(agent_pid))
 
-    cert = Certificate(config)
+    LOG.info("Restoring state from state-store")
+    state_store_factory = StateStoreFactory(config.state_store_location)
+    state_store = state_store_factory.get_instance('file')
+    state_store.load()
+    
+    cert = Certificate(config, state_store)
     if args.operation == "init":
         LOG.debug("Initializing")
         
@@ -263,7 +285,7 @@ if __name__ == '__main__':
             
         cert.create_csr()
 
-        h = Host(config, cert)
+        h = Host(config, cert, state_store)
         with requests.Session() as session:
             try:
                 h.register_host(session)
@@ -276,7 +298,7 @@ if __name__ == '__main__':
         LOG.debug("Key rotation")
 
         cert.create_csr()
-        h = Host(config, cert)
+        h = Host(config, cert, state_store)
         with requests.Session() as session:
             try:
                 h.rotate_key(session, args.commandid)

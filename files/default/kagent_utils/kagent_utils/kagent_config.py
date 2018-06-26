@@ -66,6 +66,7 @@ class KConfig:
             self.group_name = self._config.get('agent', 'group-name')
             self.hadoop_home = self._config.get('agent', 'hadoop-home')
             self.certs_dir = self._config.get('agent', 'certs-dir')
+            self.state_store_location = self._config.get('agent', 'state-store')
 
             # First time we run csr.py, it will generate an agent password and store it in the config.ini file.
             # The agent password is then stored in the 'hosts' table in hopsworks.

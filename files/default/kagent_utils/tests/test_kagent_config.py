@@ -45,6 +45,7 @@ class TestKConfig(unittest.TestCase):
     server_keystore = 'path/to/server_keystore'
     server_truststore = 'path/to/server_truststore'
     keystore_script = 'path/to/keystore_script'
+    state_store = 'path/to/state_store'
     agent_password = 'agent_password'
 
     def setUp(self):
@@ -97,6 +98,7 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.server_keystore, config.server_keystore)
         self.assertEqual(self.server_truststore, config.server_truststore)
         self.assertEqual(self.keystore_script, config.keystore_script)
+        self.assertEqual(self.state_store, config.state_store_location)
         self.assertEqual(self.agent_password, config.agent_password)
 
     ## Let KConfig figure out values for these properties
@@ -159,6 +161,7 @@ class TestKConfig(unittest.TestCase):
                 'server-keystore': self.server_keystore,
                 'server-truststore': self.server_truststore,
                 'keystore-script': self.keystore_script,
+                'state-store': self.state_store,
                 'password': self.agent_password
             }
         else:
@@ -184,6 +187,7 @@ class TestKConfig(unittest.TestCase):
                 'server-keystore': self.server_keystore,
                 'server-truststore': self.server_truststore,
                 'keystore-script': self.keystore_script,
+                'state-store': self.state_store
             }
             
         with open(self.config_file[1], 'w') as config_fd:

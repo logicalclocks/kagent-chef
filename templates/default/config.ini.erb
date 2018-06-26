@@ -34,5 +34,6 @@ key-file = <%= node[:kagent][:certs_dir] %>/priv.key
 server-keystore = <%= @kstore %>
 server-truststore = <%= @tstore %>
 keystore-script = <%= node[:kagent][:base_dir] %>/keystore.sh
+state-store = <%= node[:kagent][:base_dir]%>/state_store
 <%= @agent_password %>
 
