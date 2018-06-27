@@ -6,7 +6,7 @@ source <%= node[:kagent][:base_dir] %>/bin/get-pid.sh
 
 if [ $? -ne 0 ]; then
 	echo "Starting the agent..."
-	nohup <%= node[:kagent][:base_dir] %>/agent.py &> /dev/null &
+	nohup <%= node[:kagent][:base_dir] %>/agent.py --config <%= node[:kagent][:base_dir] %>/config.ini &> /dev/null &
         sleep 1
         PID_FILE=<%= node[:kagent][:pid_file] %>
         if [ -e $PID_FILE ] ; then

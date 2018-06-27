@@ -195,7 +195,6 @@ if hops_dir == ""
 end
 
 
-
 #
 # use :create_if_missing, as if there is a failure during/after the csr.py program,
 # you will get a failure. csr.py adds a password entry to the [agent] section. 
@@ -215,8 +214,11 @@ template "#{node["kagent"]["base_dir"]}/config.ini" do
               :private_ip => private_ip,
               :network_if => network_if,
               :hops_dir => hops_dir,
-              :agent_password => agent_password
+              :agent_password => agent_password,
+              :kstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__kstore.jks",
+              :tstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__tstore.jks"
             })
+  
 if node["services"]["enabled"] == "true"  
   notifies :enable, "service[#{service_name}]"
 end

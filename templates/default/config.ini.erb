@@ -12,8 +12,12 @@ password = <%= node[:kagent][:dashboard][:password] %>
 host-id = <%= @hostname %>
 restport = <%= node[:kagent][:port] %>
 heartbeat-interval = <%= node[:kagent][:heartbeat_interval] %>
+services-file = <%= node[:kagent][:base_dir] %>/services
 watch-interval = <%= node[:kagent][:watch_interval] %>
+bin-dir = <%= node[:kagent][:base_dir] %>/bin
 pid-file = <%= node[:kagent][:pid_file] %>
+agent-log-file = <%= node[:kagent][:base_dir] %>/agent.log
+csr-log-file= <%= node[:kagent][:base_dir] %>/csr.log
 logging-level = <%= node[:kagent][:logging_level] %>
 max-log-size = <%= node[:kagent][:max_log_size] %>
 public-ip = <%= @public_ip %>
@@ -23,5 +27,12 @@ hostname = <%= @hostname %>
 network-interface = <%= @network_if %>
 group-name = <%= node[:kagent][:group_name] %>
 hadoop-home = <%= @hops_dir %>/hadoop
+certs-dir = <%= node[:kagent][:certs_dir] %>
+certificate-file = <%= node[:kagent][:certs_dir] %>/pub.pem
+ca-file = <%= node[:kagent][:certs_dir] %>/ca_pub.pem
+key-file = <%= node[:kagent][:certs_dir] %>/priv.key
+server-keystore = <%= @kstore %>
+server-truststore = <%= @tstore %>
+keystore-script = <%= node[:kagent][:base_dir] %>/keystore.sh
 <%= @agent_password %>
 

@@ -194,13 +194,27 @@ if node["ntp"]["install"] == "true"
   include_recipe "ntp::default"
 end
 
-my_hostname = node['hostname']
-if node["kagent"].attribute?("hostname") then
- my_hostname = node["kagent"]["hostname"]
+remote_directory "#{node["kagent"]["base_dir"]}/kagent_utils" do
+  source 'kagent_utils'
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  mode 0710
+  files_owner node["kagent"]["user"]
+  files_group node["kagent"]["group"]
+  files_mode 0710
+  notifies :run, 'bash[install-kagent_utils]', :immediately
 end
 
-template "#{node["kagent"]["base_dir"]}/agent.py" do
-  source "agent.py.erb"
+bash "install-kagent_utils" do
+  user "root"
+  code <<-EOH
+       cd #{node["kagent"]["base_dir"]}/kagent_utils
+       pip install -U .
+  EOH
+end
+
+cookbook_file "#{node["kagent"]["base_dir"]}/agent.py" do
+  source 'agent.py'
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode 0710
@@ -214,17 +228,12 @@ file "#{node["kagent"]["base_dir"]}/csr.log" do
   action :touch
 end
 
-template"#{node["kagent"]["certs_dir"]}/csr.py" do
-  source "csr.py.erb"
+cookbook_file "#{node["kagent"]["certs_dir"]}/csr.py" do
+  source 'csr.py'
   owner node["kagent"]["user"]
   group node["kagent"]["certs_group"]
   mode 0710
-  variables({
-              :kstore => "#{node["kagent"]["keystore_dir"]}/#{my_hostname}__kstore.jks",
-              :tstore => "#{node["kagent"]["keystore_dir"]}/#{my_hostname}__tstore.jks"
-            })
 end
-
 
 ['start-agent.sh', 'stop-agent.sh', 'restart-agent.sh', 'get-pid.sh'].each do |script|
   Chef::Log.info "Installing #{script}"

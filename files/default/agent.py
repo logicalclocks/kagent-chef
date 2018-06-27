@@ -43,6 +43,9 @@ import re
 from collections import defaultdict
 import io
 import tempfile
+import argparse
+
+from kagent_utils import KConfig
 
 global mysql_process
 mysql_process = None
@@ -52,15 +55,6 @@ config_mutex = Lock()
 conda_mutex = Lock()
 
 HTTP_OK = 200
-
-BIN_DIR = "<%= node[:kagent][:base_dir] %>/bin"
-CONFIG_FILE = "<%= node[:kagent][:base_dir] %>/config.ini"
-SERVICES_FILE = "<%= node[:kagent][:base_dir] %>/services"
-LOG_FILE = "<%= node[:kagent][:base_dir] %>/agent.log"
-
-CERT_FILE = "<%= node[:kagent][:certs_dir] %>/pub.pem"
-CA_FILE = "<%= node[:kagent][:certs_dir] %>/ca_pub.pem"
-KEY_FILE = "<%= node[:kagent][:certs_dir] %>/priv.key"
 
 global states
 states = {}
@@ -83,102 +77,48 @@ def count_num_gpus():
     except Exception as err:
         return 0
 
-# reading config
-try:
-    config = ConfigParser.ConfigParser()
-    config.read(CONFIG_FILE)
-    server_url = config.get('server', 'url')
-    login_url = server_url + config.get('server', 'path-login')
-    register_url = server_url + config.get('server', 'path-register')
-    heartbeat_url = server_url + config.get('server', 'path-heartbeat')
-    alert_url = server_url + config.get('server', 'path-alert')
-
-
-    server_username = config.get('server', 'username')
-    server_password = config.get('server', 'password')
-
-    logging_level = config.get('agent', 'logging-level').upper()
-    max_log_size = config.getint('agent', 'max-log-size')
-    password = config.get('agent', 'password')
-    agent_pidfile = config.get('agent', 'pid-file')
-    agent_restport = config.getint('agent', 'restport')
-    heartbeat_interval = config.getfloat('agent', 'heartbeat-interval')
-    watch_interval = config.getfloat('agent', 'watch-interval')
-    mysql_socket = config.get('agent', 'mysql-socket')
-    network_interface = config.get('agent', 'network-interface')
-    group_name = config.get('agent', 'group-name')
-    hadoop_home = config.get('agent', 'hadoop-home')
-
-# TODO find public/private IP addresses
-    public_ip = None
-    private_ip = None
-    eth0_ip = netifaces.ifaddresses(network_interface)[netifaces.AF_INET][0]['addr']
-    if (IP(eth0_ip).iptype() == "PUBLIC"):
-        public_ip = eth0_ip
-    else:
-        private_ip = eth0_ip
-
-    if (config.has_option("agent", "hostname")):
-        hostname = config.get("agent", "hostname")
-    else:
-        try:
-            self.hostname = socket.gethostbyaddr(eth0_ip)[0]
-        except socket.herror:
-            try:
-                self.hostname = socket.gethostname()
-            except socket.herror:
-                self.hostname = "localhost"
-
-    if (config.has_option("agent", "host-id")):
-        host_id = config.get("agent", "host-id")
-    else:
-        host_id = hostname
-
-
-except Exception, e:
-    print "Exception while reading {0}: {1}".format(CONFIG_FILE, e)
-    sys.exit(1)
-
 # logging
-try:
-    os.remove(LOG_FILE + '.1')
-except:
-    pass
-with open(LOG_FILE, 'w'):  # clear log file
-    pass
-logger = logging.getLogger('agent')
-logger_formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-logger_file_handler = logging.handlers.RotatingFileHandler(LOG_FILE, "w", maxBytes=max_log_size, backupCount=1)
-logger_stream_handler = logging.StreamHandler()
-logger_file_handler.setFormatter(logger_formatter)
-logger_stream_handler.setFormatter(logger_formatter)
-logger.addHandler(logger_file_handler)
-logger.addHandler(logger_stream_handler)
-logger.setLevel(logging.INFO)
+def setupLogging():
+    try:
+        os.remove(kconfig.agent_log_file + '.1')
+    except:
+        pass
+    with open(kconfig.agent_log_file, 'w'):  # clear log file
+        pass
+    
+    global logger
+    logger = logging.getLogger('agent')
+    logger_formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    logger_file_handler = logging.handlers.RotatingFileHandler(kconfig.agent_log_file, "w", maxBytes=kconfig.max_log_size, backupCount=1)
+    logger_stream_handler = logging.StreamHandler()
+    logger_file_handler.setFormatter(logger_formatter)
+    logger_stream_handler.setFormatter(logger_formatter)
+    logger.addHandler(logger_file_handler)
+    logger.addHandler(logger_stream_handler)
+    logger.setLevel(logging.INFO)
 
-logger.info("Hops-Kagent started.")
-logger.info("Heartbeat URL: {0}".format(heartbeat_url))
-logger.info("Alert URL: {0}".format(alert_url))
-logger.info("Host Id: {0}".format(host_id))
-logger.info("Hostname: {0}".format(hostname))
-logger.info("Public IP: {0}".format(public_ip))
-logger.info("Private IP: {0}".format(private_ip))
-
-verbose=False
+    logger.info("Hops-Kagent started.")
+    logger.info("Heartbeat URL: {0}".format(kconfig.heartbeat_url))
+    logger.info("Alert URL: {0}".format(kconfig.alert_url))
+    logger.info("Host Id: {0}".format(kconfig.host_id))
+    logger.info("Hostname: {0}".format(kconfig.hostname))
+    logger.info("Public IP: {0}".format(kconfig.public_ip))
+    logger.info("Private IP: {0}".format(kconfig.private_ip))
 
 # reading services
-try:
-    services = ConfigParser.ConfigParser()
-    services.read(SERVICES_FILE)
+def readServicesFile():
+    try:
+        global services
+        services = ConfigParser.ConfigParser()
+        services.read(kconfig.services_file)
 
-    for s in services.sections():
-        if services.has_option(s, "service") :
-            states[services.get(s, "service")] = {'status':'Stopped', 'start-time':''}
-
-except Exception, e:
-    print "Error in the services file. Check its formatting: {0}: {1}".format(SERVICE_FILE, e)
-    logger.error("Exception while reading {0} file: {1}".format(SERVICES_FILE, e))
-    sys.exit(1)
+        for s in services.sections():
+            if services.has_option(s, "service") :
+                states[services.get(s, "service")] = {'status':'Stopped', 'start-time':''}
+    except Exception, e:
+        print "Error in the services file. Check its formatting: {0}: {1}".format(kconfig.services_file, e)
+        logger.error("Exception while reading {0} file: {1}".format(kconfig.services_file, e))
+        sys.exit(1)
 
 
 logged_in = False
@@ -235,7 +175,7 @@ class Heartbeat():
 
         while True:
             self.send()
-            time.sleep(heartbeat_interval)
+            time.sleep(kconfig.heartbeat_interval)
 
 
     @staticmethod
@@ -247,8 +187,8 @@ class Heartbeat():
         global session
         try:
             session = requests.Session()
-            resp = session.post(login_url, data={'email': server_username, 'password': server_password}, headers=form_headers, verify=False)
-#            resp = session.put(register_url, data=json.dumps(payload), headers=json_headers, verify=False)
+            resp = session.post(kconfig.login_url, data={'email': kconfig.server_username, 'password': kconfig.server_password}, headers=form_headers, verify=False)
+#            resp = session.put(kconfig.register_url, data=json.dumps(payload), headers=json_headers, verify=False)
             if not resp.status_code == HTTP_OK:
                 logged_in = False
                 logger.warn('Could not login agent to Hopsworks (Status code: {0}).'.format(resp.status_code))
@@ -286,7 +226,7 @@ class Heartbeat():
                 headers = {'content-type': 'application/json'}
                 payload = {}
                 payload["num-gpus"] = count_num_gpus()
-                payload["host-id"] = host_id
+                payload["host-id"] = kconfig.host_id
                 payload["agent-time"] = now
                 payload["load1"] = load_info.load1
                 payload["load5"] = load_info.load5
@@ -294,8 +234,8 @@ class Heartbeat():
                 payload["disk-used"] = disk_info.used
                 payload['memory-used'] = memory_info.used
                 payload["services"] = services_list
-                payload["group-name"] = group_name
-                payload["hostname"] = hostname
+                payload["group-name"] = kconfig.group_name
+                payload["hostname"] = kconfig.hostname
 
                 commands_status = {}
 
@@ -330,13 +270,13 @@ class Heartbeat():
 
                 logger.debug("Commands reply payload: {0}".format(json.dumps(payload["commands-reply"], indent=2)))
 
-                if (public_ip != None):
-                    payload["public-ip"] = public_ip
+                if (kconfig.public_ip != None):
+                    payload["public-ip"] = kconfig.public_ip
                 else:
                     payload["public-ip"] = ""
 
-                if (private_ip != None):
-                    payload["private-ip"] = private_ip
+                if (kconfig.private_ip != None):
+                    payload["private-ip"] = kconfig.private_ip
                 else:
                     payload["private-ip"] = ""
 
@@ -344,7 +284,7 @@ class Heartbeat():
                 payload["disk-capacity"] = disk_info.capacity
                 payload['memory-capacity'] = memory_info.total
                 logger.info("Sending heartbeat...")
-                resp = session.post(heartbeat_url, data=json.dumps(payload), headers=headers, verify=False)
+                resp = session.post(kconfig.heartbeat_url, data=json.dumps(payload), headers=headers, verify=False)
                 logger.info("Received heartbeat response")
                 if not resp.status_code == HTTP_OK:
                     # Put back deleted statuses if command ID does not exist in order to be re-send
@@ -392,7 +332,7 @@ class Heartbeat():
                             conda_ongoing[proj] = False
 
             except Exception as err:
-                logger.error("{0}. Retrying in {1} seconds...".format(err, heartbeat_interval))
+                logger.error("{0}. Retrying in {1} seconds...".format(err, kconfig.heartbeat_interval))
                 logged_in = False
 
 class CondaCommandsHandler:
@@ -444,11 +384,11 @@ class CondaCommandsHandler:
             tempfile_fd.flush()
             os.chmod(tempfile_fd.name, 0604)
 
-        script = BIN_DIR + "/anaconda_env.sh"
-        logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6}".format(script, user, op, proj, arg, offline, hadoop_home))
+        script = kconfig.bin_dir + "/anaconda_env.sh"
+        logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6}".format(script, user, op, proj, arg, offline, kconfig.hadoop_home))
         msg=""
         try:
-            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, hadoop_home], stderr=subprocess.STDOUT)
+            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, kconfig.hadoop_home], stderr=subprocess.STDOUT)
             command['status'] = 'SUCCESS'
             command['arg'] = arg
         except subprocess.CalledProcessError as e:
@@ -480,7 +420,7 @@ class CondaCommandsHandler:
             channelUrl="default"
         if not version:
             version=""
-        script = BIN_DIR + "/conda.sh"
+        script = kconfig.bin_dir + "/conda.sh"
 
         try:
             command_str = "sudo {0} {1} {2} {3} {4} {5} {6} {7}".format(script, user, op, proj, channelUrl, installType, lib, version)
@@ -503,9 +443,10 @@ class CondaCommandsHandler:
 
 
 class SystemCommandsHandler:
-    def __init__(self, system_commands_status, system_commands_status_mutex):
+    def __init__(self, system_commands_status, system_commands_status_mutex, config_file_path):
         self._system_commands_status = system_commands_status
         self._system_commands_status_mutex = system_commands_status_mutex
+        self._config_file_path = config_file_path
 
     def handle(self, command):
         if command is None:
@@ -521,7 +462,8 @@ class SystemCommandsHandler:
     def _service_key_rotation(self, command):
         try:
             logger.debug("Calling certificate rotation script")
-            subprocess.check_call(["sudo", "<%= node[:kagent][:certs_dir] %>/csr.py", "operation", "rotate", "-c", str(command['id'])])
+            csr_script = kconfig.certs_dir + "/csr.py"
+            subprocess.check_call(["sudo", csr_script, "--config", self._config_file_path, "rotate", "-c", str(command['id'])])
             command['status'] = 'FINISHED'
             logger.info("Successfully rotated service certificates")
         except CalledProcessError as e:
@@ -586,7 +528,7 @@ class Alert:
                 headers = {'content-type': 'application/json'}
                 payload = {}
                 payload["Provider"] = "Agent"
-                payload["host-id"] = host_id
+                payload["host-id"] = kconfig.host_id
                 payload["Time"] = time
                 payload["Plugin"] = "Monitoring"
                 payload["Type"] = "Role"
@@ -601,11 +543,11 @@ class Alert:
                     payload["Message"] = "Service is not running: {0}/{1}/{2}".format(cluster, group, service)
 
                 logger.info("Sending Alert...")
-                #auth = (server_username, server_password)
+                #auth = (kconfig.server_username, kconfig.server_password)
                 #            session = requests.Session()
-                #            session.post(alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)
-                #requests.post(alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)
-                session.post(alert_url, data=json.dumps(payload), headers=headers, verify=False)
+                #            session.post(kconfig.alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)
+                #requests.post(kconfig.alert_url, data=json.dumps(payload), headers=headers, auth=auth, verify=False)
+                session.post(kconfig.alert_url, data=json.dumps(payload), headers=headers, verify=False)
             except:
                 logger.error("Cannot access the REST service for alerts. Alert not sent.")
 
@@ -661,7 +603,7 @@ class ExtProcess():  # external process
                 if (states[service]['status'] == 'Started'):
                     logger.info("Process failed: {0}/{1}/{2}".format(cluster, group, service))
                     Service().failed(cluster, group, service)
-            sleep(watch_interval)
+            sleep(kconfig.watch_interval)
 
 class Config():
 
@@ -726,7 +668,7 @@ class Service:
 
 
     def start(self, cluster, group, service):
-        script = BIN_DIR + "/start-service.sh"
+        script = kconfig.bin_dir + "/start-service.sh"
         try:
             p = Popen(['sudo',script,service],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (output,err)=p.communicate()
@@ -736,14 +678,14 @@ class Service:
                 raise Exception("Start script returned a none-zero value")
             Service().started(cluster, group, service)
             # wait for the alert to get returned to Hopsworks, before returning (as this will cause a correct refresh of the service's status)
-            sleep(heartbeat_interval+1)
+            sleep(kconfig.heartbeat_interval+1)
             return True
         except Exception as err:
             logger.error(err)
             return False
 
     def stop(self, cluster, group, service):
-        script = BIN_DIR + "/stop-service.sh"
+        script = kconfig.bin_dir + "/stop-service.sh"
         global states
         try:
             subprocess.check_call(['sudo', script, service], close_fds=True)  # raises exception if not returncode == 0
@@ -751,14 +693,14 @@ class Service:
             states[service] = {'status':'Stopped', 'stop-time':now}
             # wait for the alert to get returned to Hopsworks, before returning (as this will cause a correct refresh of the service's status)
             Service().failed(cluster, group, service)
-            sleep(heartbeat_interval+1)
+            sleep(kconfig.heartbeat_interval+1)
             return True
         except Exception as err:
             logger.error(err)
             return False
 
     def restart(self, cluster, group, service):
-        script = BIN_DIR + "/restart-service.sh"
+        script = kconfig.bin_dir + "/restart-service.sh"
         try:
             p = Popen(['sudo',script,service], close_fds=True)
             p.wait()
@@ -767,14 +709,14 @@ class Service:
                 raise Exception("Restart script returned a none-zero value")
             Service().started(cluster, group, service)
             # wait for the alert to get returned to Hopsworks, before returning (as this will cause a correct refresh of the service's status)
-            sleep(heartbeat_interval)
+            sleep(kconfig.heartbeat_interval)
             return True
         except Exception as err:
             logger.error(err)
             return False
 
     def alive(self, cluster, group, service):
-        script = BIN_DIR + "/status-service.sh"
+        script = kconfig.bin_dir + "/status-service.sh"
         try:
             p = Popen(['sudo',script,service], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if (verbose == True):
@@ -806,7 +748,7 @@ class MySQLConnector():
     @staticmethod
     def read(database, table):
         try:
-            db = MySQLdb.connect(unix_socket=mysql_socket, db=database)
+            db = MySQLdb.connect(unix_socket=kconfig.mysql_socket, db=database)
             cur = db.cursor()
             query = "SELECT * FROM {0}".format(table)
             cur.execute(query)
@@ -892,7 +834,7 @@ class CommandHandler():
 
     def read_agent_log(self, lines):
         try:
-            log = Util().tail(LOG_FILE, lines)
+            log = Util().tail(kconfig.agent_log_file, lines)
             return CommandHandler().response(200, log)
 
         except Exception as err:
@@ -963,13 +905,13 @@ class Authentication():
         result = False
         try:
             inPassword = request.params['password']
-            if (inPassword == password):
+            if (inPassword == kconfig.agent_password):
                 return True
         except Exception:
             result = False
 
         if result == False:
-            logger.info("Authentication failed: Invalid password: {0}".format(password))
+            logger.info("Authentication failed: Invalid password: {0}".format(inPassword))
         return result
 
     def failed(self):
@@ -979,7 +921,7 @@ class Authentication():
 class SSLCherryPy(ServerAdapter):
     def run(self, handler):
         server = wsgi.Server((self.host, self.port), handler)
-        server.ssl_adapter = BuiltinSSLAdapter(CERT_FILE, KEY_FILE)
+        server.ssl_adapter = BuiltinSSLAdapter(kconfig.certificate_file, kconfig.key_file)
         try:
             server.start()
         finally:
@@ -988,24 +930,33 @@ class SSLCherryPy(ServerAdapter):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 1:
-        if (sys.argv[1] == "-v" or sys.argv[1] == "-verbose" or sys.argv[1] == "--verbose"):
-            verbose=True
-        else:
-            print "usage: <prog> [-v|-verbose]"
-            sys.exit()
+    parser = argparse.ArgumentParser(description='Hops nodes administration agent')
+    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-c', '--config', default='config.ini', help='Path to configuration file')
 
+    args = parser.parse_args()
+    
+    verbose = args.verbose
+
+    global kconfig
+    kconfig = KConfig(args.config)
+    kconfig.read_conf()
+
+    setupLogging()
+    readServicesFile()
+        
     agent_pid = str(os.getpid())
-    file(agent_pidfile, 'w').write(agent_pid)
+    file(kconfig.agent_pidfile, 'w').write(agent_pid)
     logger.info("Hops Kagent PID: {0}".format(agent_pid))
-    logger.setLevel(Util().logging_level(logging_level))
+    logger.setLevel(Util().logging_level(kconfig.logging_level))
 
     # Heartbeat, process watch (alerts) and REST API are available after the agent registers successfully
     commands_queue = Queue.Queue(maxsize=100)
 
     system_commands_status = {}
     system_commands_status_mutex = Lock()
-    system_commands_handler = SystemCommandsHandler(system_commands_status, system_commands_status_mutex)
+    config_file_path = os.path.abspath(args.config)
+    system_commands_handler = SystemCommandsHandler(system_commands_status, system_commands_status_mutex, config_file_path)
 
     conda_commands_status = {}
     conda_commands_status_mutex = Lock()
@@ -1072,7 +1023,7 @@ if __name__ == '__main__':
 
     @get('/restartService/<cluster>/<group>/<service>')
     def restartService(cluster, group, service):
-        logger.info('Incoming REST Request:  GET /restartService/{0}/{1}'.format(cluster, group, service))
+        logger.info('Incoming REST Request:  GET /restartService/{0}/{1}/{2}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
 
@@ -1083,7 +1034,7 @@ if __name__ == '__main__':
 
     @get('/startService/<cluster>/<group>/<service>')
     def startService(cluster, group, service):
-        logger.info('Incoming REST Request:  GET /startService/{0}/{1}'.format(cluster, group, service))
+        logger.info('Incoming REST Request:  GET /startService/{0}/{1}/{2}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
 
@@ -1105,7 +1056,7 @@ if __name__ == '__main__':
 
     @get('/log/<cluster>/<group>/<service>/<lines>')
     def log(cluster, group, service, lines):
-        logger.info('Incoming REST Request:  GET /log/{0}/{1}/{2}'.format(cluster, group, service, lines))
+        logger.info('Incoming REST Request:  GET /log/{0}/{1}/{2}/{3}'.format(cluster, group, service, lines))
         if not Authentication().check():
             return Authentication().failed()
 
@@ -1148,7 +1099,7 @@ if __name__ == '__main__':
 
     @get('/info/<cluster>/<group>/<service>')
     def info(cluster, group, service):
-        logger.info('Incoming REST Request:  GET /status/{0}/{1}'.format(cluster, group, service))
+        logger.info('Incoming REST Request:  GET /status/{0}/{1}/{2}'.format(cluster, group, service))
         if not Authentication().check():
             return Authentication().failed()
 
@@ -1229,5 +1180,5 @@ if __name__ == '__main__':
             return CommandHandler().response(400, "Error")
 
     logger.info("RESTful service started.")
-    run(host='0.0.0.0', port=agent_restport, server='sslcherrypy')
+    run(host='0.0.0.0', port=kconfig.rest_port, server='sslcherrypy')
 
