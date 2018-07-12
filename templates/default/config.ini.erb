@@ -1,10 +1,10 @@
 [server]
 url = <%= @rest_url %>
-path-login: <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:login] %>
-path-register: hopsworks-ca/<%= node[:kagent][:dashboard][:api][:register] %>
-path-rotate: hopsworks-ca/<%= node[:kagent][:dashboard][:api][:rotate] %>
-path-heartbeat: <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:heartbeat] %>
-path-alert: <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:alert] %>
+path-login = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:login] %>
+path-register = hopsworks-ca/<%= node[:kagent][:dashboard][:api][:register] %>
+path-rotate = hopsworks-ca/<%= node[:kagent][:dashboard][:api][:rotate] %>
+path-heartbeat = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:heartbeat] %>
+path-alert = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:alert] %>
 username = <%= node[:kagent][:dashboard][:user] %>
 password = <%= node[:kagent][:dashboard][:password] %>
 
@@ -17,7 +17,7 @@ watch-interval = <%= node[:kagent][:watch_interval] %>
 bin-dir = <%= node[:kagent][:base_dir] %>/bin
 pid-file = <%= node[:kagent][:pid_file] %>
 agent-log-file = <%= node[:kagent][:base_dir] %>/agent.log
-csr-log-file= <%= node[:kagent][:base_dir] %>/csr.log
+csr-log-file = <%= node[:kagent][:base_dir] %>/csr.log
 logging-level = <%= node[:kagent][:logging_level] %>
 max-log-size = <%= node[:kagent][:max_log_size] %>
 public-ip = <%= @public_ip %>
