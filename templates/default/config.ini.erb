@@ -1,10 +1,10 @@
 [server]
 url = <%= @rest_url %>
-path-login: <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:login] %>
-path-register: hopsworks-ca/<%= node[:kagent][:dashboard][:api][:register] %>
-path-rotate: hopsworks-ca/<%= node[:kagent][:dashboard][:api][:rotate] %>
-path-heartbeat: <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:heartbeat] %>
-path-alert: <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:alert] %>
+path-login = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:login] %>
+path-register = hopsworks-ca/<%= node[:kagent][:dashboard][:api][:register] %>
+path-rotate = hopsworks-ca/<%= node[:kagent][:dashboard][:api][:rotate] %>
+path-heartbeat = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:heartbeat] %>
+path-alert = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:alert] %>
 username = <%= node[:kagent][:dashboard][:user] %>
 password = <%= node[:kagent][:dashboard][:password] %>
 
