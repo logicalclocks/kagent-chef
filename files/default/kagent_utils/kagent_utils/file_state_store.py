@@ -46,8 +46,25 @@ class FileStateStore(state_store.StateStore):
             self.state_lock.acquire()
             with open(self.crypto_material_state_file, 'wb') as fd:
                 pickle.dump(crypto_material_state, fd, 2)
+            self._fix_permission(self.crypto_material_state_file)
         finally:
             self.state_lock.release()
+
+    # csr.py is run as user root so we need to fix the permission
+    # and set the file owner to the user running kagent
+    def _fix_permission(self, file):
+        self._chmod(file)
+        self._chown(file)
+        
+    def _chmod(self, file):
+        os.chmod(file, 0700)
+
+    def _chown(self, file):
+        # Get UID and GID of state store directory, it should be the user running kagent
+        ss_stat = os.stat(self.state_store_location)
+        uid = ss_stat.st_uid
+        gid = ss_stat.st_gid
+        os.chown(file, uid, gid)
             
     def _load_crypto_material_state(self):
         if (os.path.isfile(self.crypto_material_state_file)):

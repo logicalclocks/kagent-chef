@@ -78,7 +78,7 @@ def count_num_gpus():
         return 0
 
 # logging
-def setupLogging():
+def setupLogging(kconfig):
     try:
         os.remove(kconfig.agent_log_file + '.1')
     except:
@@ -95,7 +95,7 @@ def setupLogging():
     logger_stream_handler.setFormatter(logger_formatter)
     logger.addHandler(logger_file_handler)
     logger.addHandler(logger_stream_handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(kconfig.logging_level)
 
     logger.info("Hops-Kagent started.")
     logger.info("Heartbeat URL: {0}".format(kconfig.heartbeat_url))
@@ -942,13 +942,12 @@ if __name__ == '__main__':
     kconfig = KConfig(args.config)
     kconfig.read_conf()
 
-    setupLogging()
+    setupLogging(kconfig)
     readServicesFile()
         
     agent_pid = str(os.getpid())
     file(kconfig.agent_pidfile, 'w').write(agent_pid)
     logger.info("Hops Kagent PID: {0}".format(agent_pid))
-    logger.setLevel(Util().logging_level(kconfig.logging_level))
 
     # Heartbeat, process watch (alerts) and REST API are available after the agent registers successfully
     commands_queue = Queue.Queue(maxsize=100)

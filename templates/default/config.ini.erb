@@ -12,12 +12,12 @@ password = <%= node[:kagent][:dashboard][:password] %>
 host-id = <%= @hostname %>
 restport = <%= node[:kagent][:port] %>
 heartbeat-interval = <%= node[:kagent][:heartbeat_interval] %>
-services-file = <%= node[:kagent][:base_dir] %>/services
+services-file = <%= node[:kagent][:services] %>
 watch-interval = <%= node[:kagent][:watch_interval] %>
 bin-dir = <%= node[:kagent][:base_dir] %>/bin
 pid-file = <%= node[:kagent][:pid_file] %>
-agent-log-file = <%= node[:kagent][:base_dir] %>/agent.log
-csr-log-file = <%= node[:kagent][:base_dir] %>/csr.log
+agent-log-file = <%= node[:kagent][:dir] %>/agent.log
+csr-log-file = <%= node[:kagent][:dir] %>/csr.log
 logging-level = <%= node[:kagent][:logging_level] %>
 max-log-size = <%= node[:kagent][:max_log_size] %>
 public-ip = <%= @public_ip %>
@@ -34,6 +34,6 @@ key-file = <%= node[:kagent][:certs_dir] %>/priv.key
 server-keystore = <%= @kstore %>
 server-truststore = <%= @tstore %>
 keystore-script = <%= node[:kagent][:base_dir] %>/keystore.sh
-state-store = <%= node[:kagent][:base_dir]%>/state_store
-<%= @agent_password %>
+state-store = <%= node[:kagent][:etc]%>/state_store
+password = <%= @agent_password %>
 

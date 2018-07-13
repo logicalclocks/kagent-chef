@@ -19,7 +19,7 @@ fi
 
 
 # Check which services are installed on this server
-services=$(grep service <%= node["kagent"]["base_dir"] %>/services | perl -p -e "s/service = //g" | perl -p -e "s/\n/ /g") 2>&1 > /dev/null
+services=$(grep service <%= node["kagent"]["services"] %> | perl -p -e "s/service = //g" | perl -p -e "s/\n/ /g") 2>&1 > /dev/null
 services="kagent $services glassfish-domain1"
 
 echo -e ""

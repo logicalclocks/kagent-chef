@@ -67,16 +67,7 @@ class KConfig:
             self.hadoop_home = self._config.get('agent', 'hadoop-home')
             self.certs_dir = self._config.get('agent', 'certs-dir')
             self.state_store_location = self._config.get('agent', 'state-store')
-
-            # First time we run csr.py, it will generate an agent password and store it in the config.ini file.
-            # The agent password is then stored in the 'hosts' table in hopsworks.
-            if (self._config.has_option("agent", "password")):
-                self.agent_password = self._config.get('agent', 'password')
-            else:
-                self.agent_password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(8))
-                self._config.set('agent', 'password', self.agent_password)
-                with open(self._configFile, 'wb') as configfile:
-                    self._config.write(configfile)
+            self.agent_password = self._config.get('agent', 'password')
 
             # TODO find public/private IP addresses
             self.public_ip = None

@@ -136,8 +136,25 @@ directory node["kagent"]["dir"]  do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode "755"
+  recursive true
   action :create
   not_if { File.directory?("#{node["kagent"]["dir"]}") }
+end
+
+directory node["kagent"]["etc"]  do
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  mode "755"
+  action :create
+  not_if { File.directory?("#{node["kagent"]["etc"]}") }
+end
+
+directory "#{node["kagent"]["etc"]}/state_store" do
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  mode "700"
+  action :create
+  not_if { File.directory?("#{node["kagent"]["etc"]}/state_store") }
 end
 
 directory node["kagent"]["home"] do
@@ -154,22 +171,13 @@ directory node["kagent"]["certs_dir"] do
   action :create
 end
 
-if node["kagent"]["test"] == false && node['install']['upgrade'] == "true"
-  bash "copy_old_config_ini_to_new_version" do
-    user "root"
-    code <<-EOF
-      cp -p #{node["kagent"]["base_dir"]}/config.ini #{node["kagent"]["home"]}
- EOF
-  end
-end
-
 link node["kagent"]["base_dir"] do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   to node["kagent"]["home"]
 end
 
-directory "#{node["kagent"]["base_dir"]}/bin" do
+directory "#{node["kagent"]["home"]}/bin" do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode "755"
@@ -194,7 +202,7 @@ if node["ntp"]["install"] == "true"
   include_recipe "ntp::default"
 end
 
-remote_directory "#{node["kagent"]["base_dir"]}/kagent_utils" do
+remote_directory "#{node["kagent"]["home"]}/kagent_utils" do
   source 'kagent_utils'
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
@@ -213,7 +221,7 @@ bash "install-kagent_utils" do
   EOH
 end
 
-cookbook_file "#{node["kagent"]["base_dir"]}/agent.py" do
+cookbook_file "#{node["kagent"]["home"]}/agent.py" do
   source 'agent.py'
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
@@ -221,7 +229,7 @@ cookbook_file "#{node["kagent"]["base_dir"]}/agent.py" do
 end
 
 ## Touch cssr script log file as kagent user, so agent.py can write to it
-file "#{node["kagent"]["base_dir"]}/csr.log" do
+file "#{node["kagent"]["dir"]}/csr.log" do
   mode '0750'
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
@@ -237,7 +245,7 @@ end
 
 ['start-agent.sh', 'stop-agent.sh', 'restart-agent.sh', 'get-pid.sh'].each do |script|
   Chef::Log.info "Installing #{script}"
-  template "#{node["kagent"]["base_dir"]}/bin/#{script}" do
+  template "#{node["kagent"]["home"]}/bin/#{script}" do
     source "#{script}.erb"
     owner node["kagent"]["user"]
     group node["kagent"]["group"]
@@ -245,19 +253,8 @@ end
   end
 end 
 
-['services'].each do |conf|
-  Chef::Log.info "Installing #{conf}"
-  template "#{node["kagent"]["base_dir"]}/#{conf}" do
-    source "#{conf}.erb"
-    owner node["kagent"]["user"]
-    group node["kagent"]["group"]
-    mode 0644
-    action :create_if_missing
-  end
-end
-
 ['start-service.sh', 'stop-service.sh', 'restart-service.sh', 'status-service.sh'].each do |script|
-  template  "#{node["kagent"]["base_dir"]}/bin/#{script}" do
+  template  "#{node["kagent"]["home"]}/bin/#{script}" do
     source "#{script}.erb"
     owner "root"
     group node["kagent"]["group"]

@@ -14,16 +14,17 @@ default["kagent"]["group"]                         = node["install"]["user"].emp
 default["kagent"]["certs_group"]                   = "certs"
 
 
-default["kagent"]["dir"]                           = node["install"]["dir"].empty? ? "/var/lib" : node["install"]["dir"]
+default["kagent"]["dir"]                           = node["install"]["dir"].empty? ? "/var/lib/kagent" : node["install"]["dir"] + "/kagent"
 default["kagent"]["base_dir"]                      = "#{node["kagent"]["dir"]}/kagent"
 default["kagent"]["home"]                          = "#{node["kagent"]["dir"]}/kagent-#{node["kagent"]["version"]}"
+default["kagent"]["etc"]                           = "#{node["kagent"]["dir"]}/etc"
 
 default["conda"]["default_libs"]                   = %w{ }
 #numpy hdfs3 scikit-learn matplotlib pandas }
 
 default["kagent"]["enabled"]                       = "true"
 
-default["kagent"]["certs_dir"]                     = "#{node["kagent"]["dir"]}/kagent-certs"
+default["kagent"]["certs_dir"]                     = "#{node["kagent"]["dir"]}/host-certs"
 
 # API calls
 default["kagent"]["dashboard"]["api"]["register"]  = "ca/agentservice/register"
@@ -53,7 +54,7 @@ default["kagent"]["ca_app"]                        = "hopsworks-ca"
 default["kagent"]["port"]                          = 8090
 default["kagent"]["heartbeat_interval"]            = 3
 default["kagent"]["watch_interval"]                = 2
-default["kagent"]["pid_file"]                      = node["kagent"]["base_dir"] + "/kagent.pid"
+default["kagent"]["pid_file"]                      = node["kagent"]["dir"] + "/kagent.pid"
 default["kagent"]["logging_level"]                 = "INFO"
 default["kagent"]["max_log_size"]                  = "10000000"
 
@@ -65,7 +66,7 @@ default["kagent"][:default][:gateway_ips]             = ['10.0.2.2']
 
 # services file contains locally installed services
 
-default["kagent"]["services"]                      = node["kagent"]["base_dir"] + "/services"
+default["kagent"]["services"]                      = node["kagent"]["etc"] + "/services"
 
 # name of cluster as shown in Dashboard
 default["kagent"]["cluster"]                       = "Hops"

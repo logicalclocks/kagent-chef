@@ -1,17 +1,27 @@
 require 'inifile'
+require 'securerandom'
 
 service_name = "kagent"
 
 agent_password = ""
-if ::File.exists?("#{node["kagent"]["base_dir"]}/config.ini")
-  ini_file = IniFile.load("#{node["kagent"]["base_dir"]}/config.ini", :comment => ';#')
+
+# First try to read from Chef attributes
+if node["kagent"]["password"].empty? == false
+ agent_password = node["kagent"]["password"]
+end
+
+# If agent password has not been overwritten try to read it from a previous
+# configuration file, in case of an update
+if ::File.exists?("#{node["kagent"]["etc"]}/config.ini") && agent_password.empty?
+  ini_file = IniFile.load("#{node["kagent"]["etc"]}/config.ini", :comment => ';#')
   if ini_file.has_section?("agent")
     agent_password = ini_file["agent"]["password"]
   end
 end  
 
-if node["kagent"]["password"].empty? == false
- agent_password = "password = #{node["kagent"]["password"]}"
+# Otherwise generate a random password
+if agent_password.empty?
+  agent_password = SecureRandom.hex[0...10]
 end
 
 case node[:platform]
@@ -123,7 +133,7 @@ if network_if == ""
 end
 
 
-template "#{node["kagent"]["base_dir"]}/bin/start-all-local-services.sh" do
+template "#{node["kagent"]["home"]}/bin/start-all-local-services.sh" do
   source "start-all-local-services.sh.erb"
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
@@ -131,14 +141,14 @@ template "#{node["kagent"]["base_dir"]}/bin/start-all-local-services.sh" do
 end
 
 
-template "#{node["kagent"]["base_dir"]}/bin/shutdown-all-local-services.sh" do
+template "#{node["kagent"]["home"]}/bin/shutdown-all-local-services.sh" do
   source "shutdown-all-local-services.sh.erb"
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode 0740
 end
 
-template "#{node["kagent"]["base_dir"]}/bin/status-all-local-services.sh" do
+template "#{node["kagent"]["home"]}/bin/status-all-local-services.sh" do
   source "status-all-local-services.sh.erb"
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
@@ -151,7 +161,7 @@ end
 #
 
 
-template "#{node["kagent"]["base_dir"]}/keystore.sh" do
+template "#{node["kagent"]["home"]}/keystore.sh" do
   source "keystore.sh.erb"
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
@@ -194,18 +204,12 @@ if hops_dir == ""
  hops_dir = node['install']['dir'] + "/hadoop"
 end
 
-
-#
-# use :create_if_missing, as if there is a failure during/after the csr.py program,
-# you will get a failure. csr.py adds a password entry to the [agent] section. 
-# The file will be created without the agent->pasword if it is re-run and the password will be lost. 
-#
-template "#{node["kagent"]["base_dir"]}/config.ini" do
+template "#{node["kagent"]["etc"]}/config.ini" do
   source "config.ini.erb"
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode 0600
-  action :create_if_missing
+  action :create
   variables({
               :rest_url => "http://#{dashboard_endpoint}/",
               :rack => '/default',
