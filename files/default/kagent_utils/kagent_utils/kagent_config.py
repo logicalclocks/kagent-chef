@@ -38,7 +38,7 @@ class KConfig:
             self._config.read(self._configFile)
             self.server_url = self._config.get('server', 'url')
             self.register_url = self.server_url + self._config.get('server', 'path-register')
-            self.rotate_url = self.server_url + self._config.get('server', 'path-rotate')
+            self.ca_host_url = self.server_url + self._config.get('server', 'path-ca-host')
             self.login_url = self.server_url + self._config.get('server', 'path-login')
             self.heartbeat_url = self.server_url + self._config.get('server', 'path-heartbeat')
             self.alert_url = self.server_url + self._config.get('server', 'path-alert')

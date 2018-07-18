@@ -39,26 +39,30 @@ class Certificate:
         self._private_key = None
         self._certificate = None
         self._ca_certificate = None
+        self.cn = None
+        self.version = None
         
     def create_csr(self):
         """Generates a cryptographic key-pair and a CSR"""
 
-        crypto_material_state = state_store.get_crypto_material_state()
+        crypto_material_state = self._state_store.get_crypto_material_state()
         
         LOG.info("Creating Certificate Signing Request")
         pKey = self._generate_key()
+        
+        self.version = crypto_material_state.get_version() + 1
         # Create CSR
         csr = crypto.X509Req()
         csr.get_subject().C = "SE"
         csr.get_subject().ST = "Sweden"
         csr.get_subject().L = "Stockholm"
         csr.get_subject().O = "Hopsworks"
-        csr.get_subject().OU = str(crypto_material_state.get_version() + 1)
+        csr.get_subject().OU = str(self.version)
 
         # CN should be the hostname of the server
-        _hostname = self._getHostname()
-        LOG.debug("Hostname used in CN is {}".format(_hostname))
-        csr.get_subject().CN = _hostname
+        self.cn = self._getHostname()
+        LOG.debug("Hostname used in CN is {}".format(self.cn))
+        csr.get_subject().CN = self.cn
         csr.set_pubkey(pKey)
 
         ### For kafka fix
@@ -141,47 +145,55 @@ class Host:
         self._certificate = certificate
         self._state_store = state_store
 
-    def rotate_key(self, session, command_id):
+    def rotate_key(self, session):
         """Public method to perform key rotation"""
-        self._rotate_key_internal(session, command_id)
+        self._sign_csr(session)
+        self._store_new_crypto_state()
+        self._revoke_certificate(session)
 
-    def _rotate_key_internal(self, session, command_id):
+    def _sign_csr(self, session):
+        """Sends CSR to HopsCA and gets the signed X509 certificate"""
         self._login(session)
         payload = {}
         payload["csr"] = self._certificate.csr_req
-        payload["agent-password"] = self._conf.agent_password
-        payload["host-id"] = self._conf.host_id
-        payload["id"] = command_id
-        LOG.info("Rotating service key")
-        LOG.debug("Rotation url is {0}".format(self._conf.rotate_url))
-        response = session.post(self._conf.rotate_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
-
+        LOG.info("Sending CSR")
+        response = session.post(self._conf.ca_host_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
         if (response.status_code != requests.codes.ok):
-            raise Exception('Could not rotate service certificate Status code: {0} Reason: {1}'
+            raise Exception('HopsCA could not sign CSR Status code: {0} - {1}'
                             .format(response.status_code, response.text))
-
-        self._store_new_crypto_state()
-        
         json_response = json.loads(response.content)
         self._extract_crypto_material(json_response)
-    
+
+        
     def register_host(self, session):
         """Public method to register a new host and sign its CSR"""
         registered = False
         while not registered:
             try :
                 self._register_host_internal(session)
+                self._sign_csr(session)
+                self._store_new_crypto_state()
+                if self._certificate.version > 0:
+                    self._revoke_certificate(session)
                 registered = True
             except Exception, e:
                 LOG.warning("Error while registering host {0}, will try again in {1} seconds..."
                             .format(e, self._conf.heartbeat_interval))
                 time.sleep(self._conf.heartbeat_interval)
 
+    def _revoke_certificate(self, session):
+        version_to_revoke = self._certificate.version - 1
+        hostname = self._certificate.cn
+        cert_identifier = hostname + "__" + str(version_to_revoke)
+        params = {"certId": cert_identifier}
+        LOG.info("Revoking certificate {0}".format(cert_identifier))
+        self._login(session)
+        response = session.delete(self._conf.ca_host_url, params=params)
+        
     def _register_host_internal(self, session):
         self._login(session)
         payload = {}
-        payload["csr"] = self._certificate.csr_req
-        payload["agent-password"] = self._conf.agent_password
+        payload["password"] = self._conf.agent_password
         payload["host-id"] = self._conf.host_id
         LOG.info("Registering with Hopsworks")
         response = session.post(self._conf.register_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
@@ -189,12 +201,8 @@ class Host:
         if (response.status_code != requests.codes.ok):
             raise Exception('Could not register: Unknown host id or internal error on the dashboard (Status code: {0} - {1}).'
                             .format(response.status_code, response.text))
-
-        self._store_new_crypto_state()
         
         json_response = json.loads(response.content)
-        self._extract_crypto_material(json_response)
-        
         hadoopHome = json_response["hadoopHome"]
         self._conf.set_conf_value('agent', 'hadoop-home', hadoopHome)
         self._conf.dump_to_file()
@@ -207,10 +215,13 @@ class Host:
 
     def _extract_crypto_material(self, json_response):
         """Extract crypto material from the response from hopsworks-ca and write them locally"""
-        certificate = json_response["pubAgentCert"]
-        caCertificate = json_response["caPubCert"]
+        certificate = json_response["signedCert"]
+        #cat intermediate/certs/intermediate.cert.pem certs/ca.cert.pem > intermediate/certs/ca-chain.cert.pem
+        intermediateCA = json_response["intermediateCaCert"]
+        rootCA = json_response["rootCaCert"]
+        chain_of_trust = intermediateCA + rootCA
         self._certificate.set_certificate(certificate)
-        self._certificate.set_ca_certificate(caCertificate)
+        self._certificate.set_ca_certificate(chain_of_trust)
         self._certificate.store()
         
     def _login(self, session):
@@ -251,10 +262,8 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', default='config.ini', help='Configuration file')
 
     subparser = parser.add_subparsers(dest='operation', help='Operations')
-    parser_i = subparser.add_parser('init', help='Initialize agent')
-
-    parser_r = subparser.add_parser('rotate', help='Rotate node certificate')
-    parser_r.add_argument('-c', '--commandid', help='Command ID from Hopsworks', default='-1')
+    subparser.add_parser('init', help='Initialize agent')
+    subparser.add_parser('rotate', help='Rotate node certificate')
 
     args = parser.parse_args()
 
@@ -301,7 +310,7 @@ if __name__ == '__main__':
         h = Host(config, cert, state_store)
         with requests.Session() as session:
             try:
-                h.rotate_key(session, args.commandid)
+                h.rotate_key(session)
                 subprocess.call(config.keystore_script)
             except Exception, e:
                 LOG.error("Error while rotating key: {0}".format(e))

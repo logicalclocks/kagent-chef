@@ -234,10 +234,6 @@ class Heartbeat():
                 payload["disk-used"] = disk_info.used
                 payload['memory-used'] = memory_info.used
                 payload["services"] = services_list
-                payload["group-name"] = kconfig.group_name
-                payload["hostname"] = kconfig.hostname
-
-                commands_status = {}
 
                 self._system_commands_status_mutex.acquire()
                 system_commands_response = []
@@ -250,7 +246,7 @@ class Heartbeat():
                 for command_to_delete in system_status_to_delete:
                     del self._system_commands_status[command_to_delete['id']]
                 self._system_commands_status_mutex.release()
-                commands_status["systemCommands"] = system_commands_response
+                payload["system-commands"] = system_commands_response
 
                 self._conda_commands_status_mutex.acquire()
                 conda_commands_response = []
@@ -264,16 +260,7 @@ class Heartbeat():
                     del self._conda_commands_status[command_to_delete['id']]
 
                 self._conda_commands_status_mutex.release()
-                commands_status["condaCommands"] = conda_commands_response
-
-                payload["commands-reply"] = commands_status
-
-                logger.debug("Commands reply payload: {0}".format(json.dumps(payload["commands-reply"], indent=2)))
-
-                if (kconfig.public_ip != None):
-                    payload["public-ip"] = kconfig.public_ip
-                else:
-                    payload["public-ip"] = ""
+                payload["conda-commands"] = conda_commands_response
 
                 if (kconfig.private_ip != None):
                     payload["private-ip"] = kconfig.private_ip
@@ -306,7 +293,7 @@ class Heartbeat():
                     theResponse = resp.json()
                     logger.debug("Response from heartbeat is: {0}".format(theResponse))
                     try:
-                        system_commands = theResponse['systemCommands']
+                        system_commands = theResponse['system-commands']
                         for command in system_commands:
                             c = Command('SYSTEM_COMMAND', command)
                             logger.debug("Adding SYSTEM command with ID {0} and status {1} to Handler Queue".format(command['id'], command['status']))
@@ -316,7 +303,7 @@ class Heartbeat():
                             self._system_commands_status[command['id']] = command
                             self._system_commands_status_mutex.release()
 
-                        conda_commands = theResponse['condaCommands']
+                        conda_commands = theResponse['conda-commands']
                         for command in conda_commands:
                             c = Command('CONDA_COMMAND', command)
                             logger.debug("Adding CONDA command with ID {0} and status {1} to Handler Queue".format(command['id'], command['status']))
@@ -463,7 +450,7 @@ class SystemCommandsHandler:
         try:
             logger.debug("Calling certificate rotation script")
             csr_script = kconfig.certs_dir + "/csr.py"
-            subprocess.check_call(["sudo", csr_script, "--config", self._config_file_path, "rotate", "-c", str(command['id'])])
+            subprocess.check_call(["sudo", csr_script, "--config", self._config_file_path, "rotate"])
             command['status'] = 'FINISHED'
             logger.info("Successfully rotated service certificates")
         except CalledProcessError as e:
@@ -527,20 +514,20 @@ class Alert:
             try:
                 headers = {'content-type': 'application/json'}
                 payload = {}
-                payload["Provider"] = "Agent"
+                payload["provider"] = "Agent"
                 payload["host-id"] = kconfig.host_id
-                payload["Time"] = time
-                payload["Plugin"] = "Monitoring"
-                payload["Type"] = "Role"
-                payload["TypeInstance"] = "{0}/{1}/{2}".format(cluster, group, service)
-                payload["DataSource"] = "Agent"
-                payload["CurrentValue"] = status
+                payload["time"] = time
+                payload["plugin"] = "Monitoring"
+                payload["type"] = "Role"
+                payload["type-instance"] = "{0}/{1}/{2}".format(cluster, group, service)
+                payload["datasource"] = "Agent"
+                payload["current-value"] = status
                 if status == True:
-                    payload["Severity"] = "OK"
-                    payload["Message"] = "Service is running: {0}/{1}/{2}".format(cluster, group, service)
+                    payload["severity"] = "OK"
+                    payload["message"] = "Service is running: {0}/{1}/{2}".format(cluster, group, service)
                 else:
-                    payload["Severity"] = "FAILURE"
-                    payload["Message"] = "Service is not running: {0}/{1}/{2}".format(cluster, group, service)
+                    payload["severity"] = "FAILURE"
+                    payload["message"] = "Service is not running: {0}/{1}/{2}".format(cluster, group, service)
 
                 logger.info("Sending Alert...")
                 #auth = (kconfig.server_username, kconfig.server_password)

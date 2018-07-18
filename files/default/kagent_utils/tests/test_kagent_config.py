@@ -15,7 +15,7 @@ class TestKConfig(unittest.TestCase):
     url = 'http://localhost:1337/'
     path_login = 'login/path'
     path_register = 'register/path'
-    path_rotate = 'rotate/path'
+    path_ca_host = 'ca/host/path'
     path_heartbeat = 'heartbeat/path'
     path_alert = 'alert/path'
     username = 'username'
@@ -65,7 +65,7 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.url, config.server_url)
         self.assertEqual(self._toUrl(self.path_login), config.login_url)
         self.assertEqual(self._toUrl(self.path_register), config.register_url)
-        self.assertEqual(self._toUrl(self.path_rotate), config.rotate_url)
+        self.assertEqual(self._toUrl(self.path_ca_host), config.ca_host_url)
         self.assertEqual(self._toUrl(self.path_heartbeat), config.heartbeat_url)
         self.assertEqual(self._toUrl(self.path_alert), config.alert_url)
         self.assertEqual(self.username, config.server_username)
@@ -129,7 +129,7 @@ class TestKConfig(unittest.TestCase):
             'url': self.url,
             'path-login': self.path_login,
             'path-register': self.path_register,
-            'path-rotate': self.path_rotate,
+            'path-ca-host': self.path_ca_host,
             'path-heartbeat': self.path_heartbeat,
             'path-alert': self.path_alert,
             'username': self.username,
