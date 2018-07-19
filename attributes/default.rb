@@ -134,3 +134,11 @@ default["mml"]["url"]                              = node["download_url"] + "/mm
 
 
 default['pydoop']['version']                       = "2.0a3"
+
+default["java"]["jdk_version"]                     = 8
+default["java"]["install_flavor"]                  = "oracle"
+default["java"]["oracle"]["accept_oracle_download_terms"] = true
+# this is for java8 build 181
+default["java"]["jdk"]["8"]["x86_64"]["url"]       = "http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8u181-linux-x64.tar.gz"
+default["java"]["jdk"]["8"]["x86_64"]["checksum"]  = "1845567095bfbfebd42ed0d09397939796d05456290fb20a83c476ba09f991d3"
+
