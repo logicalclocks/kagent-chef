@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # conda <user> <op> -n <proj> [-c <channel> --override-channels] lib[=version]
 # conda $1 -n $2 -c [$3] $4 [$5]
@@ -49,7 +49,7 @@ if [ "$OP" != "UPGRADE" ] ; then
 fi
 
 function exists() {
-    su $EXEC_AS_USER -c "<%= node["conda"]["base_dir"] %>/bin/conda list -n $PROJECT | grep '^${LIB_NAME} '"
+    su "$EXEC_AS_USER" -c "<%= node["conda"]["base_dir"] %>/bin/conda list -n $PROJECT | grep '^${LIB_NAME} '"
     return $?
 }
 
@@ -63,27 +63,27 @@ if [ "$OP" == "INSTALL" ] ; then
   if [ $? -ne 0 ] ; then
       if [ "${INSTALL_TYPE}" == "CONDA" ] ; then
           # this causes problems - '--use-index-cache'
-          su $EXEC_AS_USER -c "<%= node["conda"]["base_dir"] %>/bin/conda install -n $PROJECT -q -y $CHANNEL $LIB"
+          su "$EXEC_AS_USER" -c "<%= node["conda"]["base_dir"] %>/bin/conda install -n $PROJECT -q -y $CHANNEL $LIB"
       elif [ "${INSTALL_TYPE}" == "PIP" ] ; then
-          su $EXEC_AS_USER -c "yes | <%= node["conda"]["base_dir"] %>/envs/${PROJECT}/bin/pip install $LIB"
+          su "$EXEC_AS_USER" -c "yes | <%= node["conda"]["base_dir"] %>/envs/${PROJECT}/bin/pip install $LIB"
       fi
   fi
 elif [ "$OP" == "UPGRADE" ] ; then
   exists
   if [ $? -eq 0 ] ; then
       if [ "${INSTALL_TYPE}" == "CONDA" ] ; then
-          su $EXEC_AS_USER -c "<%= node["conda"]["base_dir"] %>/bin/conda update -n $PROJECT -q -y $CHANNEL $LIB"
+          su "$EXEC_AS_USER" -c "<%= node["conda"]["base_dir"] %>/bin/conda update -n $PROJECT -q -y $CHANNEL $LIB"
       elif [ "${INSTALL_TYPE}" == "PIP" ] ; then
-          su $EXEC_AS_USER -c "yes | <%= node["conda"]["base_dir"] %>/envs/${PROJECT}/bin/pip install --upgrade $LIB"
+          su "$EXEC_AS_USER" -c "yes | <%= node["conda"]["base_dir"] %>/envs/${PROJECT}/bin/pip install --upgrade $LIB"
       fi
   fi
 elif [ "$OP" == "UNINSTALL" ] ; then
   exists
   if [ $? -eq 0 ] ; then
       if [ "${INSTALL_TYPE}" == "CONDA" ] ; then
-          su $EXEC_AS_USER -c "<%= node["conda"]["base_dir"] %>/bin/conda remove -n $PROJECT -q -y $CHANNEL $LIB_NAME"
+          su "$EXEC_AS_USER" -c "<%= node["conda"]["base_dir"] %>/bin/conda remove -n $PROJECT -q -y $CHANNEL $LIB_NAME"
       elif [ "${INSTALL_TYPE}" == "PIP" ] ; then
-          su $EXEC_AS_USER -c "yes | <%= node["conda"]["base_dir"] %>/envs/${PROJECT}/bin/pip uninstall $LIB"
+          su "$EXEC_AS_USER" -c "yes | <%= node["conda"]["base_dir"] %>/envs/${PROJECT}/bin/pip uninstall $LIB"
       fi
   fi
 else

@@ -309,6 +309,13 @@ template "#{node["kagent"]["home"]}/bin/anaconda_env.sh" do
   })
 end
 
+template "#{node["kagent"]["home"]}/bin/anaconda_sync.sh" do
+  source "anaconda_sync.sh.erb"
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  mode "750"
+  action :create
+end
 
 template "/etc/sudoers.d/kagent" do
   source "sudoers.erb"

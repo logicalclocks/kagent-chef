@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 source <%= node[:kagent][:base_dir] %>/bin/get-pid.sh
 
@@ -6,7 +6,7 @@ if [ $? -ne 0 ]; then
     echo "Agent is not running."
 else
     echo "Agent's process-id is $PID. Killing the agent..."
-    kill $PID > /dev/null 2>&1    
+    kill "$PID" > /dev/null 2>&1    
 #    kill $PID
 fi
 #exit $?

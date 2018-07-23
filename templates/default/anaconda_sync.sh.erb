@@ -6,7 +6,7 @@ HOST=$(grep url <%= node['kagent']['etc'] %>/config.ini | sed -e 's/url[ \t]*=[ 
 
 cd <%= node['conda']['dir'] %>
 rm -rf anaconda*
-wget http://${HOST}/anaconda.tgz
+wget "http://${HOST}/anaconda.tgz"
 tar zxf anaconda.tgz
 ln -s anaconda-<%= node['conda']['python'] %>-<%= node['conda']['version'] %> anaconda
 chown -R <%= node['conda']['user'] %> anaconda

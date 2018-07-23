@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 really_stop() 
 {
   echo -n "Do you really want to shutdown all the Hops services running on this server? (y/n) "
-  read ACCEPT
+  read -r ACCEPT
   case $ACCEPT in
    y | Y)
       ;;
@@ -19,7 +19,7 @@ really_stop()
 }
 
 if [ $# -gt 1 ] ; then
-  echo "Invalid parameters $@."
+  echo "Invalid parameters $*."
   echo "Usage: $0 [-f]"
   exit 1
 fi
@@ -38,13 +38,13 @@ fi
 export LC_CTYPE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-stop()
+_stop()
 {
 if [[ $services == *"$active"* ]] ; then
- sudo <%= node["kagent"]["base_dir"] %>/bin/status-service.sh $active > /dev/null
+ sudo <%= node["kagent"]["base_dir"] %>/bin/status-service.sh "$active" > /dev/null
  if [ $? -eq 0 ] ; then
    echo -e "Stopping ${active} ...."
-   sudo service $active stop
+   sudo service "$active" stop
    if [ $? -ne 0 ] ; then 
      echo -e "\e[31mProblem stopping $active \e[0m"
    else 
@@ -59,7 +59,7 @@ fi
 
 
 # Check which services are installed on this server
-services=$(grep service <%= node["kagent"]["services"] %> | perl -p -e "s/service = //g" | perl -p -e "s/\n/ /g") 2>&1 > /dev/null
+services=$(grep service <%= node["kagent"]["services"] %> | perl -p -e "s/service = //g" | perl -p -e "s/\n/ /g") > /dev/null 2>&1
 services="kagent $services glassfish-domain1"
 
 echo -e ""
@@ -67,54 +67,54 @@ echo -e ""
 # Shut down the services in the correct order
 
 active="telegraf"
-stop
+_stop
 active="kagent"
-stop
+_stop
 active="historyserver"
-stop
+_stop
 active="sparkhistoryserver"
-stop
+_stop
 active="elasticsearch"
-stop
+_stop
 active="livy"
-stop
+_stop
 active="epipe"
-stop
+_stop
 active="zookeeper"
-stop
+_stop
 active="kafka"
-stop
+_stop
 active="drelephant"
-stop
+_stop
 active="influxdb"
-stop
+_stop
 active="grafana"
-stop
+_stop
 active="logstash"
-stop
+_stop
 active="kibana"
-stop
+_stop
 active="namenode"
-stop
+_stop
 active="datanode"
-stop
+_stop
 active="resourcemanager"
-stop
+_stop
 active="nodemanager"
-stop
+_stop
 active="dela"
-stop
+_stop
 active="hiveserver2"
-stop
+_stop
 active="hivemetastore"
-stop
+_stop
 active="hivecleaner"
-stop
+_stop
 active="ndb_mgmd"
-stop
+_stop
 active="ndbmtd"
-stop
+_stop
 active="mysqld"
-stop
+_stop
 active="glassfish-domain1"
-stop
+_stop

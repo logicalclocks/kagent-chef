@@ -1,13 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #supress perl warnings
 export LC_CTYPE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-status()
+_status()
 {
 if [[ $services == *"$active"* ]] ; then
- sudo service $active status 2>&1 > /dev/null
+ sudo service "$active" status > /dev/null 2>&1
  if [ $? -eq 0 ] ; then
    echo -e "$active \e[32mrunning \e[0m"
  else
@@ -19,62 +19,62 @@ fi
 
 
 # Check which services are installed on this server
-services=$(grep service <%= node["kagent"]["services"] %> | perl -p -e "s/service = //g" | perl -p -e "s/\n/ /g") 2>&1 > /dev/null
+services=$(grep service <%= node["kagent"]["services"] %> | perl -p -e "s/service = //g" | perl -p -e "s/\n/ /g") > /dev/null 2>&1
 services="kagent $services glassfish-domain1"
 
 echo -e ""
 # Shut down the services in the correct order
 
 active="kagent"
-status
+_status
 active="historyserver"
-status
+_status
 active="sparkhistoryserver"
-status
+_status
 active="elasticsearch"
-status
+_status
 active="livy"
-status
+_status
 active="epipe"
-status
+_status
 active="zookeeper"
-status
+_status
 active="kafka"
-status
+_status
 active="drelephant"
-status
+_status
 active="namenode"
-status
+_status
 active="datanode"
-status
+_status
 active="resourcemanager"
-status
+_status
 active="nodemanager"
-status
+_status
 active="ndb_mgmd"
-status
+_status
 active="ndbmtd"
-status
+_status
 active="mysqld"
-status
+_status
 active="glassfish-domain1"
-status
+_status
 active="grafana"
-status
+_status
 active="influxdb"
-status
+_status
 active="logstash"
-status
+_status
 active="kibana"
-status
+_status
 active="telegraf"
-status
+_status
 active="dela"
-status
+_status
 active="hivemetastore"
-status
+_status
 active="hiveserver2"
-status
+_status
 active="hivecleaner"
-status
+_status
 

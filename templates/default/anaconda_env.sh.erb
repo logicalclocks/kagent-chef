@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ $# -lt 6  ]; then
     echo "<user> <op> <proj> <arg> <offline> <hadoop_home>"
@@ -23,12 +23,12 @@ if [ "$OP" == "CLONE" ] ; then
 fi
 
 function exists() {
-    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda info --envs | grep '^${PROJECT} '"
+    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda info --envs | grep '^${PROJECT} '"
     return $?
 }
 
 if [ "$OP" == "YML" ] ; then
-   su $EXEC_AS_USER -c "export HADOOP_HOME=${HADOOP_DIR}; ${CONDA_DIR}/bin/conda env create -f ${ARG} -n ${PROJECT}"
+   su "$EXEC_AS_USER" -c "export HADOOP_HOME=${HADOOP_DIR}; ${CONDA_DIR}/bin/conda env create -f ${ARG} -n ${PROJECT}"
    exit $?
 
 elif [ "$OP" == "CREATE" ] ; then
@@ -41,77 +41,76 @@ elif [ "$OP" == "CREATE" ] ; then
        ARG=${ARG::-1} # removes the 'X' at the end of the version
        WITH_PYTHON_KERNEL="false"
     fi
-    PY=$(echo $ARG | sed 's/\.//g')
+    PY=${ARG//\./}
     
     if [ "$PY" == "27" ] ; then
-      su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python27 -y -q $OFFLINE"
+      su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python27 -y -q $OFFLINE"
     else
-      su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python36 -y -q $OFFLINE"	
+      su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python36 -y -q $OFFLINE"	
     fi
 
     
 elif [ "$OP" == "LIST_ENVS" ] ; then
-  su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda env list --json > /tmp/conda_envs.json"    
+  su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda env list --json > /tmp/conda_envs.json"    
 
 elif [ "$OP" == "LIST" ] ; then
-  su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda list -n $PROJECT --json > /tmp/${PROJECT}__conda_list.json"
+  su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda list -n $PROJECT --json > /tmp/${PROJECT}__conda_list.json"
 
 elif [ "$OP" == "CLONE" ] ; then
-  su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone $CLONE -y -q $OFFLINE"
+  su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone $CLONE -y -q $OFFLINE"
 
 elif [ "$OP" == "LIB_SYNC" ] ; then
 
-    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda list -n $1 --json > /tmp/${1}.json"
+    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda list -n $1 --json > /tmp/${1}.json"
     if [ $? -ne 0 ] ; then
 	echo "Problem listing conda libraries for project $1"
 	exit 2
     fi
-    if [ ! -f /tmp/${1}.json ] ; then
+    if [ ! -f "/tmp/${1}.json" ] ; then
 	echo "Problem finding fil with list of conda libraries for project $1"
 	exit 2
     fi
-    arr=( $(jq -r '.[].dist_name' /tmp/${1}.json) )
-    printf '%s ' "${arr[@]}" > /tmp/${1}.libs
+    arr=( $(jq -r '.[].dist_name' "/tmp/${1}.json") )
+    printf '%s ' "${arr[@]}" > "/tmp/${1}.libs"
 
     # kagent has to take the one big json object and save it locally as one json object per project.
-    server_libs=( $(jq -r  '.[].library' /tmp/${1}_server.json) )
+    server_libs=( $(jq -r  '.[].library' "/tmp/${1}_server.json") )
 
     # For all the libs installed in Hopsworks, check each one is installed in the local conda environment
     #for i in "${arr[@]}"
     for i in "${server_libs[@]}"
     do
 	# If i cannot find the library installed locally, install it in this project
-	grep $i /tmp/${1}.libs
+	grep "$i" "/tmp/${1}.libs"
 	if [ $? -ne 0 ] ; then
 	    su <%= node['conda']['user'] %> -c "${CONDA_DIR}/bin/conda install -n $1 -q -y $2 $i"
 	fi
     done
     
 elif [ "$OP" == "REMOVE" ] ; then
-    PROJECTUSERNAME=$ARG
     exists    # If the env has already been removed, return OK
     if [ $? -ne 0 ] ; then
        echo "Cannot remove environment that doesn't exist"
        exit 0
     fi
-    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda-env remove -n $PROJECT -y -q"
-    rm -rf ${CONDA_DIR}/envs/${PROJECT}
+    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda-env remove -n $PROJECT -y -q"
+    rm -rf "${CONDA_DIR}/envs/${PROJECT}"
     if [ "${WITH_PYTHON_KERNEL}" == "true" ] ; then
-	kernelsToDelete=$(sudo jupyter-kernelspec list | grep ${PROJECT}__ | sed -e 's/.*\/usr\/local\/share\/jupyter\/kernels\///g')
+	kernelsToDelete=$(sudo jupyter-kernelspec list | grep "${PROJECT}__" | sed -e 's/.*\/usr\/local\/share\/jupyter\/kernels\///g')
         echo "Kernels to delete:"
-        echo $kernelsToDelete
+        echo "$kernelsToDelete"
         if [ "$kernelsToDelete" != "" ] ; then
 	  while read -r kernel; do
              echo "sudo jupyter-kernelspec remove -y -f ${kernel}"
-             sudo jupyter-kernelspec remove -y -f ${kernel} || 0
+             sudo jupyter-kernelspec remove -y -f "${kernel}" || 0
 	  done <<< "$kernelsToDelete"
         fi
     fi
 
 elif [ "$OP" == "CLEAN" ] ; then
-    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda clean --all -y"
+    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda clean --all -y"
 elif [ "$OP" == "UPDATE" ] ; then
-    su $EXEC_AS_USER -c "${CONDA_DIR}/bin/conda update conda -y"
+    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda update conda -y"
 else
     exit -1
 fi

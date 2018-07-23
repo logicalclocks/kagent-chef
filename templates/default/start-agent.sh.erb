@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # returns '0' if agent started successfully
 # returns '1' if agent already running
 
@@ -10,7 +10,7 @@ if [ $? -ne 0 ]; then
         sleep 1
         PID_FILE=<%= node[:kagent][:pid_file] %>
         if [ -e $PID_FILE ] ; then
-          PID=`cat $PID_FILE`
+          PID=$(cat $PID_FILE)
           echo "PID is $PID"
         fi
 else

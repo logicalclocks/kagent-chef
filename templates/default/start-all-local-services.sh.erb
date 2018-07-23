@@ -1,20 +1,20 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #supress perl warnings
 export LC_CTYPE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-start()
+_start()
 {
 if [[ $services == *"$active"* ]] ; then
- sudo <%= node["kagent"]["base_dir"] %>/bin/status-service.sh $active > /dev/null
+ sudo <%= node["kagent"]["base_dir"] %>/bin/status-service.sh "$active" > /dev/null
  if [ $? -ne 0 ] ; then
    echo -e "Starting ${active} ...."
-   sudo service $active start 2>&1 > /dev/null
+   sudo service "$active" start > /dev/null 2>&1
    if [ $? -ne 0 ] ; then 
      echo -e "\e[31mProblem starting $active \e[0m"
      echo -e "Trying one more time to start $active...."
-     sudo service $active start 2>&1 > /dev/null
+     sudo service "$active" start > /dev/null 2>&1
      if [ $? -ne 0 ] ; then 
         echo -e "No, didn't start the 2nd time either."
      else
@@ -31,61 +31,61 @@ fi
 }
 
 # Check which services are installed on this server
-services=$(grep service <%= node["kagent"]["services"] %> | perl -p -e "s/service = //g" | perl -p -e "s/\n/ /g") 2>&1 > /dev/null
+services=$(grep service <%= node["kagent"]["services"] %> | perl -p -e "s/service = //g" | perl -p -e "s/\n/ /g") > /dev/null 2>&1
 services="kagent $services glassfish-domain1"
 
 echo -e ""
 # Shut down the services in the correct order
 
 active="ndb_mgmd"
-start
+_start
 active="ndbmtd"
-start
+_start
 active="mysqld"
-start
+_start
 active="zookeeper"
-start
+_start
 active="kafka"
-start
+_start
 active="namenode"
-start
+_start
 active="datanode"
-start
+_start
 active="resourcemanager"
-start
+_start
 active="nodemanager"
-start
+_start
 active="glassfish-domain1"
-start
+_start
 active="historyserver"
-start
+_start
 active="sparkhistoryserver"
-start
+_start
 active="elasticsearch"
-start
+_start
 active="livy"
-start
+_start
 active="epipe"
-start
+_start
 active="drelephant"
-start
+_start
 active="influxdb"
-start
+_start
 active="grafana"
-start
+_start
 active="logstash"
-start
+_start
 active="kibana"
-start
+_start
 active="kagent"
-start
+_start
 active="telegraf"
-start
+_start
 active="dela"
-start
+_start
 active="hivemetastore"
-start
+_start
 active="hiveserver2"
-start
+_start
 active="hivecleaner"
-start
+_start
