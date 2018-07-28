@@ -5,9 +5,9 @@ require 'resolv'
 # https://github.com/caskdata/hadoop_cookbook/blob/master/libraries/helpers.rb
 # hostname -fqdn   is used by the tasktracker
 
-module Kagent 
+module Kagent
   module Helpers
-# If the public-ip is empty, return a private-ip instead    
+# If the public-ip is empty, return a private-ip instead
     def my_public_ip()
       if node.attribute?("public_ips") == false || node["public_ips"].empty?
          Chef::Log.error "Could not find a public_ip for this host"
@@ -29,15 +29,29 @@ module Kagent
     end
 
     def my_private_ip()
-      if node.attribute?("private_ips") == false || node["private_ips"].empty?      
+      if node.attribute?("private_ips") == false || node["private_ips"].empty?
          Chef::Log.error "Could not find a private_ip for this host"
          raise ArgumentError, "No private_ip found", node['host']
       end
       return node["private_ips"][0]
     end
 
+    def my_hostname()
+      my_ip = my_private_ip()
+
+      begin
+        hostf = Resolv::Hosts.new
+        h = hostf.getname("#{my_ip}")
+      rescue
+        dns = Resolv::DNS.new
+        h = dns.getname("#{my_ip}")
+      end
+
+      return h
+    end
+
     def my_gateway_ip()
-      if node.attribute?("gateway_ips") == false || node["gateway_ips"].empty?      
+      if node.attribute?("gateway_ips") == false || node["gateway_ips"].empty?
          Chef::Log.error "Could not find a gateway_ip for this host"
          raise ArgumentError, "No gateway_ip found", node['host']
       end
@@ -46,7 +60,7 @@ module Kagent
 
 
     def valid_cookbook(cookbook)
-      if node.attribute?(cookbook) == false 
+      if node.attribute?(cookbook) == false
         Chef::Log.error "Invalid cookbook name: #{cookbook}"
         raise ArgumentError, "Invalid Cookbook name", cookbook
       end
@@ -54,7 +68,7 @@ module Kagent
 
     def valid_recipe(cookbook, recipe)
       valid_cookbook(cookbook)
-      if node[cookbook].attribute?(recipe) == false 
+      if node[cookbook].attribute?(recipe) == false
         Chef::Log.error "Invalid cookbook/recipe name: #{cookbook}/#{recipe}"
         raise ArgumentError, "Invalid Recipe fo cookbook #{cookbook}", recipe
       end
@@ -62,7 +76,7 @@ module Kagent
 
     def valid_attribute(cookbook, recipe, attr)
       valid_recipe(cookbook, recipe)
-      if node[cookbook][recipe].attribute?(attr) == false 
+      if node[cookbook][recipe].attribute?(attr) == false
         Chef::Log.error "Invalid cookbook/recipe/attr name: #{cookbook}/#{recipe}/#{attr}"
         raise ArgumentError, "Invalid Attribute for Recipe to cookbook #{cookbook}/#{recipe}", attr
       end
@@ -114,12 +128,12 @@ module Kagent
               # end
               h = host
               #h = "10.0.2.15"
-            else 
+            else
               raise "You need to supply a valid list  of ips for #{cookbook}/#{recipe}"
             end
           end
         end
-        hostnames << h 
+        hostnames << h
       end
       hostnames
     end
@@ -127,7 +141,7 @@ module Kagent
     def previous_version()
       node['install']['versions'].split(',')[-1]
     end
-    
+
     def set_my_hostname()
       my_ip = my_private_ip()
       my_dns_name = my_dns_name()
@@ -188,7 +202,7 @@ module Kagent
       str = str.chop
       str
     end
-    
+
     def ndb_connectstring()
       connectString = ""
       for n in node["ndb"]["mgmd"]["private_ips"]
@@ -198,7 +212,7 @@ module Kagent
       connectString = connectString.chop
       node.normal["ndb"]["connectstring"] = connectString
     end
-    
+
     def jdbc_url()
       # The first mysqld that a NN should contact is localhost
       # On failure, contact other mysqlds. We should configure

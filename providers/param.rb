@@ -7,8 +7,11 @@
 
 require 'json'
 
-def deep_merge(h1, h2)
-  h1.merge(h2) { |key, h1_elem, h2_elem| deep_merge(h1_elem, h2_elem) }
+class ::Hash
+    def deep_merge(second)
+        merger = proc { |key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2, &merger) : Array === v1 && Array === v2 ? v1 | v2 : [:undefined, nil, :nil].include?(v2) ? v1 : v2 }
+        self.merge(second.to_h, &merger)
+    end
 end
 
 action :add do
@@ -31,17 +34,19 @@ action :add do
   else
      entry_hash = {"#{cookbook}" => { "#{recipe}" => { "#{subrecipe}" => { "#{subsubrecipe}" => { "#{param}" => "#{value}" }}}}}
   end
+
   filename = "#{path}/#{executing_cookbook}__#{executing_recipe}__out.json"
-# 'w+' : Read and write access. Pointer is positioned at start of file.
-# We will overwrite the file with a new json object.
-  file = ::File.new(filename, "w+")
+
   if ::File.file?(filename) && (not ::File.zero?(filename))
-     data_json = JSON.parse(file)
+     file_content = ::File.read(filename)
+     file_json = JSON.parse(file_content)
+     data_hash = file_json.deep_merge(entry_hash)
   else
-     data_hash = Hash.new
+     data_hash = entry_hash
   end
 
-  data_hash = deep_merge(data_hash, entry_hash)
+  # We will overwrite the file with a new json object.
+  file = ::File.new(filename, "w+")
   file.puts(JSON.pretty_generate(data_hash))
   file.close
 end
