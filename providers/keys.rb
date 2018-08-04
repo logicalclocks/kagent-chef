@@ -20,6 +20,7 @@ action :csr do
       cd #{node["kagent"]["certs_dir"]}
       chown -R root:#{node["kagent"]["certs_group"]} #{node["kagent"]["keystore_dir"]}
       chown root:#{node["kagent"]["certs_group"]} pub.pem ca_pub.pem priv.key
+      rm -f #{node["kagent"]["base_dir"]}/kagent.pid
     EOH
   end
 
