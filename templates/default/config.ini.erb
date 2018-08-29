@@ -36,4 +36,6 @@ server-truststore = <%= @tstore %>
 keystore-script = <%= node[:kagent][:base_dir] %>/keystore.sh
 state-store = <%= node[:kagent][:etc]%>/state_store
 password = <%= @agent_password %>
-
+conda-dir = <%= node[:conda][:home] %>
+conda-python-versions = <%= node[:tensorflow][:python_conda_versions] %>
+conda-gc-interval = <%= node[:kagent][:conda_gc_interval] %>

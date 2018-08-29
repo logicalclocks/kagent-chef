@@ -107,7 +107,7 @@ end
 
 bash "install_python" do
   user 'root'
-  ignore_failure true
+  ignore_failure false
   code <<-EOF
   pip install --upgrade inifile
   pip install --upgrade requests

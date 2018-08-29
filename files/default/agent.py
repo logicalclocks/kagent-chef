@@ -45,7 +45,10 @@ import io
 import tempfile
 import argparse
 
+import kagent_utils
 from kagent_utils import KConfig
+from kagent_utils import IntervalParser
+from kagent_utils import UnrecognizedIntervalException
 
 global mysql_process
 mysql_process = None
@@ -96,6 +99,12 @@ def setupLogging(kconfig):
     logger.addHandler(logger_file_handler)
     logger.addHandler(logger_stream_handler)
     logger.setLevel(kconfig.logging_level)
+
+    # Setup kagent_utils logger
+    kagent_utils_logger = logging.getLogger('kagent_utils')
+    kagent_utils_logger.setLevel(kconfig.logging_level)
+    kagent_utils_logger.addHandler(logger_file_handler)
+    kagent_utils_logger.addHandler(logger_stream_handler)
 
     logger.info("Hops-Kagent started.")
     logger.info("Heartbeat URL: {0}".format(kconfig.heartbeat_url))
@@ -166,13 +175,18 @@ class Util():
 class Heartbeat():
     daemon_threads = True
     def __init__(self, commands_queue, system_commands_status, system_commands_status_mutex,
-                 conda_commands_status, conda_commands_status_mutex):
+                 conda_commands_status, conda_commands_status_mutex, conda_report_interval,
+                 conda_envs_monitor_list):
         self._commands_queue = commands_queue
         self._system_commands_status = system_commands_status
         self._system_commands_status_mutex = system_commands_status_mutex
         self._conda_commands_status = conda_commands_status
         self._conda_commands_status_mutex = conda_commands_status_mutex
-
+        self._conda_envs_monitor_list = conda_envs_monitor_list
+        # in ms
+        self._conda_report_interval = conda_report_interval
+        self._last_conda_report = long(time.mktime(datetime.now().timetuple()) * 1000)
+            
         while True:
             self.send()
             time.sleep(kconfig.heartbeat_interval)
@@ -207,6 +221,20 @@ class Heartbeat():
                 ob = ob[key]
             return ob
 
+    def is_conda_gc_triggered(self):
+        conda_report = False
+        CONDA_CONTROL = '/tmp/trigger_conda_gc'
+        if os.path.isfile(CONDA_CONTROL):
+            with open(CONDA_CONTROL, 'r') as fd:
+                if int(next(fd)) == 1:
+                    conda_report = True
+
+            if conda_report:
+                with open(CONDA_CONTROL, 'w') as fd:
+                    fd.write('0')
+
+        return conda_report
+        
     def send(self):
         global logged_in
         global session
@@ -234,6 +262,20 @@ class Heartbeat():
                 payload["disk-used"] = disk_info.used
                 payload['memory-used'] = memory_info.used
                 payload["services"] = services_list
+                
+                now_in_ms = now * 1000
+                time_to_report = (now_in_ms - self._last_conda_report) > self._conda_report_interval
+                if self.is_conda_gc_triggered() or time_to_report:
+                    logger.debug("Triggering Conda GC")
+                    envs_slice = self._conda_envs_monitor_list.slice(10)
+                    if envs_slice is not None:
+                        logger.debug("Investigating Anaconda envs for GC: {0}".format(envs_slice))
+                        payload["conda-report"] = list(envs_slice)
+                    else:
+                        logger.debug("No Anaconda envs for GC")
+                    self._last_conda_report = now_in_ms
+                    
+                commands_status = {}
 
                 self._system_commands_status_mutex.acquire()
                 system_commands_response = []
@@ -430,10 +472,11 @@ class CondaCommandsHandler:
 
 
 class SystemCommandsHandler:
-    def __init__(self, system_commands_status, system_commands_status_mutex, config_file_path):
+    def __init__(self, system_commands_status, system_commands_status_mutex, config_file_path, conda_envs_monitor_list):
         self._system_commands_status = system_commands_status
         self._system_commands_status_mutex = system_commands_status_mutex
         self._config_file_path = config_file_path
+        self._conda_envs_monitor_list = conda_envs_monitor_list
 
     def handle(self, command):
         if command is None:
@@ -443,9 +486,31 @@ class SystemCommandsHandler:
 
         if op == 'SERVICE_KEY_ROTATION':
             self._service_key_rotation(command)
+        elif op == 'CONDA_GC':
+            self._conda_env_garbage_collection(command)
         else:
             logger.error("Unknown OP {0} for system command {1}".format(op, command))
 
+    def _conda_env_garbage_collection(self, command):
+        to_be_removed = json.loads(command['arguments'])
+        exec_user = command['execUser']
+
+        conda_bin = os.path.join(kconfig.conda_dir, 'bin', 'conda')
+        for env in to_be_removed:
+            try:
+                script = os.path.join(kconfig.bin_dir, 'anaconda_env.sh')
+                subprocess.check_call(['sudo', script, exec_user, 'REMOVE', env, '', '', ''])
+                logger.info("Removed Anaconda environment {0}".format(env))
+                self._conda_envs_monitor_list.remove(env)
+            except CalledProcessError as e:
+                logger.warn("Could not remove environment {0} - exit code {1}".format(env, e.returncode))
+        command['status'] = 'FINISHED'
+        try:
+            self._system_commands_status_mutex.acquire()
+            self._system_commands_status[command['id']] = command
+        finally:
+            self._system_commands_status_mutex.release()
+            
     def _service_key_rotation(self, command):
         try:
             logger.debug("Calling certificate rotation script")
@@ -470,6 +535,23 @@ class Command:
     def __init__(self, command_type, command):
         self._command_type = command_type
         self._command = command
+        if command.has_key('priority'):
+            self._priority = command['priority']
+        else:
+            self._priority = 0
+
+    def __cmp__(self, other):
+        if self._priority < other._priority:
+            return 1
+        elif self._priority > other._priority:
+            return -1
+        else:
+            if self._command['id'] < other._command['id']:
+                return -1
+            elif self._command['id'] > other._command['id']:
+                return 1
+            else:
+                return 0
 
     def get_command_type(self):
         return self._command_type
@@ -496,12 +578,15 @@ class Handler(threading.Thread):
             command_type = c.get_command_type()
             command = c.get_command()
 
-            if (command_type == 'CONDA_COMMAND'):
-                logger.info("Conda command")
-                self._condaCommandsHandler.handle(command)
-            elif (command_type == 'SYSTEM_COMMAND'):
-                logger.info("System command")
-                self._systemCommandsHandler.handle(command)
+            try:
+                if (command_type == 'CONDA_COMMAND'):
+                    logger.info("Conda command")
+                    self._condaCommandsHandler.handle(command)
+                elif (command_type == 'SYSTEM_COMMAND'):
+                    logger.info("System command")
+                    self._systemCommandsHandler.handle(command)
+            except Exception as e:
+                logger.error(">>> Error while handling command {0} - Error: {1}".format(c.get_command(), e))
 
 class Alert:
     @staticmethod
@@ -936,13 +1021,24 @@ if __name__ == '__main__':
     file(kconfig.agent_pidfile, 'w').write(agent_pid)
     logger.info("Hops Kagent PID: {0}".format(agent_pid))
 
+    interval_parser = IntervalParser()
+    conda_report_interval = interval_parser.get_interval_in_ms(kconfig.conda_gc_interval)
+    conda_envs_monitor_list = kagent_utils.ConcurrentCircularLinkedList()
+    watcher_action = kagent_utils.CondaEnvsWatcherAction(conda_envs_monitor_list, kconfig)
+    watcher_interval = int(interval_parser.get_interval_in_s(kconfig.conda_gc_interval) / 2)
+    # Default interval to 1 second. We don't want the watcher to spin like crazy
+    conda_envs_watcher = kagent_utils.Watcher(watcher_action, max(1, watcher_interval), name="conda_gc_watcher")
+    conda_envs_watcher.setDaemon(True)
+    conda_envs_watcher.start()
+    
     # Heartbeat, process watch (alerts) and REST API are available after the agent registers successfully
-    commands_queue = Queue.Queue(maxsize=100)
+    commands_queue = Queue.PriorityQueue(maxsize=100)
 
     system_commands_status = {}
     system_commands_status_mutex = Lock()
     config_file_path = os.path.abspath(args.config)
-    system_commands_handler = SystemCommandsHandler(system_commands_status, system_commands_status_mutex, config_file_path)
+    system_commands_handler = SystemCommandsHandler(system_commands_status, system_commands_status_mutex,
+                                                    config_file_path, conda_envs_monitor_list)
 
     conda_commands_status = {}
     conda_commands_status_mutex = Lock()
@@ -953,7 +1049,8 @@ if __name__ == '__main__':
     commands_handler.start()
 
     hb_thread = threading.Thread(target=Heartbeat, args=(commands_queue, system_commands_status, system_commands_status_mutex,
-                                                         conda_commands_status, conda_commands_status_mutex))
+                                                         conda_commands_status, conda_commands_status_mutex, conda_report_interval,
+                                                         conda_envs_monitor_list))
     hb_thread.setDaemon(True)
     hb_thread.start()
 

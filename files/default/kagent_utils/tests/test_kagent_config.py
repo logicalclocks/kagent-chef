@@ -47,6 +47,9 @@ class TestKConfig(unittest.TestCase):
     keystore_script = 'path/to/keystore_script'
     state_store = 'path/to/state_store'
     agent_password = 'agent_password'
+    conda_dir = 'path/to/conda'
+    conda_python_versions = '2.7, 3,6'
+    conda_gc_interval = '2h'
 
     def setUp(self):
         self.config_file = tempfile.mkstemp(prefix='kagent_config_')
@@ -100,6 +103,9 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.keystore_script, config.keystore_script)
         self.assertEqual(self.state_store, config.state_store_location)
         self.assertEqual(self.agent_password, config.agent_password)
+        self.assertEqual(self.conda_dir, config.conda_dir)
+        self.assertEqual(self.conda_python_versions, config.conda_python_versions)
+        self.assertEqual(self.conda_gc_interval, config.conda_gc_interval)
 
     ## Let KConfig figure out values for these properties
     def test_parse_partial_config(self):
@@ -162,7 +168,10 @@ class TestKConfig(unittest.TestCase):
                 'server-truststore': self.server_truststore,
                 'keystore-script': self.keystore_script,
                 'state-store': self.state_store,
-                'password': self.agent_password
+                'password': self.agent_password,
+                'conda-dir': self.conda_dir,
+                'conda-python-versions': self.conda_python_versions,
+                'conda-gc-interval': self.conda_gc_interval
             }
         else:
             config['agent'] = {
@@ -187,7 +196,11 @@ class TestKConfig(unittest.TestCase):
                 'server-keystore': self.server_keystore,
                 'server-truststore': self.server_truststore,
                 'keystore-script': self.keystore_script,
-                'state-store': self.state_store
+                'state-store': self.state_store,
+                'password': self.agent_password,
+                'conda-dir': self.conda_dir,
+                'conda-python-versions': self.conda_python_versions,
+                'conda-gc-interval': self.conda_gc_interval
             }
             
         with open(self.config_file[1], 'w') as config_fd:

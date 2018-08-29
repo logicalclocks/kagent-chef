@@ -102,6 +102,10 @@ attribute "kagent/network/interface",
           :description => "Define the network intefaces (eth0, enp0s3)",
           :type => "string"
 
+attribute "kagent/conda_gc_interval",
+          :description => "Define interval for kagent to run Anaconda garbage collection, suffix: ms, s, m, h, d. Default: 1h",
+          :type => "string"
+
 attribute "ntp/install",
           :description => "Install Network Time Protocol (default: false)",
           :type => "string"
@@ -187,3 +191,8 @@ attribute "hops/dir",
 attribute "jupyter/python",
           :description => "'true' (default) to enable the python interpreter, 'false' to disable it (more secure). ",
           :type => 'string'
+
+attribute "tensorflow/python_conda_versions",
+          :description => "CSV of python versions to be used as base environments for Anaconda",
+          :type => "string"
+
