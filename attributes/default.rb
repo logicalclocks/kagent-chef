@@ -120,18 +120,10 @@ default["services"]["enabled"]                     = "true"
 
 default["certs"]["dir"]                            = node["install"]["dir"].empty? ? node["kagent"]["dir"] + "/certs-dir" : node["install"]["dir"] + "/certs-dir"
 
-default["tensorflow"]["version"]                   = "1.10.0"
-default["tensorflow"]["py36"]["url"]               = node["download_url"] + "/tensorflow-" + node["tensorflow"]["version"] + "-cp36-cp36m-manylinux1_x86_64.whl"
-default["tensorflow"]["py36_gpu"]["url"]           = node["download_url"] + "/tensorflow_gpu-" + node["tensorflow"]["version"] + "-cp36-cp36m-manylinux1_x86_64.whl"
-default["tensorflow"]["py27"]["url"]               = node["download_url"] + "/tensorflow-" + node["tensorflow"]["version"] + "-cp27-cp27mu-manylinux1_x86_64.whl"
-default["tensorflow"]["py27_gpu"]["url"]           = node["download_url"] + "/tensorflow_gpu-" + node["tensorflow"]["version"] + "-cp27-cp27mu-manylinux1_x86_64.whl"
-default['tensorflow']['python_conda_versions']     = "2.7, 3.6"
-
 default['mml']['version']                          = "0.13"
 # https://mmlspark.azureedge.net/pip/mmlspark-0.12-py2.py3-none-any.whl
 # spark.jars.packages=Azure:mmlspark:0.12
 default["mml"]["url"]                              = node["download_url"] + "/mmlspark-" + node['mml']['version'] + "-py2.py3-none-any.whl"
-
 
 default['pydoop']['version']                       = "2.0a3"
 
@@ -141,4 +133,6 @@ default["java"]["oracle"]["accept_oracle_download_terms"] = true
 # this is for java8 build 181
 default["java"]["jdk"]["8"]["x86_64"]["url"]       = "http://download.oracle.com/otn-pub/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8u181-linux-x64.tar.gz"
 default["java"]["jdk"]["8"]["x86_64"]["checksum"]  = "1845567095bfbfebd42ed0d09397939796d05456290fb20a83c476ba09f991d3"
+
 default["kagent"]["conda_gc_interval"]             = "1h"
+default["kagent"]["python_conda_versions"]         = "2.7, 3.6"
