@@ -88,7 +88,7 @@ class KConfig:
                     self.hostname = socket.gethostbyaddr(self.eth0_ip)[0]
                 except socket.herror:
                     try:
-                        self.hostname = socket.gethostname()
+                        self.hostname = socket.getfqdn()
                     except socket.herror:
                         self.hostname = "localhost"
 

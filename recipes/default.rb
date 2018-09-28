@@ -174,14 +174,7 @@ end
 
 # Default to hostname found in /etc/hosts, but allow user to override it.
 # First with DNS. Highest priority if user supplies the actual hostname
-hostname = node['hostname']  
-if node['kagent']['dns'].eql? "true"
-  hostname = node['fqdn']
-end
-
-if private_ip.eql? "127.0.0.1"
-  hostname="localhost"
-end  
+hostname = node['fqdn']  
 
 if node["kagent"].attribute?("hostname")
    if node["kagent"]["hostname"].empty? == false
