@@ -54,7 +54,6 @@ class KConfig:
             self.agent_pidfile = self._config.get('agent', 'pid-file')
             self.network_interface = self._config.get('agent', 'network-interface')
             self.certificate_file = self._config.get('agent', 'certificate-file')
-            self.ca_file = self._config.get('agent', 'ca-file')
             self.key_file = self._config.get('agent', 'key-file')
             self.server_keystore = self._config.get('agent', 'server-keystore')
             self.server_truststore = self._config.get('agent', 'server-truststore')

@@ -40,7 +40,6 @@ class TestKConfig(unittest.TestCase):
     hadoop_home = 'path/to/hadoop_home'
     certs_dir = 'path/to/certs_dir'
     certificate_file = 'path/to/certificate'
-    ca_file = 'path/to/ca'
     key_file = 'path/to/key'
     server_keystore = 'path/to/server_keystore'
     server_truststore = 'path/to/server_truststore'
@@ -162,7 +161,6 @@ class TestKConfig(unittest.TestCase):
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,
                 'certificate-file': self.certificate_file,
-                'ca-file': self.ca_file,
                 'key-file': self.key_file,
                 'server-keystore': self.server_keystore,
                 'server-truststore': self.server_truststore,
@@ -191,7 +189,6 @@ class TestKConfig(unittest.TestCase):
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,
                 'certificate-file': self.certificate_file,
-                'ca-file': self.ca_file,
                 'key-file': self.key_file,
                 'server-keystore': self.server_keystore,
                 'server-truststore': self.server_truststore,

@@ -38,7 +38,8 @@ class Certificate:
         self._state_store = state_store
         self._private_key = None
         self._certificate = None
-        self._ca_certificate = None
+        self._intermediate_ca = None
+        self._root_ca = None
         self.cn = None
         self.version = None
         
@@ -79,14 +80,6 @@ class Certificate:
         self._private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, pKey)
         LOG.debug("Finished CSR")
 
-    def set_certificate(self, certificate):
-        """Setter for a host certificate returned by Hopsworks"""
-        self._certificate = certificate
-
-    def set_ca_certificate(self, ca_certificate):
-        """Setter for CA certificate returned by Hopsworks"""
-        self._ca_certificate = ca_certificate
-
     def keystoresExist(self):
         """Checks if keystore, truststore and client_truststore exist in the predefined directory"""
         return exists(self._config.server_keystore) and exists(self._config.server_truststore)
@@ -96,10 +89,16 @@ class Certificate:
         LOG.debug("Storing certificate, key and CA certificate")
         cert_dir = os.path.dirname(os.path.abspath(__file__))
 
-        if self._ca_certificate is not None:
-            with open(join(cert_dir, self._config.ca_file), "wt") as fd:
-                fd.write(self._ca_certificate)
-                
+        intermediate_ca_file = join(cert_dir, "hops_intermediate_ca.pem")
+        if self._intermediate_ca is not None:
+            with open(intermediate_ca_file, "wt") as fd:
+                fd.write(self._intermediate_ca)
+
+        root_ca_file = join(cert_dir, "hops_root_ca.pem")
+        if self._root_ca is not None:
+            with open(root_ca_file, "wt") as fd:
+                fd.write(self._root_ca)
+        
         if self._private_key is not None:
             with open(join(cert_dir, self._config.key_file), "wt") as fd:
                 fd.write(self._private_key)
@@ -216,12 +215,12 @@ class Host:
     def _extract_crypto_material(self, json_response):
         """Extract crypto material from the response from hopsworks-ca and write them locally"""
         certificate = json_response["signedCert"]
-        #cat intermediate/certs/intermediate.cert.pem certs/ca.cert.pem > intermediate/certs/ca-chain.cert.pem
         intermediateCA = json_response["intermediateCaCert"]
         rootCA = json_response["rootCaCert"]
-        chain_of_trust = intermediateCA + rootCA
-        self._certificate.set_certificate(certificate)
-        self._certificate.set_ca_certificate(chain_of_trust)
+        
+        self._certificate._certificate = certificate
+        self._certificate._intermediate_ca = intermediateCA
+        self._certificate._root_ca = rootCA
         self._certificate.store()
         
     def _login(self, session):

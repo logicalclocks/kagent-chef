@@ -29,7 +29,6 @@ group-name = <%= node[:kagent][:group_name] %>
 hadoop-home = <%= @hops_dir %>/hadoop
 certs-dir = <%= node[:kagent][:certs_dir] %>
 certificate-file = <%= node[:kagent][:certs_dir] %>/pub.pem
-ca-file = <%= node[:kagent][:certs_dir] %>/ca_pub.pem
 key-file = <%= node[:kagent][:certs_dir] %>/priv.key
 server-keystore = <%= @kstore %>
 server-truststore = <%= @tstore %>
