@@ -36,5 +36,5 @@ keystore-script = <%= node[:kagent][:base_dir] %>/keystore.sh
 state-store = <%= node[:kagent][:etc]%>/state_store
 password = <%= @agent_password %>
 conda-dir = <%= node[:conda][:home] %>
-conda-python-versions = <%= node[:kagent][:python_conda_versions] %>
+conda-envs-blacklist = <%= @blacklisted_envs %>
 conda-gc-interval = <%= node[:kagent][:conda_gc_interval] %>

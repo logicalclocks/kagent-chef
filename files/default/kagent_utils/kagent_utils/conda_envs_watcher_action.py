@@ -18,13 +18,8 @@ class CondaEnvsWatcherAction(watcher_action.WatcherAction):
         self._blacklisted_envs = set()
         self._blacklisted_envs.add('anaconda')
         self._blacklisted_envs.add(os.path.basename(os.path.normpath(kconfig.conda_dir)))
-        # python27 python36
-        [self._bl_python_env_name(p) for p in kconfig.conda_python_versions.split(',')]
-
-    def _bl_python_env_name(self, version):
-        stripped = version.strip()
-        env_name = "python{0}".format(stripped.replace('.', ''))
-        self._blacklisted_envs.add(env_name)
+        # python27 python36 hops-system
+        [self._blacklisted_envs.add(p.strip()) for p in kconfig.conda_envs_blacklist.split(',')]
         
     def preAction(self, *args, **kwargs):
         pass

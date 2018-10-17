@@ -10,7 +10,8 @@ setup(name='kagent_utils',
       install_requires=[
           'ConfigParser',
           'logging',
-          'netifaces'
+          'netifaces',
+          'ipy'
       ],
       zip_safe=False
       #setup_requires=["pytest-runner"],

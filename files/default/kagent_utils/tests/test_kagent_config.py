@@ -47,7 +47,7 @@ class TestKConfig(unittest.TestCase):
     state_store = 'path/to/state_store'
     agent_password = 'agent_password'
     conda_dir = 'path/to/conda'
-    conda_python_versions = '2.7, 3,6'
+    conda_envs_blacklist = 'python27,python35,hops-system'
     conda_gc_interval = '2h'
 
     def setUp(self):
@@ -95,7 +95,6 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.hadoop_home, config.hadoop_home)
         self.assertEqual(self.certs_dir, config.certs_dir)
         self.assertEqual(self.certificate_file, config.certificate_file)
-        self.assertEqual(self.ca_file, config.ca_file)
         self.assertEqual(self.key_file, config.key_file)
         self.assertEqual(self.server_keystore, config.server_keystore)
         self.assertEqual(self.server_truststore, config.server_truststore)
@@ -103,7 +102,7 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.state_store, config.state_store_location)
         self.assertEqual(self.agent_password, config.agent_password)
         self.assertEqual(self.conda_dir, config.conda_dir)
-        self.assertEqual(self.conda_python_versions, config.conda_python_versions)
+        self.assertEqual(self.conda_envs_blacklist, config.conda_envs_blacklist)
         self.assertEqual(self.conda_gc_interval, config.conda_gc_interval)
 
     ## Let KConfig figure out values for these properties
@@ -168,7 +167,7 @@ class TestKConfig(unittest.TestCase):
                 'state-store': self.state_store,
                 'password': self.agent_password,
                 'conda-dir': self.conda_dir,
-                'conda-python-versions': self.conda_python_versions,
+                'conda-envs-blacklist': self.conda_envs_blacklist,
                 'conda-gc-interval': self.conda_gc_interval
             }
         else:
@@ -196,7 +195,7 @@ class TestKConfig(unittest.TestCase):
                 'state-store': self.state_store,
                 'password': self.agent_password,
                 'conda-dir': self.conda_dir,
-                'conda-python-versions': self.conda_python_versions,
+                'conda-envs-blacklist': self.conda_envs_blacklist,
                 'conda-gc-interval': self.conda_gc_interval
             }
             

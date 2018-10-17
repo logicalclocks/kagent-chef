@@ -68,7 +68,7 @@ class KConfig:
             self.state_store_location = self._config.get('agent', 'state-store')
             self.agent_password = self._config.get('agent', 'password')
             self.conda_dir = self._config.get('agent', 'conda-dir')
-            self.conda_python_versions = self._config.get('agent', 'conda-python-versions')
+            self.conda_envs_blacklist = self._config.get('agent', 'conda-envs-blacklist')
             self.conda_gc_interval = self._config.get('agent', 'conda-gc-interval')
 
             # TODO find public/private IP addresses

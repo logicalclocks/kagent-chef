@@ -8,7 +8,7 @@ class MockCondaEnvsWatcherAction(CondaEnvsWatcherAction):
     def __init__(self, monitor_list):
         config = KConfig("some_path")
         config.conda_dir = "/some/path/anaconda-2-5.2.0"
-        config.conda_python_versions = "2.7, 3.6"
+        config.conda_envs_blacklist = "python27, python35, hops-system"
         CondaEnvsWatcherAction.__init__(self, monitor_list, config)
 
     def _get_conda_envs(self):
@@ -17,7 +17,8 @@ class MockCondaEnvsWatcherAction(CondaEnvsWatcherAction):
         \"/srv/hops/anaconda/anaconda-2-5.2.0\",\
         \"/srv/hops/anaconda/anaconda-2-5.2.0/envs/anaconda\",\
         \"/srv/hops/anaconda/anaconda-2-5.2.0/envs/lala\",\
-        \"/srv/hops/anaconda/anaconda-2-5.2.0/envs/project_06c88519\"\
+        \"/srv/hops/anaconda/anaconda-2-5.2.0/envs/project_06c88519\",\
+        \"/srv/hops/anaconda/anaconda-2-5.2.0/envs/hops-system\"\
         ]\
         }"
     
@@ -34,5 +35,6 @@ class TestCondaEnvsWatcherAction(unittest.TestCase):
         # These are blacklisted environments
         self.assertFalse(self.list.contains("anaconda-2-5.2.0"))
         self.assertFalse(self.list.contains("anaconda"))
+        self.assertFalse(self.list.contains("hops-system"))
         self.assertTrue(self.list.contains("lala"))
         self.assertTrue(self.list.contains("project_06c88519"))
