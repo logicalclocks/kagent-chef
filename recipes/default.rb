@@ -1,6 +1,8 @@
 require 'inifile'
 require 'securerandom'
 
+include_recipe "conda::default"
+
 service_name = "kagent"
 
 agent_password = ""

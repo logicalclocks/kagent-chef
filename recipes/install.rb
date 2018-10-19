@@ -339,5 +339,4 @@ template "/etc/sudoers.d/kagent" do
   action :create
 end  
 
-
-include_recipe "kagent::anaconda"
+include_recipe "conda::install"
