@@ -6,11 +6,7 @@ __author__="Jim Dowling <jdowling@kth.se> Antonios Kouzoupis <kouzoupis.ant@gmai
 '''
 Install:
  requests:    easy_install requests
- Netifaces:   easy_install netifaces
- IPy:         easy_install ipy
  pyOpenSSL:   apt-get install python-openssl
- MySQLdb:     apt-get install python-mysqldb
- pexpect:     apt-get install python-pexpect
 '''
 
 import sys
@@ -42,13 +38,14 @@ class Certificate:
         self._root_ca = None
         self.cn = None
         self.version = None
+        self._LOG = logging.getLogger(__name__)
         
     def create_csr(self):
         """Generates a cryptographic key-pair and a CSR"""
 
         crypto_material_state = self._state_store.get_crypto_material_state()
         
-        LOG.info("Creating Certificate Signing Request")
+        self._LOG.info("Creating Certificate Signing Request")
         pKey = self._generate_key()
         
         self.version = crypto_material_state.get_version() + 1
@@ -62,7 +59,7 @@ class Certificate:
 
         # CN should be the hostname of the server
         self.cn = self._getHostname()
-        LOG.debug("Hostname used in CN is {}".format(self.cn))
+        self._LOG.debug("Hostname used in CN is {}".format(self.cn))
         csr.get_subject().CN = self.cn
         csr.set_pubkey(pKey)
 
@@ -78,7 +75,7 @@ class Certificate:
         csr.sign(pKey, 'sha256')
         self.csr_req = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr)
         self._private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, pKey)
-        LOG.debug("Finished CSR")
+        self._LOG.debug("Finished CSR")
 
     def keystoresExist(self):
         """Checks if keystore, truststore and client_truststore exist in the predefined directory"""
@@ -86,7 +83,7 @@ class Certificate:
     
     def store(self):
         """Write certificate and private key in current directory"""
-        LOG.debug("Storing certificate, key and CA certificate")
+        self._LOG.debug("Storing certificate, key and CA certificate")
         cert_dir = os.path.dirname(os.path.abspath(__file__))
 
         intermediate_ca_file = join(cert_dir, "hops_intermediate_ca.pem")
@@ -106,12 +103,12 @@ class Certificate:
         if self._certificate is not None:
             with open(join(cert_dir, self._config.certificate_file), "wt") as fd:
                 fd.write(self._certificate)
-        LOG.info("Flushed crypto material to filesystem")
+        self._LOG.info("Flushed crypto material to filesystem")
         
     def _generate_key(self):
         """Generates cryptographic pair"""
 
-        LOG.debug("Generating cryptographic key-pair")
+        self._LOG.debug("Generating cryptographic key-pair")
         pKey = crypto.PKey()
         pKey.generate_key(crypto.TYPE_RSA, 2048)
         
@@ -139,7 +136,8 @@ class Host:
     json_headers = {'User-Agent': 'Agent', 'content-type': 'application/json'}
     
     def __init__(self, conf, certificate, state_store):
-        LOG.debug("Creating new host")
+        self._LOG = logging.getLogger(__name__)
+        self._LOG.debug("Creating new host")
         self._conf = conf
         self._certificate = certificate
         self._state_store = state_store
@@ -155,7 +153,7 @@ class Host:
         self._login(session)
         payload = {}
         payload["csr"] = self._certificate.csr_req
-        LOG.info("Sending CSR")
+        self._LOG.info("Sending CSR")
         response = session.post(self._conf.ca_host_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
         if (response.status_code != requests.codes.ok):
             raise Exception('HopsCA could not sign CSR Status code: {0} - {1}'
@@ -176,7 +174,7 @@ class Host:
                     self._revoke_certificate(session)
                 registered = True
             except Exception, e:
-                LOG.warning("Error while registering host {0}, will try again in {1} seconds..."
+                self._LOG.warning("Error while registering host {0}, will try again in {1} seconds..."
                             .format(e, self._conf.heartbeat_interval))
                 time.sleep(self._conf.heartbeat_interval)
 
@@ -185,7 +183,7 @@ class Host:
         hostname = self._certificate.cn
         cert_identifier = hostname + "__" + str(version_to_revoke)
         params = {"certId": cert_identifier}
-        LOG.info("Revoking certificate {0}".format(cert_identifier))
+        self._LOG.info("Revoking certificate {0}".format(cert_identifier))
         self._login(session)
         response = session.delete(self._conf.ca_host_url, params=params)
         
@@ -194,7 +192,7 @@ class Host:
         payload = {}
         payload["password"] = self._conf.agent_password
         payload["host-id"] = self._conf.host_id
-        LOG.info("Registering with Hopsworks")
+        self._LOG.info("Registering with Hopsworks")
         response = session.post(self._conf.register_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
 
         if (response.status_code != requests.codes.ok):
@@ -227,18 +225,17 @@ class Host:
         """Helper method to login to Hopsworks"""
         login_payload = {'email': self._conf.server_username, 'password': self._conf.server_password}
         # First login
-        LOG.debug("Logging in to Hopsworks")
+        self._LOG.debug("Logging in to Hopsworks")
         response = session.post(self._conf.login_url, headers=self.form_headers, data=login_payload, verify=False)
         if (response.status_code != requests.codes.ok):
             raise Exception('Could not login to Hopsworks')
 
-        LOG.debug("Logged in successfully")        
+        self._LOG.debug("Logged in successfully")        
 
         
 def setup_logging(log_file, max_log_size, logLevel):
     """Setup logging utilities"""
-    global LOG
-    LOG = logging.getLogger('csr-agent')
+    LOG = logging.getLogger(__name__)
     LOG.setLevel(logLevel)
     file_handler = logging.handlers.RotatingFileHandler(log_file, mode='a', maxBytes=max_log_size, backupCount=5)
     file_handler.setLevel(logLevel)
@@ -269,6 +266,7 @@ if __name__ == '__main__':
     config = KConfig(args.config)
     config.read_conf()
     setup_logging(config.csr_log_file, config.max_log_size, config.logging_level)
+    LOG = logging.getLogger(__name__)
     LOG.info("Hops CSR-agent started.")
     LOG.info("Register URL: {0}".format(config.register_url))
     LOG.info("Public IP: {0}".format(config.public_ip))

@@ -21,10 +21,9 @@ when "debian"
   end
 
   package "python2.7" 
-  package "python-pip" 
-  package "python2.7-dev" 
-  package "python2.7-lxml" 
-  package "python-openssl"
+  package "python2.7-dev"
+  # Needed by pip install MySQL-python
+  package "libmysqlclient-dev"
 
 when "rhel"
   package "epel-release"
@@ -39,9 +38,9 @@ when "rhel"
   package "python" 
   package "python-pip" 
   package "python-devel" 
-  package "python-lxml" 
-  package "jq" 
-  package "pyOpenSSL"
+  package "jq"
+  # MySQL-python needs libmysqlclient which in Centos is provided by mariadb-devel
+  package "mariadb-devel"
   # Change lograte policy
   cookbook_file '/etc/logrotate.d/syslog' do
     source 'syslog.centos'
@@ -88,37 +87,6 @@ group node["kagent"]["certs_group"] do
   action :modify
   members ["#{node["kagent"]["user"]}"]
   append true
-end
-
-
-# ubuntu python-mysqldb package install only works if we first run "apt-get update; apt-get upgrade"
-if platform?("ubuntu", "debian") 
-  package "python-mysqldb" do
-   options "--force-yes"
-   action :install
-  end
-elsif platform?("centos","redhat","fedora")
-  package "MySQL-python" do
-    action :install
-  end
-else
-  Chef::Log.warn "Needs to install python mysql libs - this Linux distribution is not supported. Only debian/ubuntu and rhel/centos supported."
-end
-
-bash "install_python" do
-  user 'root'
-  ignore_failure false
-  code <<-EOF
-  pip install --upgrade inifile
-  pip install --upgrade requests
-  pip install --upgrade bottle
-  pip install --upgrade CherryPy
-  pip install --upgrade pyOpenSSL
-  pip install --upgrade netifaces
-  pip install --upgrade IPy
-  pip install --upgrade pexpect
-  pip install --upgrade wsgiserver
- EOF
 end
 
 bash "make_gemrc_file" do
@@ -203,7 +171,7 @@ if node["ntp"]["install"] == "true"
   include_recipe "ntp::default"
 end
 
-remote_directory "#{node["kagent"]["home"]}/kagent_utils" do
+remote_directory "#{Chef::Config['file_cache_path']}/kagent_utils" do
   source 'kagent_utils'
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
@@ -211,15 +179,6 @@ remote_directory "#{node["kagent"]["home"]}/kagent_utils" do
   files_owner node["kagent"]["user"]
   files_group node["kagent"]["group"]
   files_mode 0710
-  notifies :run, 'bash[install-kagent_utils]', :immediately
-end
-
-bash "install-kagent_utils" do
-  user "root"
-  code <<-EOH
-       cd #{node["kagent"]["base_dir"]}/kagent_utils
-       pip install -U .
-  EOH
 end
 
 cookbook_file "#{node["kagent"]["home"]}/agent.py" do
@@ -241,6 +200,13 @@ cookbook_file "#{node["kagent"]["certs_dir"]}/csr.py" do
   source 'csr.py'
   owner node["kagent"]["user"]
   group node["kagent"]["certs_group"]
+  mode 0710
+end
+
+template "#{node["kagent"]["certs_dir"]}/run_csr.sh" do
+  source 'run_csr.sh.erb'
+  owner node['kagent']['user']
+  group node['kagent']['group']
   mode 0710
 end
 
@@ -334,9 +300,7 @@ template "/etc/sudoers.d/kagent" do
                 :startall => "#{node["kagent"]["base_dir"]}/bin/start-all-local-services.sh",
                 :stopall => "#{node["kagent"]["base_dir"]}/bin/shutdown-all-local-services.sh",
                 :statusall => "#{node["kagent"]["base_dir"]}/bin/status-all-local-services.sh",
-                :rotate_service_key => "#{node[:kagent][:certs_dir]}/csr.py"
+                :rotate_service_key => "#{node[:kagent][:certs_dir]}/run_csr.sh"
               })
   action :create
 end  
-
-include_recipe "conda::install"

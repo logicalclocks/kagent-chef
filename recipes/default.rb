@@ -1,8 +1,6 @@
 require 'inifile'
 require 'securerandom'
 
-include_recipe "conda::default"
-
 service_name = "kagent"
 
 agent_password = ""
@@ -32,19 +30,6 @@ when "ubuntu"
    node.default["systemd"] = "false"
  end
 end
-
-#
-# Hack because of a problem with Cheroot 
-#
-bash "reinstall_backports_functools" do
-  user 'root'
-  ignore_failure true
-  code <<-EOF
-  yes | pip uninstall backports.functools_lru_cache
-  yes | pip install backports.functools_lru_cache
- EOF
-end
-
 
 if node[:systemd] == "true"
   service "#{service_name}" do

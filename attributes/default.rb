@@ -22,9 +22,6 @@ default["kagent"]["base_dir"]                      = "#{node["kagent"]["dir"]}/k
 default["kagent"]["home"]                          = "#{node["kagent"]["dir"]}/kagent-#{node["kagent"]["version"]}"
 default["kagent"]["etc"]                           = "#{node["kagent"]["dir"]}/etc"
 
-default["conda"]["default_libs"]                   = %w{ }
-#numpy hdfs3 scikit-learn matplotlib pandas }
-
 default["kagent"]["enabled"]                       = "true"
 
 default["kagent"]["certs_dir"]                     = "#{node["kagent"]["dir"]}/host-certs"

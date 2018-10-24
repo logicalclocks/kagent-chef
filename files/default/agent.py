@@ -9,7 +9,6 @@ Install:
  IPy:         easy_install ipy
  pyOpenSSL:   apt-get install python-openssl
  MySQLdb:     apt-get install python-mysqldb
- pexpect:     apt-get install python-pexpect
 '''
 
 import time
@@ -38,7 +37,6 @@ from cheroot import wsgi
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 import netifaces
 from IPy import IP
-import pexpect
 import re
 from collections import defaultdict
 import io
@@ -105,6 +103,12 @@ def setupLogging(kconfig):
     kagent_utils_logger.setLevel(kconfig.logging_level)
     kagent_utils_logger.addHandler(logger_file_handler)
     kagent_utils_logger.addHandler(logger_stream_handler)
+
+    # Setup csr logger
+    csr_logger = logging.getLogger('csr')
+    csr_logger.setLevel(kconfig.logging_level)
+    csr_logger.addHandler(logger_file_handler)
+    csr_logger.addHandler(logger_stream_handler)
 
     logger.info("Hops-Kagent started.")
     logger.info("Heartbeat URL: {0}".format(kconfig.heartbeat_url))
@@ -510,16 +514,17 @@ class SystemCommandsHandler:
             self._system_commands_status[command['id']] = command
         finally:
             self._system_commands_status_mutex.release()
-            
+
     def _service_key_rotation(self, command):
         try:
             logger.debug("Calling certificate rotation script")
-            csr_script = kconfig.certs_dir + "/csr.py"
-            subprocess.check_call(["sudo", csr_script, "--config", self._config_file_path, "rotate"])
+            csr_helper_script = os.path.join(kconfig.certs_dir, "run_csr.sh")
+            subprocess.check_call(["sudo", csr_helper_script, self._config_file_path, "rotate"])
+            
             command['status'] = 'FINISHED'
             logger.info("Successfully rotated service certificates")
         except CalledProcessError as e:
-            logger.error("Error while calling csr.py script: {0}".format(e))
+            logger.error("Error while calling csr script: {0}".format(e))
             command['status'] = 'FAILED'
         except Exception as e:
             logger.error("General error while rotating certificates {0}".format(e))

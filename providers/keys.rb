@@ -7,7 +7,8 @@ action :csr do
     code <<-EOF
       set -eo pipefail
       export PYTHON_EGG_CACHE=/tmp
-      #{node[:kagent][:certs_dir]}/csr.py -c #{node[:kagent][:etc]}/config.ini init
+      #{node[:conda][:base_dir]}/envs/hops-system/bin/python #{node[:kagent][:certs_dir]}/csr.py \
+      -c #{node[:kagent][:etc]}/config.ini init
   EOF
     not_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key" ) }
   end
