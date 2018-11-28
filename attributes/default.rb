@@ -4,7 +4,14 @@ default["install"]["ssl"]                          = "false"
 default["install"]["cleanup_downloads"]            = "false"
 default["install"]["upgrade"]                      = "false"
 default["install"]["addhost"]                      = "false"
+
+# Current installed version
+default["install"]["current_version"]              = ""
+
+# Update target
 default["install"]["version"]                      = "0.7.0-SNAPSHOT"
+
+# List of released versions
 default["install"]["versions"]                     = "0.1.0,0.2.0,0.3.0,0.4.0,0.4.1,0.4.2,0.5.0,0.6.0,0.6.1"
 
 # hops-util-py version, when value is "master" install from git, when value is "0.6.0.0" do pip install hops==0.6.0.0

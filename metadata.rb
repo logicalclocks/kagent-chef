@@ -138,8 +138,12 @@ attribute "install/addhost",
           :description => "Indicates that this host will be added to an existing Hops cluster.",
           :type => "string"
 
+attribute "install/current_version",
+          :description => "Current installed Hopsworks version",
+          :type => "string"
+
 attribute "install/version",
-          :description => "Hopsworks version.",
+          :description => "Hopsworks target install version.",
           :type => "string"
 
 attribute "install/versions",
