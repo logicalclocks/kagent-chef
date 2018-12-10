@@ -150,9 +150,10 @@ class Host:
 
     def _sign_csr(self, session):
         """Sends CSR to HopsCA and gets the signed X509 certificate"""
-        self._login(session)
+        jwt = self._login(session)
         payload = {}
         payload["csr"] = self._certificate.csr_req
+        self.json_headers['Authorization'] = jwt
         self._LOG.info("Sending CSR")
         response = session.post(self._conf.ca_host_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
         if (response.status_code != requests.codes.ok):
@@ -184,8 +185,9 @@ class Host:
         cert_identifier = hostname + "__" + str(version_to_revoke)
         params = {"certId": cert_identifier}
         self._LOG.info("Revoking certificate {0}".format(cert_identifier))
-        self._login(session)
-        response = session.delete(self._conf.ca_host_url, params=params)
+        jwt = self._login(session)
+        self.json_headers['Authorization'] = jwt
+        response = session.delete(self._conf.ca_host_url, headers=self.json_headers, params=params)
         
     def _register_host_internal(self, session):
         self._login(session)
@@ -232,6 +234,7 @@ class Host:
 
         self._LOG.debug("Logged in successfully")        
 
+        return response.headers['Authorization']
         
 def setup_logging(log_file, max_log_size, logLevel):
     """Setup logging utilities"""
