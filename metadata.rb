@@ -152,6 +152,3 @@ attribute "jupyter/python",
 attribute "kagent/python_conda_versions",
           :description => "CSV of python versions to be used as base environments for Anaconda",
           :type => "string"
-
-
-

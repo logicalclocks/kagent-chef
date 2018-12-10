@@ -17,6 +17,7 @@ module Kagent
             
             http = Net::HTTP.new(url.host, url.port)
             # Don't verify the host certificate
+            http.use_ssl = true
             http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
             request = Net::HTTP::Post.new(url)
@@ -26,7 +27,7 @@ module Kagent
             
             response = http.request(request)
 
-            if response.kind_of? Net::HTTPSuccess
+            if !response.kind_of? Net::HTTPSuccess
                 raise "Error authenticating with the Hopsworks server"
             end
 
@@ -34,3 +35,6 @@ module Kagent
         end
     end
 end
+
+Chef::Recipe.send(:include, Kagent::JWTHelper)
+Chef::Resource.send(:include, Kagent::JWTHelper)
