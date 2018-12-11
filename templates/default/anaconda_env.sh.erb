@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [ $# -lt 6  ]; then
-    echo "<user> <op> <proj> <arg> <offline> <hadoop_home>"
+if [ $# -lt 7  ]; then
+    echo "<user> <op> <proj> <arg> <offline> <hadoop_home> <install_jupyter>"
     echo "incorrect usage."
     echo "<arg> is the python version for 'create', the source env for 'clone' and the path to yml file for 'yml'."
  exit 1
@@ -13,9 +13,11 @@ PROJECT=$3
 ARG=$4
 OFFLINE=$5
 HADOOP_DIR=$6
+INSTALL_JUPYTER=$7
 
 CLONE=
 CONDA_DIR=<%= node["conda"]["base_dir"] %>
+SPARKMAGIC_DIR=<%= node["conda"]["dir"] %>/sparkmagic
 WITH_PYTHON_KERNEL=<%= @jupyter_python %>
 
 if [ "$OP" == "CLONE" ] ; then
@@ -29,7 +31,55 @@ function exists() {
 
 if [ "$OP" == "YML" ] ; then
    su "$EXEC_AS_USER" -c "export HADOOP_HOME=${HADOOP_DIR}; ${CONDA_DIR}/bin/conda env create -f ${ARG} -n ${PROJECT}"
-   exit $?
+   
+   if [ $? -ne 0 ] ; then
+       exit 2
+   fi 
+
+   if [ "$INSTALL_JUPYTER" == "true" ] ; then 
+        set -e
+        # Install packages
+        su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade hdfscontents urllib3 requests jupyter pandas"
+        if [ $? -ne 0 ] ; then
+            exit 2
+        fi 
+
+        # Install packages to allow users to manage their jupyter extensions
+        su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade jupyter_contrib_nbextensions jupyter_nbextensions_configurator"
+        if [ $? -ne 0 ] ; then
+            exit 2
+        fi 
+
+        su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade $SPARKMAGIC_DIR/hdijupyterutils $SPARKMAGIC_DIR/autovizwidget $SPARKMAGIC_DIR/sparkmagic"
+        if [ $? -ne 0 ] ; then
+            exit 2
+        fi 
+
+        # Enable kernels
+        su "$EXEC_AS_USER" -c "cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/sparkkernel --sys-prefix"
+        if [ $? -ne 0 ] ; then
+            exit 2
+        fi 
+
+        su "$EXEC_AS_USER" -c "cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/pysparkkernel --sys-prefix"
+        if [ $? -ne 0 ] ; then
+            exit 2
+        fi 
+
+        su "$EXEC_AS_USER" -c "cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/pyspark3kernel --sys-prefix"
+        if [ $? -ne 0 ] ; then
+            exit 2
+        fi 
+
+        su "$EXEC_AS_USER" -c "cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/sparkrkernel --sys-prefix"
+        if [ $? -ne 0 ] ; then
+            exit 2
+        fi 
+
+        # Enable jupyter notebook extensions 
+        su "$EXEC_AS_USER" -c "${CONDA_DIR}/envs/${PROJECT}/bin/jupyter contrib nbextension install --sys-prefix"
+        su "$EXEC_AS_USER" -c "${CONDA_DIR}/envs/${PROJECT}/bin/jupyter serverextension enable jupyter_nbextensions_configurator --sys-prefix"
+   fi 
 
 elif [ "$OP" == "CREATE" ] ; then
     exists

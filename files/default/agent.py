@@ -408,6 +408,7 @@ class CondaCommandsHandler:
         command_id = command['id']
         op = command['op'].upper()
         proj = command['proj']
+        install_jupyter = str(command['installJupyter']).lower()
 
         tempfile_fd = None
         if command['op'] == 'YML':
@@ -418,10 +419,10 @@ class CondaCommandsHandler:
             os.chmod(tempfile_fd.name, 0604)
 
         script = kconfig.bin_dir + "/anaconda_env.sh"
-        logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6}".format(script, user, op, proj, arg, offline, kconfig.hadoop_home))
+        logger.info("sudo {0} {1} {2} {3} {4} '{5}' {6} {7}".format(script, user, op, proj, arg, offline, kconfig.hadoop_home, install_jupyter))
         msg=""
         try:
-            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, kconfig.hadoop_home], stderr=subprocess.STDOUT)
+            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, kconfig.hadoop_home, install_jupyter], stderr=subprocess.STDOUT)
             command['status'] = 'SUCCESS'
             command['arg'] = arg
         except subprocess.CalledProcessError as e:
