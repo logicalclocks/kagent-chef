@@ -5,7 +5,7 @@ module Kagent
     module JWTHelper
         def get_service_jwt()
             
-            hopsworks_hostname = private_recipe_hostname("hopsworks", "default")
+            hopsworks_hostname = private_recipe_hostnames("hopsworks", "default")[0]
             port = 8181
             if node.attribute?("hopsworks")
                 if node['hopsworks'].attribute?("secure_port") 
