@@ -5,7 +5,7 @@ module Kagent
     module JWTHelper
         def get_service_jwt()
             
-            hopsworks_ip = private_recipe_ip("hopsworks", "default")
+            hopsworks_hostname = private_recipe_hostname("hopsworks", "default")
             port = 8181
             if node.attribute?("hopsworks")
                 if node['hopsworks'].attribute?("secure_port") 
@@ -13,7 +13,7 @@ module Kagent
                 end
             end
 
-            url = URI("https://#{hopsworks_ip}:#{port}/hopsworks-api/api/auth/login")
+            url = URI("https://#{hopsworks_hostname}:#{port}/hopsworks-api/api/auth/login")
             
             http = Net::HTTP.new(url.host, url.port)
             # Don't verify the host certificate
