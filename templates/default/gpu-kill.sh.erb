@@ -1,7 +1,13 @@
 #!/bin/bash
 
-systemctl stop nodemanager
-systemctl stop kagent
+sudo systemctl stop nodemanager
+if [ $? -ne 0 ] ; then
+  echo "Problem stopping the nodemanager"
+fi
+sudo systemctl stop kagent
+if [ $? -ne 0 ] ; then
+  echo "Problem stopping kagent"
+fi
 
 procs=`sudo nvidia-smi --format=csv,noheader,nounits --query-gpu=index,memory.used | grep -v ', 0' | awk {'print $1'} | sed -e 's/,//'`
 
@@ -26,8 +32,14 @@ do
 
 done
 
-systemctl start nodemanager
-systemctl start kagent
+sudo systemctl start nodemanager
+if [ $? -ne 0 ] ; then
+  echo "Problem starting the nodemanager"
+fi
+sudo systemctl start kagent
+if [ $? -ne 0 ] ; then
+  echo "Problem starting the nodemanager"
+fi
 
 exit
 
