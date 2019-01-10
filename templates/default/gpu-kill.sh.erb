@@ -1,19 +1,35 @@
 #!/bin/bash
 
-PIDS=`sudo nvidia-smi --format=csv,noheader,nounits --query-gpu=index,memory.used | grep -v ', 0' | awk {'print $1'} | sed -e 's/,//'`
+systemctl stop nodemanager
+systemctl stop kagent
 
+procs=`sudo nvidia-smi --format=csv,noheader,nounits --query-gpu=index,memory.used | grep -v ', 0' | awk {'print $1'} | sed -e 's/,//'`
 
-for i in $PIDS
+PIDS=( $procs )
+for i in "${PIDS[@]}"
 do
 
  RUNNING_PIDS=`sudo nvidia-smi pmon -c 1 | grep -v '#' | grep -v "-" | cut -d " " -f 2-8 | tr "\n" " "`
+ found=0
  for r in $RUNNING_PIDS
  do
-   echo "Killing PID for device: $r"
-   sudo nvidia-smi --gpu-reset -i $r
+   if [ "$i" == "$r" ] ; then
+     found=1
+     echo "Found process for Device id: $i"
+   fi
  done
+
+ if [ $found -eq 0 ] ; then
+   echo "Resetting device: $i"
+   sudo nvidia-smi --gpu-reset -i $i
+ fi
 
 done
 
+systemctl start nodemanager
+systemctl start kagent
+
 exit
+
+
 

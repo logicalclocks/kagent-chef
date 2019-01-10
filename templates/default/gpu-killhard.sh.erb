@@ -10,7 +10,7 @@ if [ $? -ne 0 ] ; then
   echo "Problem stopping kagent"
 fi
 
-PIDS=$(fuser -v /dev/nvidia* 2> /dev/null | grep -v PID)
+PIDS=`sudo nvidia-smi --format=csv,noheader,nounits --query-gpu=index,memory.used | awk {'print $1'} | sed -e 's/,//'`
 
 for i in $PIDS 
 do
