@@ -190,7 +190,7 @@ end
 blacklisted_envs = node['kagent']['python_conda_versions'].split(",").map(&:strip)
                      .map {|p| p.gsub(".", "") }.map {|p| "python" + p}.join(",")
 # hops-system anaconda env
-blacklisted_envs += ",hops-system"
+blacklisted_envs += ",hops-system,airflow"
 
 template "#{node["kagent"]["etc"]}/config.ini" do
   source "config.ini.erb"
