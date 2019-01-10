@@ -1,3 +1,19 @@
 #!/bin/bash
 
+PIDS=`sudo nvidia-smi --format=csv,noheader,nounits --query-gpu=index,memory.used | grep -v ', 0' | awk {'print $1'} | sed -e 's/,//'`
+
+
+for i in $PIDS
+do
+
+ RUNNING_PIDS=`sudo nvidia-smi pmon -c 1 | grep -v '#' | grep -v "-" | cut -d " " -f 2-8 | tr "\n" " "`
+ for r in $RUNNING_PIDS
+ do
+   echo "Killing PID for device: $r"
+   sudo nvidia-smi --gpu-reset -i $r
+ done
+
+done
+
+exit
 
