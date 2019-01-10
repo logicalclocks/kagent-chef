@@ -1,0 +1,37 @@
+#!/bin/bash
+
+
+sudo systemctl stop nodemanager
+if [ $? -ne 0 ] ; then 
+  echo "Problem stopping the nodemanager"
+fi
+sudo systemctl stop kagent
+if [ $? -ne 0 ] ; then 
+  echo "Problem stopping kagent"
+fi
+
+PIDS=$(fuser -v /dev/nvidia* 2> /dev/null | grep -v PID)
+
+for i in $PIDS 
+do
+ 
+ echo "Restarting gpu device: $i"
+ sudo nvidia-smi --gpu-reset -i $i
+ if [ $? -ne 0 ] ; then 
+   echo "Problem resetting gpu with device-id: $i"
+ fi
+done
+
+
+
+sudo systemctl start nodemanager
+if [ $? -ne 0 ] ; then 
+  echo "Problem starting the nodemanager"
+fi
+sudo systemctl start kagent
+if [ $? -ne 0 ] ; then 
+  echo "Problem starting the nodemanager"
+fi
+
+exit
+

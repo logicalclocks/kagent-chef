@@ -220,7 +220,7 @@ end
   end
 end 
 
-['start-service.sh', 'stop-service.sh', 'restart-service.sh', 'status-service.sh'].each do |script|
+['start-service.sh', 'stop-service.sh', 'restart-service.sh', 'status-service.sh', 'gpu-kill.sh', 'gpu-killhard.sh'].each do |script|
   template  "#{node["kagent"]["home"]}/bin/#{script}" do
     source "#{script}.erb"
     owner "root"
@@ -300,7 +300,9 @@ template "/etc/sudoers.d/kagent" do
                 :startall => "#{node["kagent"]["base_dir"]}/bin/start-all-local-services.sh",
                 :stopall => "#{node["kagent"]["base_dir"]}/bin/shutdown-all-local-services.sh",
                 :statusall => "#{node["kagent"]["base_dir"]}/bin/status-all-local-services.sh",
-                :rotate_service_key => "#{node[:kagent][:certs_dir]}/run_csr.sh"
+                :rotate_service_key => "#{node[:kagent][:certs_dir]}/run_csr.sh",
+                :gpu_kill => "#{node["kagent"]["base_dir"]}/bin/gpu-kill.sh",
+                :gpu_killhard => "#{node["kagent"]["base_dir"]}/bin/gpu-killhard.sh"
               })
   action :create
 end  
