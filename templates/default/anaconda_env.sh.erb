@@ -7,6 +7,9 @@ if [ $# -lt 7  ]; then
  exit 1
 fi
 
+# Force umask 022 as default for conda packages - See HOPSWORKS-880
+umask 022
+
 EXEC_AS_USER=$1
 OP=$2
 PROJECT=$3

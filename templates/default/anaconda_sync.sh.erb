@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -e
+# Force umask 022 as default for conda packages - See HOPSWORKS-880
+umask 022
 
 HOST=$(grep url <%= node['kagent']['etc'] %>/config.ini | sed -e 's/url[ \t]*=[ \t]*http:\/\///')
 
