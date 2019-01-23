@@ -137,8 +137,8 @@ default['pydoop']['version']                       = "2.0a3"
 default["java"]["jdk_version"]                     = 8
 default["java"]["install_flavor"]                  = "oracle"
 default["java"]["oracle"]["accept_oracle_download_terms"] = true
-default['java']['jdk']['8']['x86_64']['url'] = 'http://download.oracle.com/otn-pub/java/jdk/8u192-b12/750e1c8617c5452694857ad95c3ee230/jdk-8u192-linux-x64.tar.gz'
-default['java']['jdk']['8']['x86_64']['checksum'] = '6d34ae147fc5564c07b913b467de1411c795e290356538f22502f28b76a323c2'
+default['java']['jdk']['8']['x86_64']['url'] = 'https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz'
+default['java']['jdk']['8']['x86_64']['checksum'] = 'cb700cc0ac3ddc728a567c350881ce7e25118eaf7ca97ca9705d4580c506e370'
 
 default["kagent"]["conda_gc_interval"]             = "1h"
 default["kagent"]["python_conda_versions"]         = "2.7, 3.6"
