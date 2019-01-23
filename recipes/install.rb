@@ -26,7 +26,10 @@ when "debian"
   package "libmysqlclient-dev"
 
 when "rhel"
-  package "epel-release"
+
+  if node['rhel']['epel']
+    package "epel-release"
+  end
 
 # gcc, gcc-c++, kernel-devel are the equivalent of "build-essential" from apt.
   package "gcc"
