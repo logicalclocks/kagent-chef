@@ -504,7 +504,7 @@ class SystemCommandsHandler:
         for env in to_be_removed:
             try:
                 script = os.path.join(kconfig.bin_dir, 'anaconda_env.sh')
-                subprocess.check_call(['sudo', script, exec_user, 'REMOVE', env, '', '', ''])
+                subprocess.check_call(['sudo', script, exec_user, 'REMOVE', env, '', '', '', ''])
                 logger.info("Removed Anaconda environment {0}".format(env))
                 self._conda_envs_monitor_list.remove(env)
             except CalledProcessError as e:
