@@ -38,14 +38,6 @@ attribute "kagent/dir",
           :description => "Installation directory for kagent",
           :type => 'string'
 
-attribute "kagent/dashboard/ip",
-          :description => " Ip address for Dashboard REST API",
-          :type => 'string'
-
-attribute "kagent/dashboard/port",
-          :description => " Port for Dashboard REST API",
-          :type => 'string'
-
 attribute "kagent/enabled",
           :description => "Kagent enabled: default 'true'. Set to 'false' to disable it.",
           :type => 'string'

@@ -92,18 +92,10 @@ end
 private_ip = my_private_ip()
 public_ip = my_public_ip()
 
-dashboard_endpoint = "10.0.2.15"  + ":" + node["kagent"]["dashboard"]["port"]
-
+dashboard_endpoint = private_recipe_ip("hopsworks","default")  + ":8181" 
 if node.attribute? "hopsworks"
-  begin
-    if node["hopsworks"].attribute? "port"
-      dashboard_endpoint = private_recipe_ip("hopsworks","default")  + ":" + node["hopsworks"]["port"]
-    else
-      dashboard_endpoint = private_recipe_ip("hopsworks","default")  + ":" + node["kagent"]["dashboard"]["port"]
-    end
-  rescue
-    dashboard_endpoint =
-    Chef::Log.warn "could not find the hopsworks server ip to register kagent to!"
+  if node["hopsworks"].attribute? "https" and node["hopsworks"]['https'].attribute? ('port')
+    dashboard_endpoint = private_recipe_ip("hopsworks","default")  + ":" + node['hopsworks']['https']['port']
   end
 end
 
@@ -199,7 +191,7 @@ template "#{node["kagent"]["etc"]}/config.ini" do
   mode 0600
   action :create
   variables({
-              :rest_url => "http://#{dashboard_endpoint}/",
+              :rest_url => "https://#{dashboard_endpoint}/",
               :rack => '/default',
               :hostname => hostname,
               :public_ip => public_ip,
