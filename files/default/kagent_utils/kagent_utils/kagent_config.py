@@ -48,7 +48,7 @@ class KConfig:
             self.heartbeat_interval = self._config.getfloat('agent', 'heartbeat-interval')
             self.logging_level_str = self._config.get('agent', 'logging-level')
             self.logging_level = self._get_logging_level(self.logging_level_str)
-            self.agent_log_file = self._config.get('agent', 'agent-log-file')
+            self.agent_log_dir = self._config.get('agent', 'agent-log-dir')
             self.csr_log_file = self._config.get('agent', 'csr-log-file')
             self.max_log_size = self._config.getint('agent', 'max-log-size')
             self.agent_pidfile = self._config.get('agent', 'pid-file')

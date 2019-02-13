@@ -29,7 +29,7 @@ class TestKConfig(unittest.TestCase):
     watch_interval = '4'
     bin_dir = 'path/to/bin/dir'
     pid_file = 'path/to/pid/file'
-    agent_log_file = 'path/to/agent/log_file'
+    agent_log_dir = 'path/to/agent/logs'
     csr_log_file = 'path/to/csr/log_file'
     logging_level = 'DEBUG'
     max_log_size = '100'
@@ -79,7 +79,7 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(int(self.watch_interval), config.watch_interval)
         self.assertEqual(self.bin_dir, config.bin_dir)
         self.assertEqual(self.pid_file, config.agent_pidfile)
-        self.assertEqual(self.agent_log_file, config.agent_log_file)
+        self.assertEqual(self.agent_log_dir, config.agent_log_dir)
         self.assertEqual(self.csr_log_file, config.csr_log_file)
         self.assertEqual(self.logging_level, config.logging_level_str)
         self.assertEqual(int(self.max_log_size), config.max_log_size)
@@ -149,7 +149,7 @@ class TestKConfig(unittest.TestCase):
                 'watch-interval': self.watch_interval,
                 'bin-dir': self.bin_dir,
                 'pid-file': self.pid_file,
-                'agent-log-file': self.agent_log_file,
+                'agent-log-dir': self.agent_log_dir,
                 'csr-log-file': self.csr_log_file,
                 'logging-level': self.logging_level,
                 'max-log-size': self.max_log_size,
@@ -178,7 +178,7 @@ class TestKConfig(unittest.TestCase):
                 'watch-interval': self.watch_interval,
                 'bin-dir': self.bin_dir,
                 'pid-file': self.pid_file,
-                'agent-log-file': self.agent_log_file,
+                'agent-log-dir': self.agent_log_dir,
                 'csr-log-file': self.csr_log_file,
                 'logging-level': self.logging_level,
                 'max-log-size': self.max_log_size,
