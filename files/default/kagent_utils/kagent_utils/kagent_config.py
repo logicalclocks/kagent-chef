@@ -59,7 +59,7 @@ class KConfig:
             self.server_truststore = self._config.get('agent', 'server-truststore')
             self.keystore_script = self._config.get('agent', 'keystore-script')
             self.services_file = self._config.get('agent', 'services-file')
-            self.watch_interval = self._config.getfloat('agent', 'watch-interval')
+            self.watch_interval = self._config.get('agent', 'watch-interval')
             self.bin_dir = self._config.get('agent', 'bin-dir')
             self.mysql_socket = self._config.get('agent', 'mysql-socket')
             self.group_name = self._config.get('agent', 'group-name')

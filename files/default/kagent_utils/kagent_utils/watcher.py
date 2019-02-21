@@ -6,7 +6,7 @@ import logging
 A watcher thread to perform WatcherAction periodically
 """
 class Watcher(threading.Thread):
-    def __init__(self, action, watcher_interval, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+    def __init__(self, action, watcher_interval, fail_after=5, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
         """
         Constructor of the Watcher thread
 
@@ -21,6 +21,7 @@ class Watcher(threading.Thread):
         self.watcher_interval = watcher_interval
         self._stop_flag = threading.Event()
         self.failures = 0
+        self.fail_after = fail_after
         self.logger = logging.getLogger(__name__)
         
     def run(self):
@@ -38,7 +39,7 @@ class Watcher(threading.Thread):
             except Exception as e:
                 self.logger.warning("Exception in Watcher, retrying... {0}".format(e))
                 self.failures += 1
-                if self.failures > 5:
+                if self.failures > self.fail_after:
                     self.logger.critical("Fatal error in Watcher thread, exiting... {0}".format(e))
                     self.stop()
                 else:

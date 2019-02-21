@@ -36,7 +36,7 @@ class IntervalParser:
         time_value = match.group(1)
         time_unit = match.group(2)
         if not time_unit:
-            time_unit = 'm'
+            time_unit = 's'
         else:
             time_unit = time_unit.lower()
 

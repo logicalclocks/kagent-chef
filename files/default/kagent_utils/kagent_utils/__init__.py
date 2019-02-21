@@ -25,4 +25,9 @@ from watcher_action import WatcherAction
 from watcher import Watcher
 from conda_envs_watcher_action import CondaEnvsWatcherAction
 
+from http import Http
+
+from monitoring.service import Service
+from monitoring.host_services_watcher_action import HostServicesWatcherAction
+
 logging.getLogger(__name__).addHandler(logging.NullHandler())

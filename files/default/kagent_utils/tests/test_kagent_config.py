@@ -26,7 +26,7 @@ class TestKConfig(unittest.TestCase):
     restport = '8080'
     heartbeat_interval = '3'
     services_file = 'path/to/services/file'
-    watch_interval = '4'
+    watch_interval = '4s'
     bin_dir = 'path/to/bin/dir'
     pid_file = 'path/to/pid/file'
     agent_log_dir = 'path/to/agent/logs'
@@ -76,7 +76,7 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(int(self.restport), config.rest_port)
         self.assertEqual(int(self.heartbeat_interval), config.heartbeat_interval)
         self.assertEqual(self.services_file, config.services_file)
-        self.assertEqual(int(self.watch_interval), config.watch_interval)
+        self.assertEqual(self.watch_interval, config.watch_interval)
         self.assertEqual(self.bin_dir, config.bin_dir)
         self.assertEqual(self.pid_file, config.agent_pidfile)
         self.assertEqual(self.agent_log_dir, config.agent_log_dir)

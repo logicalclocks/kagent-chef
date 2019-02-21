@@ -29,7 +29,8 @@ action :add do
     'service'  => "#{service}",
     'web-port' => new_resource.web_port,
     'stdout-file'  => "#{new_resource.log_file}",
-    'config-file'  => "#{new_resource.config_file}"
+    'config-file'  => "#{new_resource.config_file}",
+    'fail-attempts' => new_resource.fail_attempts
   } 
   ini_file.save
   Chef::Log.info "Saved an updated copy of groups file at the kagent after updating #{cluster}-#{group}-#{service}"

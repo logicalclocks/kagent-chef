@@ -6,7 +6,7 @@ setup(name='kagent_utils',
       url='http://hops.io',
       author='Antonios Kouzoupis',
       author_email='antonios.kouzoupis@ri.se',
-      packages=['kagent_utils'],
+      packages=['kagent_utils', 'kagent_utils.monitoring'],
       install_requires=[
           'ConfigParser',
           'logging',

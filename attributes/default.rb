@@ -44,7 +44,7 @@ default["kagent"]["ca_app"]                        = "hopsworks-ca"
 # local settings for agent
 default["kagent"]["port"]                          = 8090
 default["kagent"]["heartbeat_interval"]            = 3
-default["kagent"]["watch_interval"]                = 2
+default["kagent"]["watch_interval"]                = "2s"
 default["kagent"]["pid_file"]                      = node["kagent"]["dir"] + "/kagent.pid"
 default["kagent"]["logging_level"]                 = "INFO"
 default["kagent"]["max_log_size"]                  = "10000000"
