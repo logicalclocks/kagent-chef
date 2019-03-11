@@ -7,7 +7,7 @@ export LC_ALL=en_US.UTF-8
 _status()
 {
 if [[ $services == *"$active"* ]] ; then
- sudo service "$active" status > /dev/null 2>&1
+ systemctl is-active "$active" > /dev/null 2>&1
  if [ $? -eq 0 ] ; then
    echo -e "$active \e[32mrunning \e[0m"
  else

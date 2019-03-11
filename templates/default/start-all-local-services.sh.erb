@@ -7,14 +7,14 @@ export LC_ALL=en_US.UTF-8
 _start()
 {
 if [[ $services == *"$active"* ]] ; then
- sudo <%= node["kagent"]["base_dir"] %>/bin/status-service.sh "$active" > /dev/null
+ <%= node["kagent"]["base_dir"] %>/bin/status-service.sh "$active" > /dev/null
  if [ $? -ne 0 ] ; then
    echo -e "Starting ${active} ...."
-   sudo service "$active" start > /dev/null 2>&1
+   sudo systemctl start "$active" > /dev/null 2>&1
    if [ $? -ne 0 ] ; then 
      echo -e "\e[31mProblem starting $active \e[0m"
      echo -e "Trying one more time to start $active...."
-     sudo service "$active" start > /dev/null 2>&1
+     sudo systemctl start "$active" > /dev/null 2>&1
      if [ $? -ne 0 ] ; then 
         echo -e "No, didn't start the 2nd time either."
      else

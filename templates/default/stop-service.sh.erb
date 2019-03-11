@@ -7,4 +7,4 @@ if [ $# -ne 1 ] ; then
   exit 2
 fi
 
-sudo service "$1" stop
+sudo systemctl stop "$1"

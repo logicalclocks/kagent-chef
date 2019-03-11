@@ -41,10 +41,10 @@ export LC_ALL=en_US.UTF-8
 _stop()
 {
 if [[ $services == *"$active"* ]] ; then
- sudo <%= node["kagent"]["base_dir"] %>/bin/status-service.sh "$active" > /dev/null
+ <%= node["kagent"]["base_dir"] %>/bin/status-service.sh "$active" > /dev/null
  if [ $? -eq 0 ] ; then
    echo -e "Stopping ${active} ...."
-   sudo service "$active" stop
+   sudo systemctl stop "$active"
    if [ $? -ne 0 ] ; then 
      echo -e "\e[31mProblem stopping $active \e[0m"
    else 
