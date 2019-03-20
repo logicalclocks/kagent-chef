@@ -2,17 +2,11 @@
 
 case node["platform_family"]
 when "debian"
-  bash "apt_update_install_build_tools" do
-    user "root"
-    code <<-EOF
-   apt-get update -y 
-   apt-get install build-essential -y 
-   apt-get install libssl-dev -y 
-   apt-get install jq -y 
- EOF
-  end
+  
+  # Needed by pip install MySQL-python
+  package ['linux-base', 'build-essential', 'libssl-dev', 'jq', 'python2.7', 'python2.7-dev', 'libmysqlclient-dev']
 
-# Change lograte policy
+ # Change lograte policy
   cookbook_file '/etc/logrotate.d/rsyslog' do
     source 'rsyslog.ubuntu'
     owner 'root'
@@ -20,30 +14,17 @@ when "debian"
     mode '0644'
   end
 
-  package "python2.7" 
-  package "python2.7-dev"
-  # Needed by pip install MySQL-python
-  package "libmysqlclient-dev"
-
 when "rhel"
 
   if node['rhel']['epel']
     package "epel-release"
   end
 
-# gcc, gcc-c++, kernel-devel are the equivalent of "build-essential" from apt.
-  package "gcc"
-  package "gcc-c++"
-  package "kernel-devel" 
-  package "openssl"
-  package "openssl-devel"
-  package "openssl-libs" 
-  package "python" 
-  package "python-pip" 
-  package "python-devel" 
-  package "jq"
   # MySQL-python needs libmysqlclient which in Centos is provided by mariadb-devel
-  package "mariadb-devel"
+  # gcc, gcc-c++, kernel-devel are the equivalent of "build-essential" from apt.
+  package ["gcc", "gcc-c++", "kernel-devel", "openssl", "openssl-devel", "openssl-libs", "python", 
+    "python-pip", "python-devel", "jq", "mariadb-devel"]
+
   # Change lograte policy
   cookbook_file '/etc/logrotate.d/syslog' do
     source 'syslog.centos'
