@@ -163,6 +163,7 @@ class Heartbeat():
         self._conda_report_interval = conda_report_interval
         self._last_conda_report = long(time.mktime(datetime.now().timetuple()) * 1000)
         self._host_services = host_services
+        self._recover = True
             
         while True:
             self.send()
@@ -244,6 +245,7 @@ class Heartbeat():
                 payload["disk-used"] = disk_info.used
                 payload['memory-used'] = memory_info.used
                 payload["services"] = services_list
+                payload["recover"] = self._recover
                 
                 now_in_ms = now * 1000
                 time_to_report = (now_in_ms - self._last_conda_report) > self._conda_report_interval
@@ -316,6 +318,7 @@ class Heartbeat():
                 else:
                     theResponse = resp.json()
                     logger.debug("Response from heartbeat is: {0}".format(theResponse))
+                    self._recover = False
                     try:
                         system_commands = theResponse['system-commands']
                         for command in system_commands:
