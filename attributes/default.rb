@@ -1,7 +1,9 @@
 include_attribute "conda"
 
-# hops-util-py version, when value is "master" install from git, when value is "0.6.0.0" do pip install hops==0.6.0.0
-default["kagent"]["hops-util-py-version"]          = "master"
+default["kagent"]["hops-util-py"]["install-mode"]     = 'git'
+default["kagent"]["hops-util-py"]["branch"]           = "master"
+default["kagent"]["hops-util-py"]["repo"]             = "logicalclocks"
+default["kagent"]["hops-util-py"]["version"]          = "0.9.0.0"
 
 # Default values for configuration parameters
 default["kagent"]["version"]                       = node["install"]["version"]

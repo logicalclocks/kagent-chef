@@ -17,3 +17,5 @@ bin/*
 *#
 .kitchen/
 Berksfile.lock
+
+.idea

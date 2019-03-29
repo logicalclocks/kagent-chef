@@ -152,3 +152,19 @@ attribute "jupyter/python",
 attribute "kagent/python_conda_versions",
           :description => "CSV of python versions to be used as base environments for Anaconda",
           :type => "string"
+
+attribute "kagent/hops-util-py/install-mode",
+          :description => "The mode for installing hops-util-py, either 'pip' to install a specific version or 'git' to install a specific branch",
+          :type => "string"
+
+attribute "kagent/hops-util-py/branch",
+          :description => "The branch to install hops-util-py from git",
+          :type => "string"
+
+attribute "kagent/hops-util-py/repo",
+          :description => "The repository where to install hops-util-py from git, e.g if you want to install logicalclocks/hops-util/py, set this string to 'logicalclocks'",
+          :type => "string"
+
+attribute "kagent/hops-util-py/version",
+          :description => "The version to install hops-util-py from pip",
+          :type => "string"
