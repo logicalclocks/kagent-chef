@@ -1,5 +1,7 @@
 require 'uri'
 require 'net/http'
+require 'json'
+require 'open3'
 
 module Kagent
     module JWTHelper
@@ -15,7 +17,7 @@ module Kagent
                 end
             end
 
-            url = URI("https://#{hopsworks_hostname}:#{port}/hopsworks-api/api/auth/login")
+            url = URI("https://#{hopsworks_hostname}:#{port}/hopsworks-api/api/auth/service")
             
             http = Net::HTTP.new(url.host, url.port)
             # Don't verify the host certificate
@@ -33,7 +35,21 @@ module Kagent
                 raise "Error authenticating with the Hopsworks server"
             end
 
-            return response['Authorization']
+            # Take only the token
+            master_token = response['Authorization'].split[1].strip
+            jbody = JSON.parse(response.body)
+            renew_tokens = jbody['renewTokens']
+
+            return master_token, renew_tokens
+        end
+
+        def execute_shell_command(command)
+          _, stdout, stderr, wait_thr = Open3.popen3(command)
+          if not wait_thr.value.success?
+            Chef::Application.fatal!("Error executing command #{command}. STDERR: #{stderr.readlines}",
+                                     wait_thr.value.exitstatus)
+          end
+          Chef::Log.debug("Command: #{command} - STDOUT: #{stdout.readlines}")
         end
     end
 end
