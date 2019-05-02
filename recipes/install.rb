@@ -27,7 +27,7 @@ when "debian"
 
 when "rhel"
 
-  if node['rhel']['epel']
+  if node['rhel']['epel'].downcase == "true"
     package "epel-release"
   end
 
