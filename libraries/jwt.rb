@@ -8,8 +8,10 @@ module Kagent
             hopsworks_hostname = private_recipe_hostnames("hopsworks", "default")[0]
             port = 8181
             if node.attribute?("hopsworks")
-                if node['hopsworks'].attribute?("secure_port") 
-                    port = node['hopsworks']['secure_port']
+                if node['hopsworks'].attribute?("https")
+                  if node['hopsworks']['https'].attribute?("port")
+                    port = node['hopsworks']['https']['port']
+                  end
                 end
             end
 
