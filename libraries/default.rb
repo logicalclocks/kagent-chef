@@ -101,6 +101,22 @@ module Kagent
       return node[cookbook][recipe][:private_ips]
     end
 
+    def resolve_hostname(ip)
+      require 'resolv'
+      hostf = Resolv::Hosts.new
+      dns = Resolv::DNS.new
+      # Try and resolve hostname first using /etc/hosts, then use DNS
+      begin
+        hostname = hostf.getname(ip)
+      rescue
+        begin
+          hostname = dns.getname(ip)
+        rescue
+          raise "Cannot resolve the hostname for IP address: #{ip}"
+        end
+      end      
+    end
+    
     def private_recipe_hostnames(cookbook, recipe)
       valid_recipe(cookbook,recipe)
       hostf = Resolv::Hosts.new
