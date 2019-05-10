@@ -153,26 +153,8 @@ end
 
 # Default to hostname found in /etc/hosts, but allow user to override it.
 # First with DNS. Highest priority if user supplies the actual hostname
-# hostname = node['fqdn']  
-# Default to hostname found in /etc/hosts, but allow user to override it.
-# First with DNS. Highest priority if user supplies the actual hostname
-h = private_recipe_ip("kagent", "default") 
+hostname = node['fqdn']  
 
-require 'resolv'
-hostf = Resolv::Hosts.new
-dns = Resolv::DNS.new
-
-# Try and resolve hostname first using /etc/hosts, then use DNS
-begin
-  hostname = hostf.getname(h)
-rescue
-  begin
-    hostname = dns.getname(h)
-  rescue
-    raise "Cannot resolve the hostname for IP address: #{h}"
-  end
-end
-  
 if node["kagent"].attribute?("hostname")
    if node["kagent"]["hostname"].empty? == false
       hostname = node["kagent"]["hostname"]
