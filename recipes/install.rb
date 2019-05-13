@@ -1,3 +1,7 @@
+# If FQDN is longer than 63 characters fail HOPSWORKS-1075
+fqdn = node['fqdn']
+raise "FQDN #{fqdn} is too long! It should not be longer than 60 characters" unless fqdn.length < 61
+
 # ubuntu python-mysqldb package install only works if we first run "apt-get update; apt-get upgrade"
 
 case node["platform_family"]
