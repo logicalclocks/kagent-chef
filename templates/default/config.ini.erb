@@ -9,7 +9,7 @@ username = <%= node[:kagent][:dashboard][:user] %>
 password = <%= node[:kagent][:dashboard][:password] %>
 
 [agent]
-host-id = <%= @hostname %>
+host-id = <%= @fqdn %>
 restport = <%= node[:kagent][:port] %>
 heartbeat-interval = <%= node[:kagent][:heartbeat_interval] %>
 services-file = <%= node[:kagent][:services] %>
@@ -23,7 +23,7 @@ max-log-size = <%= node[:kagent][:max_log_size] %>
 public-ip = <%= @public_ip %>
 private-ip = <%= @private_ip %>
 mysql-socket = <%= node[:ndb][:mysql_socket] %>
-hostname = <%= @hostname %>
+hostname = <%= @fqdn %>
 network-interface = <%= @network_if %>
 group-name = <%= node[:kagent][:group_name] %>
 hadoop-home = <%= @hops_dir %>/hadoop

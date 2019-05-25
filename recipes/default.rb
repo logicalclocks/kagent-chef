@@ -5,6 +5,14 @@ service_name = "kagent"
 
 agent_password = ""
 
+fqdn = node['fqdn']
+hostname = node['hostname']
+if node['install']['localhost'] == "true"
+  fqdn = "localhost"
+  hostname = "localhost"
+end
+
+
 # First try to read from Chef attributes
 if node["kagent"]["password"].empty? == false
  agent_password = node["kagent"]["password"]
@@ -139,13 +147,14 @@ end
 # Certificate Signing code - Needs Hopsworks dashboard
 #
 
-
 template "#{node["kagent"]["home"]}/keystore.sh" do
   source "keystore.sh.erb"
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode 0700
-   variables({
+  variables({
+              :fqdn => fqdn,
+              :hostname => hostname,
               :directory => node["kagent"]["keystore_dir"],
               :keystorepass => node["hopsworks"]["master"]["password"]
             })
@@ -153,16 +162,16 @@ end
 
 # Default to hostname found in /etc/hosts, but allow user to override it.
 # First with DNS. Highest priority if user supplies the actual hostname
-hostname = node['fqdn']  
+
 
 if node["kagent"].attribute?("hostname")
    if node["kagent"]["hostname"].empty? == false
-      hostname = node["kagent"]["hostname"]
+      fqdn = node["kagent"]["hostname"]
    end
 end
 
-Chef::Log.info "Hostname to register kagent in config.ini is: #{hostname}"
-if hostname.empty?
+Chef::Log.info "Hostname to register kagent in config.ini is: #{fqdn}"
+if fqdn.empty?
   raise "Hostname in kagent/config.ini cannot be empty"
 end
 
@@ -193,14 +202,14 @@ template "#{node["kagent"]["etc"]}/config.ini" do
   variables({
               :rest_url => "https://#{dashboard_endpoint}/",
               :rack => '/default',
-              :hostname => hostname,
+              :fqdn => fqdn,
               :public_ip => public_ip,
               :private_ip => private_ip,
               :network_if => network_if,
               :hops_dir => hops_dir,
               :agent_password => agent_password,
-              :kstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__kstore.jks",
-              :tstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__tstore.jks",
+              :kstore => "#{node["kagent"]["keystore_dir"]}/#{fqdn}__kstore.jks",
+              :tstore => "#{node["kagent"]["keystore_dir"]}/#{fqdn}__tstore.jks",
               :blacklisted_envs => blacklisted_envs
             })
   
