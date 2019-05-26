@@ -7,7 +7,7 @@ agent_password = ""
 
 fqdn = node['fqdn']
 hostname = node['hostname']
-if node['install']['localhost'] == "true"
+if node['install']['localhost'].casecmp?("true")
   fqdn = "localhost"
   hostname = "localhost"
 end
