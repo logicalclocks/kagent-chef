@@ -6,10 +6,8 @@ service_name = "kagent"
 agent_password = ""
 
 fqdn = node['fqdn']
-hostname = node['hostname']
 if node['install']['localhost'].casecmp?("true")
   fqdn = "localhost"
-  hostname = "localhost"
 end
 
 
@@ -154,7 +152,6 @@ template "#{node["kagent"]["home"]}/keystore.sh" do
   mode 0700
   variables({
               :fqdn => fqdn,
-              :hostname => hostname,
               :directory => node["kagent"]["keystore_dir"],
               :keystorepass => node["hopsworks"]["master"]["password"]
             })
@@ -162,18 +159,6 @@ end
 
 # Default to hostname found in /etc/hosts, but allow user to override it.
 # First with DNS. Highest priority if user supplies the actual hostname
-
-
-if node["kagent"].attribute?("hostname")
-   if node["kagent"]["hostname"].empty? == false
-      fqdn = node["kagent"]["hostname"]
-   end
-end
-
-Chef::Log.info "Hostname to register kagent in config.ini is: #{fqdn}"
-if fqdn.empty?
-  raise "Hostname in kagent/config.ini cannot be empty"
-end
 
 
 hops_dir=node['install']['dir']
