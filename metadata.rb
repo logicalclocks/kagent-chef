@@ -148,3 +148,7 @@ attribute "jupyter/python",
 attribute "kagent/python_conda_versions",
           :description => "CSV of python versions to be used as base environments for Anaconda",
           :type => "string"
+
+attribute "kagent/network_if_prefix",
+          :description => "'ens' for Ubuntu on GCE. Change for different cloud vendor or OS.",
+          :type => "string"
