@@ -4,6 +4,8 @@
 
 LOCALHOST=<%= node['install']['localhost'] %>
 source <%= node[:kagent][:base_dir] %>/bin/get-pid.sh
+# Make bash str compares case insensitive
+shopt -s nocasematch
 
 
 if [ $? -ne 0 ]; then
