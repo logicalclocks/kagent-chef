@@ -9,7 +9,7 @@ if [ $? -ne 0 ]; then
 
         if [ "${LOCALHOST}" == "true" ] ; then
           # This script will try and get the active network interface name. It checks that the line following net-if name have an 'inet' allocated to it.
-          net_if = $(ifconfig | grep -C 2 ^<%= node['kagent']['network_if_prefix'] %> | grep -B 2 inet | grep ^<%= node['kagent']['network_if_prefix'] %> | sed 's/ .*//g')
+          net_if=$(ifconfig | grep -C 2 ^<%= node['kagent']['network_if_prefix'] %> | grep -B 2 inet | grep ^<%= node['kagent']['network_if_prefix'] %> | sed 's/ .*//g')
           # Check if the network interface found is the same as in the config.ini file
           grep network-interface <%= node[:kagent][:etc] %>/config.ini | grep $net_if
 	  if [ $? -ne 0 ] ; then
