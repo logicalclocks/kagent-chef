@@ -3,11 +3,10 @@
 # returns '1' if agent already running
 
 LOCALHOST=<%= node['install']['localhost'] %>
-source <%= node[:kagent][:base_dir] %>/bin/get-pid.sh
 # Make bash str compares case insensitive
 shopt -s nocasematch
 
-
+source <%= node[:kagent][:base_dir] %>/bin/get-pid.sh
 if [ $? -ne 0 ]; then
 
         if [ "${LOCALHOST}" == "true" ] ; then
