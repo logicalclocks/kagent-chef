@@ -22,9 +22,8 @@ depends 'magic_shell'
 
 recipe "kagent::install", "Installs the Karamel agent and python dependencies"
 recipe "kagent::default", "Installs and configures the Karamel agent, including anaconda"
-recipe "kagent::hops", "Installs and configures the Karamel agent for hops"
 recipe "kagent::purge", "Deletes the Karamel agent files"
-recipe "kagent::anaconda", "Installs and configures anaconda"
+recipe "kagent::dev", "Development helper library"
 
 attribute "kagent/user",
           :description => "Username to run kagent as",
@@ -90,10 +89,6 @@ attribute "systemd",
           :description => "Use systemd startup scripts, default 'true'",
           :type => "string"
 
-attribute "kagent/network/interface",
-          :description => "Define the network intefaces (eth0, enp0s3)",
-          :type => "string"
-
 attribute "kagent/conda_gc_interval",
           :description => "Define interval for kagent to run Anaconda garbage collection, suffix: ms, s, m, h, d. Default: 1h",
           :type => "string"
@@ -135,7 +130,6 @@ attribute "smtp/email_password",
           :description => "Password for email account. ",
           :required => "required",
           :type => 'string'
-
 
 attribute "certs/dir",
           :description => "Installation directory for ssl/tls certs",

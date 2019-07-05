@@ -3,7 +3,6 @@ import ConfigParser
 import logging
 import random
 import string
-import netifaces
 import socket
 
 from IPy import IP
@@ -52,7 +51,6 @@ class KConfig:
             self.csr_log_file = self._config.get('agent', 'csr-log-file')
             self.max_log_size = self._config.getint('agent', 'max-log-size')
             self.agent_pidfile = self._config.get('agent', 'pid-file')
-            self.network_interface = self._config.get('agent', 'network-interface')
             self.certificate_file = self._config.get('agent', 'certificate-file')
             self.key_file = self._config.get('agent', 'key-file')
             self.server_keystore = self._config.get('agent', 'server-keystore')
@@ -70,15 +68,8 @@ class KConfig:
             self.conda_dir = self._config.get('agent', 'conda-dir')
             self.conda_envs_blacklist = self._config.get('agent', 'conda-envs-blacklist')
             self.conda_gc_interval = self._config.get('agent', 'conda-gc-interval')
-
-            # TODO find public/private IP addresses
-            self.public_ip = None
-            self.private_ip = None
-            self.eth0_ip = netifaces.ifaddresses(self.network_interface)[netifaces.AF_INET][0]['addr']
-            if (IP(self.eth0_ip).iptype() == "PUBLIC"):
-                self.public_ip = self.eth0_ip
-            else:
-                self.private_ip = self.eth0_ip
+            self.public_ip = self._config.get('agent', 'public-ip')
+            self.private_ip = self._config.get('agent') 
 
             if (self._config.has_option("agent", "hostname")):
                 self.hostname = self._config.get("agent", "hostname")

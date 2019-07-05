@@ -2,7 +2,6 @@ import unittest
 import configparser
 import os
 import tempfile
-import netifaces
 import socket
 
 from IPy import IP
@@ -35,7 +34,6 @@ class TestKConfig(unittest.TestCase):
     max_log_size = '100'
     mysql_socket = 'path/to/mysql/socket'
     hostname = 'myhostname'
-    network_interface = ''
     group_name = 'group'
     hadoop_home = 'path/to/hadoop_home'
     certs_dir = 'path/to/certs_dir'
@@ -83,14 +81,10 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.csr_log_file, config.csr_log_file)
         self.assertEqual(self.logging_level, config.logging_level_str)
         self.assertEqual(int(self.max_log_size), config.max_log_size)
-        my_ip = netifaces.ifaddresses(self.network_interface)[netifaces.AF_INET][0]['addr']
-        if (IP(my_ip).iptype() == "PUBLIC"):
-            self.assertEqual(my_ip, config.public_ip)
-        else:
-            self.assertEqual(my_ip, config.private_ip)
+        self.assertEqual(self.private_ip, config.private_ip)
+        self.assertEqual(self.public_ip, config.public_ip)
         self.assertEqual(self.mysql_socket, config.mysql_socket)
         self.assertEqual(self.hostname, config.hostname)
-        self.assertEqual(self.network_interface, config.network_interface)
         self.assertEqual(self.group_name, config.group_name)
         self.assertEqual(self.hadoop_home, config.hadoop_home)
         self.assertEqual(self.certs_dir, config.certs_dir)
@@ -114,8 +108,7 @@ class TestKConfig(unittest.TestCase):
         self.assertIsNotNone(config.agent_password)
         self.assertNotEqual('', config.agent_password)
         
-        my_ip = netifaces.ifaddresses(self.network_interface)[netifaces.AF_INET][0]['addr']
-        my_hostname = socket.gethostbyaddr(my_ip)[0]
+        my_hostname = socket.gethostbyaddr(self.private_ip)[0]
         self.assertEqual(my_hostname, config.hostname)
 
         self.assertEqual(my_hostname, config.host_id)
@@ -127,7 +120,6 @@ class TestKConfig(unittest.TestCase):
 
     def _prepare_config_file(self, all_keys):
         config = configparser.ConfigParser()
-        self.network_interface = self._get_interface_name()
         
         config['server'] = {
             'url': self.url,
@@ -155,7 +147,6 @@ class TestKConfig(unittest.TestCase):
                 'max-log-size': self.max_log_size,
                 'mysql-socket': self.mysql_socket,
                 'hostname': self.hostname,
-                'network-interface': self.network_interface,
                 'group-name': self.group_name,
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,
@@ -183,7 +174,6 @@ class TestKConfig(unittest.TestCase):
                 'logging-level': self.logging_level,
                 'max-log-size': self.max_log_size,
                 'mysql-socket': self.mysql_socket,
-                'network-interface': self.network_interface,
                 'group-name': self.group_name,
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,
