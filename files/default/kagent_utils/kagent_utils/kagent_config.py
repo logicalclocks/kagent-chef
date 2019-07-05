@@ -70,22 +70,13 @@ class KConfig:
             self.conda_gc_interval = self._config.get('agent', 'conda-gc-interval')
             self.public_ip = self._config.get('agent', 'public-ip')
             self.private_ip = self._config.get('agent', 'private-ip') 
-
-            if (self._config.has_option("agent", "hostname")):
-                self.hostname = self._config.get("agent", "hostname")
-            else:
-                try:
-                    self.hostname = socket.gethostbyaddr(self.eth0_ip)[0]
-                except socket.herror:
-                    try:
-                        self.hostname = socket.getfqdn()
-                    except socket.herror:
-                        self.hostname = "localhost"
+            self.hostname = self._config.get("agent", "hostname")
 
             if (self._config.has_option("agent", "host-id")):
                 self.host_id = self._config.get("agent", "host-id")
             else:
                 self.host_id = self.hostname
+
         except Exception, e:
             print ("Exception while reading {0}: {1}".format(self._configFile, e))
             sys.exit(1)
