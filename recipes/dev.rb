@@ -1,27 +1,24 @@
 private_ip = my_private_ip()
 
-priv_net_if = node["kagent"]["network"]["interface"]
+# This is a development recipe, used together with virtualbox. All our boxes in the 
+# 3 vm setup, have IPs starting with 192.168
 
-# If the network i/f name not set by the user, set default values for ubuntu and centos
-if priv_net_if == ""
-  case node["platform_family"]
-  when "debian"
-    priv_net_if = "eth1"
-  when "rhel"
-    priv_net_if = "enp0s8"
+# `ifconfig | grep -B 1 '192.168' | awk '{split($0,a," "); print a[1];}' | head -1`
+
+ruby_block 'discover_public_interface' do
+  block do
+    Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
+    command = "ifconfig | grep -B 1 '192.168' | awk '{split($0,a," "); print a[1];}' | head -1"
+    pub_net_if = shell_out(command).stdout.gsub(/\n/, '')
   end
 end
 
-pub_net_if = ""
-case priv_net_if
-when "enp0s3"
-  pub_net_if = "enp0s8"
-when "enp0s8"
-  pub_net_if = "enp0s3"
-when "eth1"
-  pub_net_if = "eth0"
-when "eth0"
-  pub_net_if = "eth1"
+ruby_block 'discover_private_interface' do
+  block do
+    Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
+    command = "ifconfig | grep -B 1 '10.0.2.15' | awk '{split($0,a," "); print a[1];}' | head -1"
+    priv_net_if = shell_out(command).stdout.gsub(/\n/, '')
+  end
 end
 
 directory '/etc/iptables' do
@@ -43,12 +40,14 @@ template '/etc/iptables/iptables.rules' do
   owner 'root'
   group 'root'
   mode '0700'
-  variables({
-              :pub_net_if => pub_net_if,
-              :priv_net_if => priv_net_if,
-              :private_ip => private_ip,
-              :public_ip => "10.0.2.15"
-            })
+  variables( lazy {
+    h = {}
+    h[:pub_net_if] = pub_net_if
+    h[:priv_net_if] = priv_net_if
+    h[:private_ip] = private_ip
+    h[:public_ip] = "10.0.2.15"
+    h
+  })
   notifies :run, 'execute[ip_forward]', :immediately
 end
 
