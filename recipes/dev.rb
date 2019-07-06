@@ -4,20 +4,21 @@ private_ip = my_private_ip()
 # 3 vm setup, have IPs starting with 192.168
 
 # `ifconfig | grep -B 1 '192.168' | awk '{split($0,a," "); print a[1];}' | head -1`
-
+pub_net_if = ""
 ruby_block 'discover_public_interface' do
   block do
     Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
-    command = "ifconfig | grep -B 1 '192.168' | awk '{split($0,a," "); print a[1];}' | head -1"
-    pub_net_if = shell_out(command).stdout.gsub(/\n/, '')
+    command = "ifconfig | grep -B 1 '192.168' | awk '{split($0,a,\" \"); print a[1];}' | head -1"
+    pub_net_if = shell_out(command).stdout.gsub(/\n/, '').gsub(/:/, '')
   end
 end
 
+priv_net_if
 ruby_block 'discover_private_interface' do
   block do
     Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
-    command = "ifconfig | grep -B 1 '10.0.2.15' | awk '{split($0,a," "); print a[1];}' | head -1"
-    priv_net_if = shell_out(command).stdout.gsub(/\n/, '')
+    command = "ifconfig | grep -B 1 '10.0.2.15' | awk '{split($0,a,\" \"); print a[1];}' | head -1"
+    priv_net_if = shell_out(command).stdout.gsub(/\n/, '').gsub(/:/, '')
   end
 end
 
