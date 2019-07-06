@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+
+
+from kagent_utils import KConfig
+
+global kconfig
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Kagent config.ini editor')
+
+    parser.add_argument('-ccnfig', default='config.ini', help='Path to configuration file')
+    parser.add_argument('-hostid', default='localhost', help='IP address of Hopsworks')
+    parser.add_argument('-public-ip', default='localhost', help='Public IP address of this host')
+    parser.add_argument('-private-ip', default='localhost', help='Private IP address of this host')
+    parser.add_argument('-url', default='https://localhost', help='Url for hopsworks')
+#    parser.add_argument('-username', default='agent@hops.io', help='Username for agent')
+    parser.add_argument('-password', default='admin', help='Password for agent')
+    
+    args = parser.parse_args()
+
+    kconfig = KConfig(args.config)
+    kconfig.read_conf()
+    kconfig.set_conf_value('agent','host-id', args.hostid)
+    kconfig.set_conf_value('agent','public-ip', args.public-ip)
+    kconfig.set_conf_value('agent','private-ip', args.private-ip)
+    kconfig.set_conf_value('server','url', args.url)
+#    kconfig.set_conf_value('server','username', args.username)
+    kconfig.set_conf_value('server','password', args.password)
+    kconfig.dump_to_file()

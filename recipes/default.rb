@@ -30,6 +30,27 @@ if agent_password.empty?
   agent_password = SecureRandom.hex[0...10]
 end
 
+
+
+if node['install']['gce'] == "true" || node['install']['aws'] == "true" || node['install']['azure'] == "true" 
+  template "#{node['kagent']['base_dir']}/bin/edit-config-ini-inplace.py" do
+    source "edit-config-ini-inplace.py.erb"
+    owner node['kagent']['user']
+    group node['kagent']['group']
+    mode 0744
+  end
+
+  template "#{node['kagent']['base_dir']}/bin/edit-and-start.sh" do
+    source "edit-and-start.sh.erb"
+    owner node['kagent']['user']
+    group node['kagent']['group']
+    mode 0744
+  end
+
+  
+end
+
+
 case node[:platform]
 when "ubuntu"
  if node[:platform_version].to_f <= 14.04
