@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+#
+# run as sudo for 'kagent' user?
+#
+
+if [ $# -ne 4 ] ; then
+    echo "Usage: $0 hostname ip hopsworks-url kagent-password"
+    exit 1
+fi
+
+
+host=$1
+ip=$2
+url=$3
+passwd=$4
+
+
+systemctl stop kagent
+
+<%= node['conda']['base_dir'] %>/envs/hops-system/bin/python <%= node['kagent']['base_dir'] %>/bin/edit-config-ini-inplace.py  -config  <%= node['kagent']['base_dir'] %>/etc/config.ini -hostname $host -host-id $ip -public-ip $ip  -private-ip $ip -url $url  -password $passwd
+    
+# chown <%= node['kagent']['user'] %> <%= node['kagent']['based_dir'] %>/etc/config.ini
+
+
+systemctl start kagent
