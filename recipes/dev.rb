@@ -13,7 +13,7 @@ ruby_block 'discover_public_interface' do
   end
 end
 
-priv_net_if
+priv_net_if = ""
 ruby_block 'discover_private_interface' do
   block do
     Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
