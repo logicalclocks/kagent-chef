@@ -2,23 +2,18 @@ private_ip = my_private_ip()
 
 # This is a development recipe, used together with virtualbox. All our boxes in the 
 # 3 vm setup, have IPs starting with 192.168
-
-# `ifconfig | grep -B 1 '192.168' | awk '{split($0,a," "); print a[1];}' | head -1`
+# This recipe is meant to be used in a Vbox development environment  
 pub_net_if = ""
-ruby_block 'discover_public_interface' do
-  block do
-    Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
-    command = "ifconfig | grep -B 1 '192.168' | awk '{split($0,a,\" \"); print a[1];}' | head -1"
-    pub_net_if = shell_out(command).stdout.gsub(/\n/, '').gsub(/:/, '')
-  end
-end
-
 priv_net_if = ""
-ruby_block 'discover_private_interface' do
-  block do
-    Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
-    command = "ifconfig | grep -B 1 '10.0.2.15' | awk '{split($0,a,\" \"); print a[1];}' | head -1"
-    priv_net_if = shell_out(command).stdout.gsub(/\n/, '').gsub(/:/, '')
+node['network']['interfaces'].each do |iface_name, iface| 
+  iface['addresses'].each do |addr, value| 
+    if addr.eql?(private_ip)
+      pub_net_if = iface_name
+    end
+
+    if addr.eql?("10.0.2.15")
+      priv_net_if = iface_name
+    end
   end
 end
 
@@ -41,13 +36,11 @@ template '/etc/iptables/iptables.rules' do
   owner 'root'
   group 'root'
   mode '0700'
-  variables( lazy {
-    h = {}
-    h[:pub_net_if] = pub_net_if
-    h[:priv_net_if] = priv_net_if
-    h[:private_ip] = private_ip
-    h[:public_ip] = "10.0.2.15"
-    h
+  variables({
+    'pub_net_if' => pub_net_if,
+    'priv_net_if' => priv_net_if,
+    'private_ip' => private_ip,
+    'public_ip' => "10.0.2.15"
   })
   notifies :run, 'execute[ip_forward]', :immediately
 end
