@@ -1,3 +1,4 @@
+
 maintainer       "Jim Dowling"
 maintainer_email "jdowling@kth.se"
 name             "kagent"
@@ -22,9 +23,8 @@ depends 'magic_shell'
 
 recipe "kagent::install", "Installs the Karamel agent and python dependencies"
 recipe "kagent::default", "Installs and configures the Karamel agent, including anaconda"
-recipe "kagent::hops", "Installs and configures the Karamel agent for hops"
 recipe "kagent::purge", "Deletes the Karamel agent files"
-recipe "kagent::anaconda", "Installs and configures anaconda"
+recipe "kagent::dev", "Development helper library"
 
 attribute "kagent/user",
           :description => "Username to run kagent as",
@@ -86,10 +86,6 @@ attribute "systemd",
           :description => "Use systemd startup scripts, default 'true'",
           :type => "string"
 
-attribute "kagent/network/interface",
-          :description => "Define the network intefaces (eth0, enp0s3)",
-          :type => "string"
-
 attribute "kagent/conda_gc_interval",
           :description => "Define interval for kagent to run Anaconda garbage collection, suffix: ms, s, m, h, d. Default: 1h",
           :type => "string"
@@ -110,29 +106,6 @@ attribute "hops/group",
           :description => "Haodop group for conda",
           :type => "string"
 
-attribute "smtp/host",
-          :description => "Ip Address/hostname of SMTP server (default is smtp.gmail.com)",
-          :type => 'string'
-
-attribute "smtp/port",
-          :description => "Port of SMTP server (default is 587)",
-          :type => 'string'
-
-attribute "smtp/ssl_port",
-          :description => "SSL port of SMTP server (default is 465)",
-          :type => 'string'
-
-attribute "smtp/email",
-          :description => "Email account to send notifications from. ",
-          :required => "required",
-          :type => 'string'
-
-attribute "smtp/email_password",
-          :description => "Password for email account. ",
-          :required => "required",
-          :type => 'string'
-
-
 attribute "certs/dir",
           :description => "Installation directory for ssl/tls certs",
           :type => 'string'
@@ -147,8 +120,4 @@ attribute "jupyter/python",
 
 attribute "kagent/python_conda_versions",
           :description => "CSV of python versions to be used as base environments for Anaconda",
-          :type => "string"
-
-attribute "kagent/network_if_prefix",
-          :description => "'ens' for Ubuntu on GCE. Change for different cloud vendor or OS.",
           :type => "string"

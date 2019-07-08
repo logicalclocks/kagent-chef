@@ -23,8 +23,7 @@ max-log-size = <%= node[:kagent][:max_log_size] %>
 public-ip = <%= @public_ip %>
 private-ip = <%= @private_ip %>
 mysql-socket = <%= node[:ndb][:mysql_socket] %>
-hostname = <%= @fqdn %>
-network-interface = <%= @network_if %>
+hostname = <%= @hostname %>
 group-name = <%= node[:kagent][:group_name] %>
 hadoop-home = <%= @hops_dir %>/hadoop
 certs-dir = <%= node[:kagent][:certs_dir] %>

@@ -1,27 +1,20 @@
 private_ip = my_private_ip()
 
-priv_net_if = node["kagent"]["network"]["interface"]
-
-# If the network i/f name not set by the user, set default values for ubuntu and centos
-if priv_net_if == ""
-  case node["platform_family"]
-  when "debian"
-    priv_net_if = "eth1"
-  when "rhel"
-    priv_net_if = "enp0s8"
-  end
-end
-
+# This is a development recipe, used together with virtualbox. All our boxes in the 
+# 3 vm setup, have IPs starting with 192.168
+# This recipe is meant to be used in a Vbox development environment  
 pub_net_if = ""
-case priv_net_if
-when "enp0s3"
-  pub_net_if = "enp0s8"
-when "enp0s8"
-  pub_net_if = "enp0s3"
-when "eth1"
-  pub_net_if = "eth0"
-when "eth0"
-  pub_net_if = "eth1"
+priv_net_if = ""
+node['network']['interfaces'].each do |iface_name, iface| 
+  iface['addresses'].each do |addr, value| 
+    if addr.eql?(private_ip)
+      pub_net_if = iface_name
+    end
+
+    if addr.eql?("10.0.2.15")
+      priv_net_if = iface_name
+    end
+  end
 end
 
 directory '/etc/iptables' do
@@ -44,11 +37,11 @@ template '/etc/iptables/iptables.rules' do
   group 'root'
   mode '0700'
   variables({
-              :pub_net_if => pub_net_if,
-              :priv_net_if => priv_net_if,
-              :private_ip => private_ip,
-              :public_ip => "10.0.2.15"
-            })
+    'pub_net_if' => pub_net_if,
+    'priv_net_if' => priv_net_if,
+    'private_ip' => private_ip,
+    'public_ip' => "10.0.2.15"
+  })
   notifies :run, 'execute[ip_forward]', :immediately
 end
 

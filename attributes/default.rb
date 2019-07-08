@@ -70,37 +70,27 @@ default["kagent"]["dns"]                           = "false"
 default["public_ips"]                              = ['10.0.2.15']
 default["private_ips"]                             = ['10.0.2.15']
 default["gateway_ips"]                             = ['10.0.2.2']
-default["kagent"]["allow_ssh_access"]              = "false"
 
-node.default["download_url"]                       = "http://193.10.67.171/hops"
-node.default["systemd"]                            = "true"
-node.default["ndb"]["mysql_socket"]                = "/tmp/mysql.sock"
-node.default["ndb"]["mysql.jdbc_url"]              = ""
-node.default["ndb"]["mysql_port"]                  = "3306"
+default["download_url"]                       = "http://193.10.67.171/hops"
+default["systemd"]                            = "true"
+default["ndb"]["mysql_socket"]                = "/tmp/mysql.sock"
+default["ndb"]["mysql.jdbc_url"]              = ""
+default["ndb"]["mysql_port"]                  = "3306"
 
-node.default["vagrant"]                            = "false"
+default["vagrant"]                            = "false"
 
-node.default["ntp"]["install"]                     = "false"
+default["ntp"]["install"]                     = "false"
 # Servers to sync ntp time with
 # '0.pool.ntp.org', '1.pool.ntp.org'
-node.normal["ntp"]["servers"]                      = ['0.europe.pool.ntp.org', '1.europe.pool.ntp.org', '2.europe.pool.ntp.org', '3.europe.pool.ntp.org']
+normal["ntp"]["servers"]                      = ['0.europe.pool.ntp.org', '1.europe.pool.ntp.org', '2.europe.pool.ntp.org', '3.europe.pool.ntp.org']
 
-node.normal["ntp"]["peers"]                        = ['time0.int.example.org', 'time1.int.example.org']
+normal["ntp"]["peers"]                        = ['time0.int.example.org', 'time1.int.example.org']
 
 default["kagent"]["test"]                          = false
 
 
 default["kagent"]["keystore"]                      = "#{node["kagent"]["base_dir"]}/node_server_keystore.jks"
 default["kagent"]["keystore_password"]             = "changeit"
-
-
-default["smtp"]["host"]                            = "smtp.gmail.com"
-default["smtp"]["port"]                            = "587"
-default["smtp"]["ssl_port"]                        = "465"
-default["smtp"]["email"]                           = "smtp@gmail.com"
-default["smtp"]["email_password"]                  = "password"
-default["smtp"]["gmail.placeholder"]               = "http://snurran.sics.se/hops/hopsworks.email"
-
 
 default["services"]["enabled"]                     = "true"
 
@@ -110,8 +100,5 @@ default["java"]["install_flavor"]                  = "openjdk"
 default["java"]["jdk_version"]                     = 8
 
 default["kagent"]["conda_gc_interval"]             = "1h"
+
 default["kagent"]["python_conda_versions"]         = "2.7, 3.6"
-
-
-# 'ens' for GCE. 'em' for hops.site (centos), etc....
-default["kagent"]["network_if_prefix"]             = "ens"

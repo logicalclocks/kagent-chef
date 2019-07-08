@@ -2,16 +2,16 @@ import unittest
 import configparser
 import os
 import tempfile
-import netifaces
 import socket
 
 from IPy import IP
 
 from kagent_utils import KConfig
 
+
 class TestKConfig(unittest.TestCase):
 
-    ## server section
+    # server section
     url = 'http://localhost:1337/'
     path_login = 'login/path'
     path_register = 'register/path'
@@ -21,7 +21,7 @@ class TestKConfig(unittest.TestCase):
     username = 'username'
     server_password = 'server_password'
 
-    ## agent section
+    # agent section
     host_id = 'host_0'
     restport = '8080'
     heartbeat_interval = '3'
@@ -35,7 +35,6 @@ class TestKConfig(unittest.TestCase):
     max_log_size = '100'
     mysql_socket = 'path/to/mysql/socket'
     hostname = 'myhostname'
-    network_interface = ''
     group_name = 'group'
     hadoop_home = 'path/to/hadoop_home'
     certs_dir = 'path/to/certs_dir'
@@ -49,18 +48,18 @@ class TestKConfig(unittest.TestCase):
     conda_dir = 'path/to/conda'
     conda_envs_blacklist = 'python27,python35,hops-system'
     conda_gc_interval = '2h'
+    private_ip = '127.0.0.1'
+    public_ip = '192.168.0.1'
 
     def setUp(self):
         self.config_file = tempfile.mkstemp(prefix='kagent_config_')
 
-
     def tearDown(self):
         os.remove(self.config_file[1])
 
-
     def test_parse_full_config(self):
         self._prepare_config_file(True)
-        
+
         config = KConfig(self.config_file[1])
         config.read_conf()
 
@@ -68,13 +67,15 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self._toUrl(self.path_login), config.login_url)
         self.assertEqual(self._toUrl(self.path_register), config.register_url)
         self.assertEqual(self._toUrl(self.path_ca_host), config.ca_host_url)
-        self.assertEqual(self._toUrl(self.path_heartbeat), config.heartbeat_url)
+        self.assertEqual(self._toUrl(self.path_heartbeat),
+                         config.heartbeat_url)
         self.assertEqual(self._toUrl(self.path_alert), config.alert_url)
         self.assertEqual(self.username, config.server_username)
         self.assertEqual(self.server_password, config.server_password)
         self.assertEqual(self.host_id, config.host_id)
         self.assertEqual(int(self.restport), config.rest_port)
-        self.assertEqual(int(self.heartbeat_interval), config.heartbeat_interval)
+        self.assertEqual(int(self.heartbeat_interval),
+                         config.heartbeat_interval)
         self.assertEqual(self.services_file, config.services_file)
         self.assertEqual(self.watch_interval, config.watch_interval)
         self.assertEqual(self.bin_dir, config.bin_dir)
@@ -83,14 +84,10 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.csr_log_file, config.csr_log_file)
         self.assertEqual(self.logging_level, config.logging_level_str)
         self.assertEqual(int(self.max_log_size), config.max_log_size)
-        my_ip = netifaces.ifaddresses(self.network_interface)[netifaces.AF_INET][0]['addr']
-        if (IP(my_ip).iptype() == "PUBLIC"):
-            self.assertEqual(my_ip, config.public_ip)
-        else:
-            self.assertEqual(my_ip, config.private_ip)
+        self.assertEqual(self.private_ip, config.private_ip)
+        self.assertEqual(self.public_ip, config.public_ip)
         self.assertEqual(self.mysql_socket, config.mysql_socket)
         self.assertEqual(self.hostname, config.hostname)
-        self.assertEqual(self.network_interface, config.network_interface)
         self.assertEqual(self.group_name, config.group_name)
         self.assertEqual(self.hadoop_home, config.hadoop_home)
         self.assertEqual(self.certs_dir, config.certs_dir)
@@ -102,10 +99,11 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.state_store, config.state_store_location)
         self.assertEqual(self.agent_password, config.agent_password)
         self.assertEqual(self.conda_dir, config.conda_dir)
-        self.assertEqual(self.conda_envs_blacklist, config.conda_envs_blacklist)
+        self.assertEqual(self.conda_envs_blacklist,
+                         config.conda_envs_blacklist)
         self.assertEqual(self.conda_gc_interval, config.conda_gc_interval)
 
-    ## Let KConfig figure out values for these properties
+    # Let KConfig figure out values for these properties
     def test_parse_partial_config(self):
         self._prepare_config_file(False)
         config = KConfig(self.config_file[1])
@@ -113,22 +111,15 @@ class TestKConfig(unittest.TestCase):
 
         self.assertIsNotNone(config.agent_password)
         self.assertNotEqual('', config.agent_password)
-        
-        my_ip = netifaces.ifaddresses(self.network_interface)[netifaces.AF_INET][0]['addr']
-        my_hostname = socket.gethostbyaddr(my_ip)[0]
+
+        my_hostname = socket.gethostbyaddr(self.private_ip)[0]
         self.assertEqual(my_hostname, config.hostname)
 
         self.assertEqual(my_hostname, config.host_id)
-        
-
-    def _get_interface_name(self):
-        # We hope that there is at least lo and another configured interface
-        return netifaces.interfaces()[1]
 
     def _prepare_config_file(self, all_keys):
         config = configparser.ConfigParser()
-        self.network_interface = self._get_interface_name()
-        
+
         config['server'] = {
             'url': self.url,
             'path-login': self.path_login,
@@ -155,7 +146,6 @@ class TestKConfig(unittest.TestCase):
                 'max-log-size': self.max_log_size,
                 'mysql-socket': self.mysql_socket,
                 'hostname': self.hostname,
-                'network-interface': self.network_interface,
                 'group-name': self.group_name,
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,
@@ -168,7 +158,9 @@ class TestKConfig(unittest.TestCase):
                 'password': self.agent_password,
                 'conda-dir': self.conda_dir,
                 'conda-envs-blacklist': self.conda_envs_blacklist,
-                'conda-gc-interval': self.conda_gc_interval
+                'conda-gc-interval': self.conda_gc_interval,
+                'private-ip': self.private_ip,
+                'public-ip': self.public_ip
             }
         else:
             config['agent'] = {
@@ -183,7 +175,6 @@ class TestKConfig(unittest.TestCase):
                 'logging-level': self.logging_level,
                 'max-log-size': self.max_log_size,
                 'mysql-socket': self.mysql_socket,
-                'network-interface': self.network_interface,
                 'group-name': self.group_name,
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,
@@ -196,15 +187,17 @@ class TestKConfig(unittest.TestCase):
                 'password': self.agent_password,
                 'conda-dir': self.conda_dir,
                 'conda-envs-blacklist': self.conda_envs_blacklist,
-                'conda-gc-interval': self.conda_gc_interval
+                'conda-gc-interval': self.conda_gc_interval,
+                'private-ip': self.private_ip,
+                'public-ip': self.public_ip
             }
-            
+
         with open(self.config_file[1], 'w') as config_fd:
             config.write(config_fd)
-        
 
     def _toUrl(self, path):
         return self.url + path
+
 
 if __name__ == "__main__":
     unittest.main()

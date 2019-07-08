@@ -126,19 +126,6 @@ if node.attribute? "hopsworks"
   end
 end
 
-network_if = node["kagent"]["network"]["interface"]
-
-# If the network i/f name not set by the user, set default values for ubuntu and centos
-if network_if == ""
-  case node["platform_family"]
-  when "debian"
-    network_if = "eth0"
-  when "rhel"
-    network_if = "enp0s3"
-  end
-end
-
-
 template "#{node["kagent"]["home"]}/bin/start-all-local-services.sh" do
   source "start-all-local-services.sh.erb"
   owner node["kagent"]["user"]
@@ -211,7 +198,6 @@ template "#{node["kagent"]["etc"]}/config.ini" do
               :fqdn => fqdn,
               :public_ip => public_ip,
               :private_ip => private_ip,
-              :network_if => network_if,
               :hops_dir => hops_dir,
               :agent_password => agent_password,
               :kstore => "#{node["kagent"]["keystore_dir"]}/#{fqdn}__kstore.jks",
@@ -231,32 +217,7 @@ if node["kagent"]["test"] == false && node['install']['upgrade'] == "false"
     end
 end
 
-
 execute "rm -f #{node["kagent"]["pid_file"]}"
-
-case node['platform_family']
-when "rhel"
-  # bash "disable-iptables" do
-  #   code <<-EOH
-  #   service iptables stop
-  # EOH
-  #   only_if "test -f /etc/init.d/iptables && service iptables status"
-  # end
-  
-end
-
-if node["kagent"]["allow_ssh_access"] == 'true'
-  homedir = "/home/#{node["kagent"]["user"]}"
-  kagent_keys "#{homedir}" do
-    cb_user "#{node["kagent"]["user"]}"
-    cb_group "#{node["kagent"]["group"]}"
-    cb_name "hopsworks"
-    cb_recipe "default"  
-    action :get_publickey
-  end  
-end
-
-
 
 if node["kagent"]["cleanup_downloads"] == 'true'
 
