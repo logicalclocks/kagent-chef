@@ -301,7 +301,7 @@ if __name__ == '__main__':
                 subprocess.check_call(config.keystore_script)
             except Exception, e:
                 LOG.error("Error while registering host: {0}".format(e))
-                raise e
+                sys.exit(3)
             
     elif args.operation == "rotate":
         LOG.debug("Key rotation")

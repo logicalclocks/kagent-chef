@@ -223,23 +223,6 @@ template "#{node["kagent"]["certs_dir"]}/run_csr.sh" do
   mode 0710
 end
 
-cloud="false"
-
-if node['install']['gce'].casecmp("true") == 0
-  cloud="true"
-
-end
-
-if node['install']['aws'].casecmp("true") == 0
-  cloud="true"
-
-end
-
-if node['install']['azure'].casecmp("true") == 0
-  cloud="true"
-
-end
-
 
 ['start-agent.sh', 'stop-agent.sh', 'restart-agent.sh', 'get-pid.sh'].each do |script|
   Chef::Log.info "Installing #{script}"
