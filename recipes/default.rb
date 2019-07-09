@@ -205,7 +205,12 @@ template "#{node["kagent"]["etc"]}/config.ini" do
               :tstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__tstore.jks",
               :blacklisted_envs => blacklisted_envs
             })
+if node["services"]["enabled"] == "true"  
+  notifies :enable, "service[#{service_name}]"
 end
+  notifies :restart, "service[#{service_name}]", :delayed
+end
+
 
 template "#{node["kagent"]["home"]}/keystore.sh" do
   source "keystore.sh.erb"
@@ -219,11 +224,6 @@ template "#{node["kagent"]["home"]}/keystore.sh" do
             })
 end
   
-if node["services"]["enabled"] == "true"  
-  notifies :enable, "service[#{service_name}]"
-end
-  notifies :restart, "service[#{service_name}]", :delayed
-end
 
 if node["kagent"]["test"] == false && node['install']['upgrade'] == "false"
     kagent_keys "sign-certs" do
