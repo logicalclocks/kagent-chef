@@ -3,6 +3,7 @@ action :csr do
   bash "sign-local-csr-key" do
     user "root"
     retries 4
+    retry_delay 10
     timeout 300
     code <<-EOF
       set -eo pipefail
