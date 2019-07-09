@@ -2,9 +2,6 @@
 # returns '0' if agent started successfully
 # returns '1' if agent already running
 
-# Make bash str compares case insensitive
-shopt -s nocasematch
-
 source <%= node[:kagent][:base_dir] %>/bin/get-pid.sh
 if [ $? -ne 0 ]; then
 

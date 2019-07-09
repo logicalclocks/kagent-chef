@@ -172,7 +172,7 @@ template "#{node["kagent"]["home"]}/keystore.sh" do
   group node["kagent"]["group"]
   mode 0700
   variables({
-              :fqdn => fqdn,
+              :fqdn => hostname,
               :directory => node["kagent"]["keystore_dir"],
               :keystorepass => node["hopsworks"]["master"]["password"]
             })
