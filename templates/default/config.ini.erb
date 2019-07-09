@@ -9,7 +9,7 @@ username = <%= node[:kagent][:dashboard][:user] %>
 password = <%= node[:kagent][:dashboard][:password] %>
 
 [agent]
-host-id = <%= @fqdn %>
+host-id = <%= @hostname %>
 restport = <%= node[:kagent][:port] %>
 heartbeat-interval = <%= node[:kagent][:heartbeat_interval] %>
 services-file = <%= node[:kagent][:services] %>

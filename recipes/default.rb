@@ -148,6 +148,20 @@ template "#{node["kagent"]["home"]}/bin/status-all-local-services.sh" do
   mode 0740
 end
 
+# Default to hostname found in /etc/hosts, but allow user to override it.
+# First with DNS. Highest priority if user supplies the actual hostname
+hostname = node['fqdn']
+
+if node["kagent"].attribute?("hostname")
+  if node["kagent"]["hostname"].empty? == false
+    hostname = node["kagent"]["hostname"]
+  end
+end
+
+Chef::Log.info "Hostname to register kagent in config.ini is: #{hostname}"
+if hostname.empty?
+  raise "Hostname in kagent/config.ini cannot be empty"
+end
 
 #
 # Certificate Signing code - Needs Hopsworks dashboard
@@ -195,13 +209,13 @@ template "#{node["kagent"]["etc"]}/config.ini" do
   variables({
               :rest_url => "https://#{dashboard_endpoint}/",
               :rack => '/default',
-              :fqdn => fqdn,
+              :hostname => hostname,
               :public_ip => public_ip,
               :private_ip => private_ip,
               :hops_dir => hops_dir,
               :agent_password => agent_password,
-              :kstore => "#{node["kagent"]["keystore_dir"]}/#{fqdn}__kstore.jks",
-              :tstore => "#{node["kagent"]["keystore_dir"]}/#{fqdn}__tstore.jks",
+              :kstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__kstore.jks",
+              :tstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__tstore.jks",
               :blacklisted_envs => blacklisted_envs
             })
   
