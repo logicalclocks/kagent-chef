@@ -2,23 +2,12 @@
 # returns '0' if agent started successfully
 # returns '1' if agent already running
 
-LOCALHOST=<%= @cloud %>
 # Make bash str compares case insensitive
 shopt -s nocasematch
 
 source <%= node[:kagent][:base_dir] %>/bin/get-pid.sh
 if [ $? -ne 0 ]; then
 
-        if [ "${LOCALHOST}" == "true" ] ; then
-          # This script will try and get the active network interface name. It checks that the line following net-if name have an 'inet' allocated to it.
-          net_if=$(ifconfig | grep -C 2 ^<%= @net_if_prefix %> | grep -B 2 inet | grep ^<%= node['kagent']['network_if_prefix'] %> | sed 's/ .*//g')
-          # Check if the network interface found is the same as in the config.ini file
-          grep network-interface <%= node[:kagent][:etc] %>/config.ini | grep $net_if
-	  if [ $? -ne 0 ] ; then
-	    perl -pi -e "s/network-interface.*/network-interface: ${net_if}/" <%= node[:kagent][:etc] %>/config.ini
-          fi
-	fi
-	   
         echo "Starting the agent..."
 	nohup <%= node[:conda][:base_dir] %>/envs/hops-system/bin/python <%= node[:kagent][:base_dir] %>/agent.py \
 	--config <%= node[:kagent][:etc] %>/config.ini &> /dev/null &

@@ -224,26 +224,20 @@ template "#{node["kagent"]["certs_dir"]}/run_csr.sh" do
 end
 
 cloud="false"
-net_if_prefix = node["kagent"]["network_if_prefix"]
-
-if node['install']['localhost'].casecmp("true") == 0
-  cloud="true"
-  net_if_prefix="ens"
-end
 
 if node['install']['gce'].casecmp("true") == 0
   cloud="true"
-  net_if_prefix="ens"
+
 end
 
 if node['install']['aws'].casecmp("true") == 0
   cloud="true"
-  net_if_prefix="eth"
+
 end
 
 if node['install']['azure'].casecmp("true") == 0
   cloud="true"
-  net_if_prefix="eth"
+
 end
 
 
@@ -254,10 +248,6 @@ end
     owner node["kagent"]["user"]
     group node["kagent"]["group"]
     mode 0750
-    variables({
-        :cloud => cloud,
-        :net_if_prefix => net_if_prefix
-    })
   end
 end 
 

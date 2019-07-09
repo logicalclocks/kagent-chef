@@ -63,6 +63,8 @@ default["kagent"]["hostid"]                        = 100
 
 default["kagent"]["password"]                      = ""
 
+default["kagent"]["hostname"]                      =
+  
 default["kagent"]["keystore_dir"] 		   = node["kagent"]["certs_dir"] + "/keystores"
 
 default["kagent"]["dns"]                           = "false"

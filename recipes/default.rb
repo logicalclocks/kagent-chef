@@ -5,11 +5,6 @@ service_name = "kagent"
 
 agent_password = ""
 
-fqdn = node['fqdn']
-if node['install']['localhost'].casecmp?("true")
-  fqdn = "localhost"
-end
-
 
 # First try to read from Chef attributes
 if node["kagent"]["password"].empty? == false
@@ -155,6 +150,10 @@ hostname = node['fqdn']
 if node["kagent"].attribute?("hostname")
   if node["kagent"]["hostname"].empty? == false
     hostname = node["kagent"]["hostname"]
+  end
+else
+  if node['install']['localhost'].casecmp?("true")
+    hostname = "localhost"
   end
 end
 
