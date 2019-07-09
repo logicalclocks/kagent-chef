@@ -166,18 +166,6 @@ end
 # Certificate Signing code - Needs Hopsworks dashboard
 #
 
-template "#{node["kagent"]["home"]}/keystore.sh" do
-  source "keystore.sh.erb"
-  owner node["kagent"]["user"]
-  group node["kagent"]["group"]
-  mode 0700
-  variables({
-              :fqdn => hostname,
-              :directory => node["kagent"]["keystore_dir"],
-              :keystorepass => node["hopsworks"]["master"]["password"]
-            })
-end
-
 # Default to hostname found in /etc/hosts, but allow user to override it.
 # First with DNS. Highest priority if user supplies the actual hostname
 
@@ -217,6 +205,18 @@ template "#{node["kagent"]["etc"]}/config.ini" do
               :tstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__tstore.jks",
               :blacklisted_envs => blacklisted_envs
             })
+
+template "#{node["kagent"]["home"]}/keystore.sh" do
+  source "keystore.sh.erb"
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  mode 0700
+  variables({
+              :fqdn => "#{hostname}",
+              :directory => node["kagent"]["keystore_dir"],
+              :keystorepass => node["hopsworks"]["master"]["password"]
+            })
+end
   
 if node["services"]["enabled"] == "true"  
   notifies :enable, "service[#{service_name}]"
