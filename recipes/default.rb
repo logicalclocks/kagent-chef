@@ -147,14 +147,8 @@ end
 # First with DNS. Highest priority if user supplies the actual hostname
 hostname = node['fqdn']
 
-if node["kagent"].attribute?("hostname")
-  if node["kagent"]["hostname"].empty? == false
-    hostname = node["kagent"]["hostname"]
-  end
-else
-  if node['install']['localhost'].casecmp?("true")
-    hostname = "localhost"
-  end
+if node['install']['localhost'].casecmp?("true")
+  hostname = "localhost"
 end
 
 Chef::Log.info "Hostname to register kagent in config.ini is: #{hostname}"
