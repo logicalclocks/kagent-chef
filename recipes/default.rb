@@ -205,6 +205,7 @@ template "#{node["kagent"]["etc"]}/config.ini" do
               :tstore => "#{node["kagent"]["keystore_dir"]}/#{hostname}__tstore.jks",
               :blacklisted_envs => blacklisted_envs
             })
+end
 
 template "#{node["kagent"]["home"]}/keystore.sh" do
   source "keystore.sh.erb"
