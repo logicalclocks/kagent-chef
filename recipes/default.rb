@@ -156,14 +156,6 @@ if hostname.empty?
   raise "Hostname in kagent/config.ini cannot be empty"
 end
 
-#
-# Certificate Signing code - Needs Hopsworks dashboard
-#
-
-# Default to hostname found in /etc/hosts, but allow user to override it.
-# First with DNS. Highest priority if user supplies the actual hostname
-
-
 hops_dir=node['install']['dir']
 if node.attribute?("hops") && node["hops"].attribute?("dir") 
   hops_dir=node['hops']['dir'] + "/hadoop"
