@@ -27,7 +27,7 @@ end
 
 
 
-if node['install']['gce'] == "true" || node['install']['aws'] == "true" || node['install']['azure'] == "true" 
+if !node['install']['cloud'].empty? 
   template "#{node['kagent']['base_dir']}/bin/edit-config-ini-inplace.py" do
     source "edit-config-ini-inplace.py.erb"
     owner node['kagent']['user']
