@@ -41,8 +41,6 @@ if !node['install']['cloud'].empty?
     group node['kagent']['group']
     mode 0744
   end
-
-  
 end
 
 
