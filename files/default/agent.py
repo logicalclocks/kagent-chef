@@ -643,24 +643,6 @@ class Config():
             config_mutex.release()
         return val
 
-class MySQLConnector():
-    @staticmethod
-    def read(database, table):
-        try:
-            db = MySQLdb.connect(unix_socket=kconfig.mysql_socket, db=database)
-            cur = db.cursor()
-            query = "SELECT * FROM {0}".format(table)
-            cur.execute(query)
-            return json.dumps(cur.fetchall())
-        except Exception as err:
-            logger.error("Could not access {0} table from {1}: {2}".format(table, database, err))
-            return json.dumps(["Error", "Error: Could not access {0} table from {1}.".format(table, database)])
-
-    @staticmethod
-    def read_ndbinfo(table):
-        return MySQLConnector.read("ndbinfo", table)
-
-
 class RESTCommandHandler():
 
     def __init__(self, host_services):
@@ -773,10 +755,6 @@ class RESTCommandHandler():
         except Exception as err:
             logger.error(err)
             return self.error_response(400, "Cannot read file.")
-
-    def read_ndbinfo(self, table):
-        res = MySQLConnector.read_ndbinfo(table)
-        return res
 
     ## Antonis: Most probably we don't need this and it should be
     ## removed in the future
@@ -1025,14 +1003,6 @@ if __name__ == '__main__':
             return _authentication_error()
 
         return rest_command_handler.refresh();
-
-    @get('/mysql/ndbinfo/<table>')
-    def mysql_read(table):
-        logger.info('Incoming REST Request:  GET /mysql/ndbinfo/{0}'.format(table))
-        if not _authenticate():
-            return _authentication_error()
-
-        return rest_command_handler.read_ndbinfo(table)
 
     @post('/execute/<state>/<cluster>/<group>/<service>/<command>')
     def execute_hdfs(state, cluster, group, service, command):

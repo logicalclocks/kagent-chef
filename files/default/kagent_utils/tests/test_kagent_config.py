@@ -33,7 +33,6 @@ class TestKConfig(unittest.TestCase):
     csr_log_file = 'path/to/csr/log_file'
     logging_level = 'DEBUG'
     max_log_size = '100'
-    mysql_socket = 'path/to/mysql/socket'
     hostname = 'myhostname'
     group_name = 'group'
     hadoop_home = 'path/to/hadoop_home'
@@ -86,7 +85,6 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(int(self.max_log_size), config.max_log_size)
         self.assertEqual(self.private_ip, config.private_ip)
         self.assertEqual(self.public_ip, config.public_ip)
-        self.assertEqual(self.mysql_socket, config.mysql_socket)
         self.assertEqual(self.hostname, config.hostname)
         self.assertEqual(self.group_name, config.group_name)
         self.assertEqual(self.hadoop_home, config.hadoop_home)
@@ -144,7 +142,6 @@ class TestKConfig(unittest.TestCase):
                 'csr-log-file': self.csr_log_file,
                 'logging-level': self.logging_level,
                 'max-log-size': self.max_log_size,
-                'mysql-socket': self.mysql_socket,
                 'hostname': self.hostname,
                 'group-name': self.group_name,
                 'hadoop-home': self.hadoop_home,
@@ -174,7 +171,6 @@ class TestKConfig(unittest.TestCase):
                 'csr-log-file': self.csr_log_file,
                 'logging-level': self.logging_level,
                 'max-log-size': self.max_log_size,
-                'mysql-socket': self.mysql_socket,
                 'group-name': self.group_name,
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,

@@ -247,20 +247,6 @@ module Kagent
       connectString = connectString.chop
       node.normal["ndb"]["connectstring"] = connectString
     end
-
-    def jdbc_url()
-      # The first mysqld that a NN should contact is localhost
-      # On failure, contact other mysqlds. We should configure
-      # the mysqlconnector to use the first localhost and only failover
-      # to other mysqlds
-      jdbcUrl = "localhost:#{node["ndb"]["mysql_port"]},"
-      for n in node["ndb"]["mysqld"]["private_ips"]
-        fqdn = dns_lookup(n)
-        jdbcUrl += "#{fqdn}:#{node["ndb"]["mysql_port"]},"
-      end
-      jdbcUrl = jdbcUrl.chop
-      node.normal["ndb"]["mysql"]["jdbc_url"] = "jdbc:mysql://" + jdbcUrl + "/"
-    end
   end
 end
 

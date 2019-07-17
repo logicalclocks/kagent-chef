@@ -73,9 +73,6 @@ default["gateway_ips"]                             = ['10.0.2.2']
 
 default["download_url"]                       = "http://193.10.67.171/hops"
 default["systemd"]                            = "true"
-default["ndb"]["mysql_socket"]                = "/tmp/mysql.sock"
-default["ndb"]["mysql.jdbc_url"]              = ""
-default["ndb"]["mysql_port"]                  = "3306"
 
 default["vagrant"]                            = "false"
 

@@ -69,7 +69,6 @@ class KConfig:
             self.services_file = self._config.get('agent', 'services-file')
             self.watch_interval = self._config.get('agent', 'watch-interval')
             self.bin_dir = self._config.get('agent', 'bin-dir')
-            self.mysql_socket = self._config.get('agent', 'mysql-socket')
             self.group_name = self._config.get('agent', 'group-name')
             self.hadoop_home = self._config.get('agent', 'hadoop-home')
             self.certs_dir = self._config.get('agent', 'certs-dir')
