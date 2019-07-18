@@ -8,7 +8,6 @@ Install:
  Netifaces:   easy_install netifaces
  IPy:         easy_install ipy
  pyOpenSSL:   apt-get install python-openssl
- MySQLdb:     apt-get install python-mysqldb
 '''
 
 import time
@@ -31,7 +30,6 @@ import json
 from OpenSSL import crypto
 import socket
 from os.path import exists, join
-import MySQLdb
 from bottle import Bottle, run, get, post, request, HTTPResponse, server_names, ServerAdapter, response
 from cheroot import wsgi
 from cheroot.ssl.builtin import BuiltinSSLAdapter

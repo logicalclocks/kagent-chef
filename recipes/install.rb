@@ -2,8 +2,6 @@
 fqdn = node['fqdn']
 raise "FQDN #{fqdn} is too long! It should not be longer than 60 characters" unless fqdn.length < 61
 
-# ubuntu python-mysqldb package install only works if we first run "apt-get update; apt-get upgrade"
-
 case node["platform_family"]
 when "debian"
   bash "apt_update_install_build_tools" do
@@ -26,8 +24,6 @@ when "debian"
 
   package "python2.7" 
   package "python2.7-dev"
-  # Needed by pip install MySQL-python
-  package "libmysqlclient-dev"
 
 when "rhel"
 
@@ -46,8 +42,6 @@ when "rhel"
   package "python-pip" 
   package "python-devel" 
   package "jq"
-  # MySQL-python needs libmysqlclient which in Centos is provided by mariadb-devel
-  package "mariadb-devel"
   # Change lograte policy
   cookbook_file '/etc/logrotate.d/syslog' do
     source 'syslog.centos'
