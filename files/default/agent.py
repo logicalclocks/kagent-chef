@@ -103,7 +103,6 @@ def setupLogging(kconfig):
 
     logger.info("Hops-Kagent started.")
     logger.info("Heartbeat URL: {0}".format(kconfig.heartbeat_url))
-    logger.info("Alert URL: {0}".format(kconfig.alert_url))
     logger.info("Host Id: {0}".format(kconfig.host_id))
     logger.info("Hostname: {0}".format(kconfig.hostname))
     logger.info("Public IP: {0}".format(kconfig.public_ip))
@@ -225,11 +224,6 @@ class Heartbeat():
                 payload["num-gpus"] = devices.get_num_gpus()
                 payload["host-id"] = kconfig.host_id
                 payload["agent-time"] = now
-                payload["load1"] = load_info.load1
-                payload["load5"] = load_info.load5
-                payload["load15"] = load_info.load15
-                payload["disk-used"] = disk_info.used
-                payload['memory-used'] = memory_info.used
                 payload["services"] = services_list
                 payload["recover"] = self._recover
                 
@@ -280,7 +274,6 @@ class Heartbeat():
                     payload["private-ip"] = ""
 
                 payload["cores"] = cores
-                payload["disk-capacity"] = disk_info.capacity
                 payload['memory-capacity'] = memory_info.total
                 logger.debug("Sending heartbeat...")
                 resp = session.post(kconfig.heartbeat_url, data=json.dumps(payload), headers=headers, verify=False)
@@ -862,12 +855,12 @@ if __name__ == '__main__':
         ordered_host_services = construct_ordered_services_list(kconfig, hw_http_client)
         if args.services == 'start':
             for service in ordered_host_services:
-                if not service.start(alert=False):
-                    service.start(alert=False)
+                if not service.start():
+                    service.start()
         elif args.services == 'stop':
             for service in reversed(ordered_host_services):
-                if not service.stop(alert=False):
-                    service.stop(alert=False)
+                if not service.stop():
+                    service.stop()
         elif args.services == 'status':
             for service in ordered_host_services:
                 service.alive(currently=True)

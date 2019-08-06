@@ -45,8 +45,6 @@ class KConfig:
                 self._config.get('server', 'path-login')
             self.heartbeat_url = self.server_url + \
                 self._config.get('server', 'path-heartbeat')
-            self.alert_url = self.server_url + \
-                self._config.get('server', 'path-alert')
             self.server_username = self._config.get('server', 'username')
             self.server_password = self._config.get('server', 'password')
             self.rest_port = self._config.getint('agent', 'restport')

@@ -32,15 +32,6 @@ class Http:
         self.LOG = logging.getLogger(__name__)
         self.lock = RLock()
 
-    def send_alert(self, payload):
-        self._login()
-        try:
-            response = self.session.post(self.k_config.alert_url, data=json.dumps(payload), headers=Http.JSON_HEADER,
-                              verify=Http.HTTPS_VERIFY)
-            response.raise_for_status()
-        except requests_exceptions.RequestException as ex:
-            self.LOG.error("Could not send alert to Hopsworks")
-            
     def _login(self):
         try :
             self.lock.acquire()

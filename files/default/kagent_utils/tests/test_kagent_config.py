@@ -68,7 +68,6 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self._toUrl(self.path_ca_host), config.ca_host_url)
         self.assertEqual(self._toUrl(self.path_heartbeat),
                          config.heartbeat_url)
-        self.assertEqual(self._toUrl(self.path_alert), config.alert_url)
         self.assertEqual(self.username, config.server_username)
         self.assertEqual(self.server_password, config.server_password)
         self.assertEqual(self.host_id, config.host_id)
