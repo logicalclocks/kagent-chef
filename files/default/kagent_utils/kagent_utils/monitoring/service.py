@@ -29,8 +29,7 @@ class Service:
     STARTED_STATE = "Started"
     STOPPED_STATE = "Stopped"
 
-    def __init__(self, cluster, group, name, stdout_file, config_file, fail_attempts, kconfig, http):
-        self.cluster = cluster
+    def __init__(self, group, name, stdout_file, config_file, fail_attempts, kconfig, http):
         self.group = group
         self.name = name
         self.stdout_file = stdout_file
@@ -133,4 +132,4 @@ class Service:
         subprocess.check_output(command, stderr=stderr)
 
     def __str__(self):
-        return "Service: {0}/{1}/{2} - State: {3}".format(self.cluster, self.group, self.name, self.get_state())
+        return "Service: {0}/{1} - State: {2}".format(self.group, self.name, self.get_state())

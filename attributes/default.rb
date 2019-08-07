@@ -56,9 +56,6 @@ default["kagent"][:default][:gateway_ips]             = ['10.0.2.2']
 
 default["kagent"]["services"]                      = node["kagent"]["etc"] + "/services"
 
-# name of cluster as shown in Dashboard
-default["kagent"]["cluster"]                       = "Hops"
-
 default["kagent"]["hostid"]                        = 100
 
 default["kagent"]["password"]                      = ""
