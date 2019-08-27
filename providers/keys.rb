@@ -21,7 +21,7 @@ action :csr do
       set -eo pipefail 
       cd #{node["kagent"]["certs_dir"]}
       chown -R root:#{node["kagent"]["certs_group"]} #{node["kagent"]["keystore_dir"]}
-      chown root:#{node["kagent"]["certs_group"]} pub.pem priv.key hops_intermediate_ca.pem hops_root_ca.pem
+      chown root:#{node["kagent"]["certs_group"]} pub.pem priv.key priv.key.rsa hops_intermediate_ca.pem hops_root_ca.pem
       rm -f #{node["kagent"]["base_dir"]}/kagent.pid
     EOH
   end
