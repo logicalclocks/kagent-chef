@@ -403,7 +403,7 @@ class CondaCommandsHandler:
         msg=""
         try:
             self._log_conda_command(proj, op, proj, arg, -1, 'WORKING')
-            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, kconfig.hadoop_home, install_jupyter], stderr=subprocess.STDOUT)
+            msg = subprocess.check_output(['sudo', script, user, op, proj, arg, offline, kconfig.hadoop_home, install_jupyter], cwd=kconfig.conda_dir, stderr=subprocess.STDOUT)
             command['status'] = 'SUCCESS'
             command['arg'] = arg
             self._log_conda_command(proj, op, proj, arg, 0, 'SUCCESS')
@@ -443,7 +443,7 @@ class CondaCommandsHandler:
             command_str = "sudo {0} {1} {2} {3} {4} {5} {6} {7}".format(script, user, op, proj, channelUrl, installType, lib, version)
             logger.info("Executing libOp command {0}".format(command_str))
             self._log_conda_command(proj, op, lib, version, -1, 'WORKING')
-            msg = subprocess.check_output(['sudo', script, user, op, proj, channelUrl, installType, lib, version], stderr=subprocess.STDOUT)
+            msg = subprocess.check_output(['sudo', script, user, op, proj, channelUrl, installType, lib, version], cwd=kconfig.conda_dir, stderr=subprocess.STDOUT)
             logger.info("Lib op finished without error.")
             logger.info("{0}".format(msg))
             command['status'] = 'SUCCESS'
@@ -490,7 +490,7 @@ class SystemCommandsHandler:
         for env in to_be_removed:
             try:
                 script = os.path.join(kconfig.bin_dir, 'anaconda_env.sh')
-                subprocess.check_call(['sudo', script, exec_user, 'REMOVE', env, '', '', '', ''])
+                subprocess.check_call(['sudo', script, exec_user, 'REMOVE', env, '', '', '', ''], cwd=kconfig.conda_dir)
                 logger.info("Removed Anaconda environment {0}".format(env))
                 self._conda_envs_monitor_list.remove(env)
             except CalledProcessError as e:
