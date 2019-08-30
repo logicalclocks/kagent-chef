@@ -1,6 +1,23 @@
+######################################
+## Do sanity checks here, fail fast ##
+######################################
+
 # If FQDN is longer than 63 characters fail HOPSWORKS-1075
 fqdn = node['fqdn']
 raise "FQDN #{fqdn} is too long! It should not be longer than 60 characters" unless fqdn.length < 61
+
+# If installing EE check that everything is set
+if node['install']['enterprise']['install'].casecmp? "true"
+  if not node['install']['enterprise']['download_url']
+    raise "Installing Hopsworks EE but install/enterprise/download_url is not set"
+  end
+  if node['install']['enterprise']['username'] and not node['install']['enterprise']['password']
+    raise "Installing Hopsworks EE, username is set but not password"
+  end
+  if node['install']['enterprise']['password'] and not node['install']['enterprise']['username']
+    raise "Installing Hopsworks EE, password is set but not username"
+  end    
+end
 
 case node["platform_family"]
 when "debian"

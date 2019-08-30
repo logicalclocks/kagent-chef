@@ -247,6 +247,16 @@ module Kagent
       connectString = connectString.chop
       node.normal["ndb"]["connectstring"] = connectString
     end
+
+    def get_ee_basic_auth_header()
+      # NOTE FOR YOU: Remember to add 'sensitive true' as remote_file property
+      username = node['install']['enterprise']['username']
+      password = node['install']['enterprise']['password']
+      credentials_b64 = Base64.encode64("#{username}:#{password}").gsub("\n", "")
+      header = {}
+      header['Authorization'] = "Basic #{credentials_b64}"
+      header
+    end
   end
 end
 
