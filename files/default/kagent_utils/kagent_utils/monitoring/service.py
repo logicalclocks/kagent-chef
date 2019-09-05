@@ -37,9 +37,6 @@ class Service:
         self.fail_attempts = fail_attempts
         self._host_id = kconfig.host_id
         self.http = http
-        self._start_script = os.path.join(kconfig.bin_dir, "start-service.sh")
-        self._stop_script = os.path.join(kconfig.bin_dir, "stop-service.sh")
-        self._restart_script = os.path.join(kconfig.bin_dir, "restart-service.sh")
         self.LOG = logging.getLogger(__name__)
         self._last_known_state = Service.INIT_STATE
         self.state_lock = RLock()
@@ -59,15 +56,22 @@ class Service:
         finally:
             self.state_lock.release()
             
-    def alive(self):
+    def alive(self, currently=False):
         try:
             self.LOG.debug("Checking status of %s", self.name)
             command = ['systemctl', 'is-active', '--quiet', self.name]
             self._exec_check_call(command, stderr=subprocess.STDOUT)
-            self.LOG.debug("Service %s is alive", self.name)
+            msg = "Service {0} is alive".format(self.name)
+            if currently:
+                self.LOG.info(msg)
+            else:
+                self.LOG.debug(msg)
             self._num_of_failures = 0
             return True
         except subprocess.CalledProcessError as e:
+            if currently:
+                self.LOG.error("Service %s is not alive.", self.name)
+                return False                
             self._num_of_failures = self._num_of_failures + 1
             self.LOG.debug("Service %s has failed %i times", self.name, self._num_of_failures)
             if self._num_of_failures >= self.fail_attempts:
@@ -75,12 +79,13 @@ class Service:
                 return False
             return True
 
-    def start(self):
+    def start(self, alert=True):
         try:
             self.LOG.debug("Starting service: %s", self.name)
-            command = ['sudo', self._start_script, self.name]
+            command = ['sudo', 'systemctl', 'start', self.name]
             self._exec_check_output(command, stderr=subprocess.STDOUT)
-            self.started()
+            if alert:
+                self.started()
             self.LOG.info("Started service: %s", self.name)
             return True
         except subprocess.CalledProcessError as e:
@@ -88,12 +93,13 @@ class Service:
                            self.name, e.returncode, e.output)
             return False
 
-    def stop(self):
+    def stop(self, alert=True):
         try:
             self.LOG.debug("Stopping service: %s", self.name)
-            command = ['sudo', self._stop_script, self.name]
+            command = ['sudo', 'systemctl', 'stop', self.name]
             self._exec_check_output(command, stderr=subprocess.STDOUT)
-            self.failed()
+            if alert:
+                self.failed()
             self.LOG.info("Stopped service: %s", self.name)
             return True
         except subprocess.CalledProcessError as e:
@@ -101,12 +107,13 @@ class Service:
                            self.name, e.returncode, e.output)
             return False
 
-    def restart(self):
+    def restart(self, alert=True):
         try:
             self.LOG.debug("Restarting service %s", self.name)
-            command = ['sudo', self._restart_script, self.name]
+            command = ['sudo', 'systemctl', 'restart', self.name]
             self._exec_check_output(command, stderr=subprocess.STDOUT)
-            self.started()
+            if alert:
+                self.started()
             self.LOG.info("Restarted service: %s", self.name)
             return True
         except:

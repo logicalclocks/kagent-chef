@@ -84,6 +84,14 @@ if node[:systemd] == "true"
     action :systemd_reload
   end
   
+  if node['kagent']['enabled'].casecmp? "true"
+    kagent_config service_name do
+      service "kagent"
+      config_file "#{node["kagent"]["etc"]}/config.ini"
+      log_file "#{node["kagent"]["dir"]}/logs/agent.log"
+      restart_agent false
+    end
+  end  
 else # sysv
 
   service "#{service_name}" do

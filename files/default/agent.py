@@ -814,16 +814,34 @@ def construct_services(k_config, hw_http_client):
             k_service = kagent_utils.Service(cluster, group, service_name, stdout_file,
                                              config_file, fail_attempts, k_config, hw_http_client)
             host_services[service_name] = k_service
-        else:
-            logger.info("Not watching %s/%s/%s", cluster, group, service_name)
     return host_services
-            
+
+# Maintain order of services from services file
+def construct_ordered_services_list(k_config, hw_http_client):
+    host_services = []
+    for c_service in services.sections():
+        cluster = services.get(c_service, 'cluster')
+        group = services.get(c_service, 'group')
+        if services.has_option(c_service, 'service'):
+            service_name = services.get(c_service, 'service')
+            if services.has_option(c_service, 'fail-attempts'):
+                fail_attempts = services.getint(c_service, 'fail-attempts')
+            else:
+                fail_attempts = 1
+            stdout_file = services.get(c_service, "stdout-file")
+            config_file = services.get(c_service, "config-file")
+            k_service = kagent_utils.Service(cluster, group, service_name, stdout_file,
+                                             config_file, fail_attempts, k_config, hw_http_client)
+            host_services.append(k_service)
+    return host_services
+
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Hops nodes administration agent')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-c', '--config', default='config.ini', help='Path to configuration file')
+    parser.add_argument('-s', '--services', choices=('start', 'stop', 'status'), help="Start/stop/status all local services and exit")
 
     args = parser.parse_args()
     
@@ -839,6 +857,21 @@ if __name__ == '__main__':
     readServicesFile()
         
     hw_http_client = kagent_utils.Http(kconfig)
+
+    if args.services:
+        ordered_host_services = construct_ordered_services_list(kconfig, hw_http_client)
+        if args.services == 'start':
+            for service in ordered_host_services:
+                if not service.start(alert=False):
+                    service.start(alert=False)
+        elif args.services == 'stop':
+            for service in reversed(ordered_host_services):
+                if not service.stop(alert=False):
+                    service.stop(alert=False)
+        elif args.services == 'status':
+            for service in ordered_host_services:
+                service.alive(currently=True)
+        sys.exit(-1)
 
     host_services = construct_services(kconfig, hw_http_client)
 

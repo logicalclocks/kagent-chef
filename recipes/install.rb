@@ -245,7 +245,7 @@ end
   end
 end 
 
-['start-service.sh', 'stop-service.sh', 'restart-service.sh', 'status-service.sh', 'gpu-kill.sh', 'gpu-killhard.sh'].each do |script|
+['status-service.sh', 'gpu-kill.sh', 'gpu-killhard.sh'].each do |script|
   template  "#{node["kagent"]["home"]}/bin/#{script}" do
     source "#{script}.erb"
     owner "root"
@@ -309,6 +309,14 @@ template "#{node["kagent"]["home"]}/bin/anaconda_sync.sh" do
   action :create
 end
 
+ruby_block "whereis_systemctl" do
+  block do
+    Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
+    systemctl_path = shell_out("which systemctl").stdout
+    node.set['kagent']['systemctl_path'] = systemctl_path.strip
+  end
+end
+
 template "/etc/sudoers.d/kagent" do
   source "sudoers.erb"
   owner "root"
@@ -318,14 +326,10 @@ template "/etc/sudoers.d/kagent" do
                 :user => node["kagent"]["user"],
                 :conda =>  "#{node["kagent"]["base_dir"]}/bin/conda.sh",
                 :anaconda =>  "#{node["kagent"]["base_dir"]}/bin/anaconda_env.sh",
-                :start => "#{node["kagent"]["base_dir"]}/bin/start-service.sh",
-                :stop => "#{node["kagent"]["base_dir"]}/bin/stop-service.sh",
-                :restart => "#{node["kagent"]["base_dir"]}/bin/restart-service.sh",
-                :startall => "#{node["kagent"]["base_dir"]}/bin/start-all-local-services.sh",
-                :stopall => "#{node["kagent"]["base_dir"]}/bin/shutdown-all-local-services.sh",
                 :rotate_service_key => "#{node[:kagent][:certs_dir]}/run_csr.sh",
                 :gpu_kill => "#{node["kagent"]["base_dir"]}/bin/gpu-kill.sh",
-                :gpu_killhard => "#{node["kagent"]["base_dir"]}/bin/gpu-killhard.sh"
+                :gpu_killhard => "#{node["kagent"]["base_dir"]}/bin/gpu-killhard.sh",
+                :systemctl_path => lazy { node['kagent']['systemctl_path'] }
               })
   action :create
 end  
