@@ -17,7 +17,6 @@ class TestKConfig(unittest.TestCase):
     path_register = 'register/path'
     path_ca_host = 'ca/host/path'
     path_heartbeat = 'heartbeat/path'
-    path_alert = 'alert/path'
     username = 'username'
     server_password = 'server_password'
 
@@ -123,7 +122,6 @@ class TestKConfig(unittest.TestCase):
             'path-register': self.path_register,
             'path-ca-host': self.path_ca_host,
             'path-heartbeat': self.path_heartbeat,
-            'path-alert': self.path_alert,
             'username': self.username,
             'password': self.server_password
         }
