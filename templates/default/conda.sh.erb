@@ -14,28 +14,28 @@ umask 022
 
 VERSION=""
 if [ $# -eq 7  ]; then
-  VERSION="${7}"
+  VERSION="${7//[^a-zA-Z0-9\.\-\_]/}"
 fi
 
-EXEC_AS_USER=$1
+EXEC_AS_USER="${1//[^a-zA-Z0-9\.\-\_]/}"
 shift
-OP="$1"
+OP="${1//[^a-zA-Z0-9\.\-\_]/}"
 shift
-PROJECT="$1"
+PROJECT="${1//[^a-zA-Z0-9\.\-\_]/}"
 shift
-CHANNEL=
+CHANNEL="${1//[^a-zA-Z0-9\.\-\_:\/\&~?]/}"
 # default channel_alias  is http://conda.anaconda.org/.
-if [ "$1" != "default" ] ; then
+if [ "$CHANNEL" != "default" ] ; then
     #  CHANNEL="-c $1 --override-channels"
-  CHANNEL="-c $1"    
+  CHANNEL="-c $CHANNEL"
 fi
 shift
 
-INSTALL_TYPE="$1"
+INSTALL_TYPE="${1//[^a-zA-Z0-9\.\-\_]/}"
 
 shift
 # Name of virtualenv python dependency
-LIB_NAME=$1
+LIB_NAME="${1//[^a-zA-Z0-9\.\-\_]/}"
 
 #No versions allowed with upgrade
 if [ "$OP" == "UPGRADE" ] ; then

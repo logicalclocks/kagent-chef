@@ -10,13 +10,13 @@ fi
 # Force umask 022 as default for conda packages - See HOPSWORKS-880
 umask 022
 
-EXEC_AS_USER=$1
-OP=$2
-PROJECT=$3
-ARG=$4
-OFFLINE=$5
-HADOOP_DIR=$6
-INSTALL_JUPYTER=$7
+EXEC_AS_USER="${1//[^a-zA-Z0-9\.\-\_]/}"
+OP="${2//[^a-zA-Z0-9\.\-\_]/}"
+PROJECT="${3//[^a-zA-Z0-9\.\-\_]/}"
+ARG="${4//[^a-zA-Z0-9\.\-\_]/}"
+OFFLINE="${5//[^a-zA-Z0-9\.\-\_]/}"
+HADOOP_DIR="${6//[^a-zA-Z0-9\.\-\_]/}"
+INSTALL_JUPYTER="${7//[^a-zA-Z0-9\.\-\_]/}"
 
 CLONE=
 CONDA_DIR=<%= node["conda"]["base_dir"] %>

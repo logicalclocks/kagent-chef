@@ -19,3 +19,4 @@ bin/*
 Berksfile.lock
 
 .idea
+.vscode
