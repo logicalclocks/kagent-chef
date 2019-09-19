@@ -809,7 +809,6 @@ def construct_services(k_config, hw_http_client):
 def construct_ordered_services_list(k_config, hw_http_client):
     host_services = []
     for c_service in services.sections():
-        cluster = services.get(c_service, 'cluster')
         group = services.get(c_service, 'group')
         if services.has_option(c_service, 'service'):
             service_name = services.get(c_service, 'service')
@@ -819,7 +818,7 @@ def construct_ordered_services_list(k_config, hw_http_client):
                 fail_attempts = 1
             stdout_file = services.get(c_service, "stdout-file")
             config_file = services.get(c_service, "config-file")
-            k_service = kagent_utils.Service(cluster, group, service_name, stdout_file,
+            k_service = kagent_utils.Service(group, service_name, stdout_file,
                                              config_file, fail_attempts, k_config, hw_http_client)
             host_services.append(k_service)
     return host_services
