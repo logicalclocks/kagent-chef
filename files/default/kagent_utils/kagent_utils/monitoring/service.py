@@ -70,13 +70,13 @@ class Service:
             return True
         except subprocess.CalledProcessError as e:
             if currently:
-                self.LOG.error("Service %s is not alive.", self.name)
+                self.LOG.error("Service %s is DEAD.", self.name)
                 return False
             self._num_of_failures = self._num_of_failures + 1
             self.LOG.debug("Service %s has failed %i times",
                            self.name, self._num_of_failures)
             if self._num_of_failures >= self.fail_attempts:
-                self.LOG.error("Service %s is not alive.", self.name)
+                self.LOG.error("Service %s is DEAD.", self.name)
                 return False
             return True
 

@@ -26,6 +26,7 @@ import sys
 import ConfigParser
 import requests
 import logging.handlers
+import coloredlogs
 import json
 from OpenSSL import crypto
 import socket
@@ -79,28 +80,26 @@ def setupLogging(kconfig):
     
     global logger
     logger = logging.getLogger('agent')
+    log_format = "%(asctime)s %(levelname)s [%(module)s/%(funcName)s] %(message)s"
+    logger_formatter = logging.Formatter(log_format)
 
-    logger_formatter = logging.Formatter('%(asctime)s %(levelname)s [%(module)s/%(funcName)s] %(message)s')
+    coloredlogs.install(level=kconfig.logging_level, fmt=log_format)
+    
     logger_file_handler = logging.handlers.RotatingFileHandler(agent_log_file, "w", maxBytes=kconfig.max_log_size, backupCount=1)
-    logger_stream_handler = logging.StreamHandler()
     logger_file_handler.setFormatter(logger_formatter)
-    logger_stream_handler.setFormatter(logger_formatter)
     logger.addHandler(logger_file_handler)
-    logger.addHandler(logger_stream_handler)
     logger.setLevel(kconfig.logging_level)
 
     # Setup kagent_utils logger
     kagent_utils_logger = logging.getLogger('kagent_utils')
     kagent_utils_logger.setLevel(kconfig.logging_level)
     kagent_utils_logger.addHandler(logger_file_handler)
-    kagent_utils_logger.addHandler(logger_stream_handler)
-
+    
     # Setup csr logger
     csr_logger = logging.getLogger('csr')
     csr_logger.setLevel(kconfig.logging_level)
     csr_logger.addHandler(logger_file_handler)
-    csr_logger.addHandler(logger_stream_handler)
-
+    
     logger.info("Hops-Kagent started.")
     logger.info("Heartbeat URL: {0}".format(kconfig.heartbeat_url))
     logger.info("Host Id: {0}".format(kconfig.host_id))
