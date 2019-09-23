@@ -78,11 +78,13 @@ end
 group node["kagent"]["group"] do
   action :create
   not_if "getent group #{node["kagent"]["group"]}"
+  not_if { node['install']['external_users'].casecmp("true") == 0 }
 end
 
 group node["kagent"]["certs_group"] do
   action :create
   not_if "getent group #{node["kagent"]["certs_group"]}"
+  not_if { node['install']['external_users'].casecmp("true") == 0 }
 end
 
 user node["kagent"]["user"] do
@@ -93,24 +95,28 @@ user node["kagent"]["user"] do
   shell "/bin/bash"
   system true
   not_if "getent passwd #{node["kagent"]["user"]}"
+  not_if { node['install']['external_users'].casecmp("true") == 0 }
 end
 
 group node["kagent"]["group"] do
   action :modify
   members ["#{node["kagent"]["user"]}"]
   append true
+  not_if { node['install']['external_users'].casecmp("true") == 0 }
 end
 
 group node["kagent"]["certs_group"] do
   action :modify
   members ["#{node["kagent"]["user"]}"]
   append true
+  not_if { node['install']['external_users'].casecmp("true") == 0 }
 end
 
 group "video"  do
   action :modify
   members ["#{node["kagent"]["user"]}"]
   append true
+  not_if { node['install']['external_users'].casecmp("true") == 0 }
 end
 
 bash "make_gemrc_file" do
