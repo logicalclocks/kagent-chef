@@ -24,6 +24,11 @@ CONDA_DIR=<%= node["conda"]["base_dir"] %>
 SPARKMAGIC_DIR=<%= node["conda"]["dir"] %>/sparkmagic
 WITH_PYTHON_KERNEL=<%= @jupyter_python %>
 
+IS_ENTERPRISE_EDITION=<%= node['install']['enterprise']['install'].downcase.strip %>
+JUPYTERLAB_VERSION_PY3=<%= node['conda']['jupyter']['version']['py3'] %>
+JUPYTERLAB_VERSION_PY2=<%= node['conda']['jupyter']['version']['py2'] %>
+JUPYTERLAB_GIT_VERSION=<%= node['conda']['jupyter']['jupyterlab-git']['version'] %>
+
 if [ "$OP" == "CLONE" ] ; then
    CLONE="--clone $4"
 fi
@@ -31,6 +36,11 @@ fi
 function exists() {
     su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda info --envs | grep '^${PROJECT} '"
     return $?
+}
+
+function is_python3 {
+    test_file="$1/bin/python3"
+    test -f "$test_file"
 }
 
 if [ "$OP" == "YML" ] ; then
@@ -41,24 +51,73 @@ if [ "$OP" == "YML" ] ; then
    fi 
 
    if [ "$INSTALL_JUPYTER" == "true" ] ; then 
-        set -e
+        set +e
+	is_python3 "${CONDA_DIR}/envs/${PROJECT}"
+	is_py3_env=$?
+	
         # Install packages
-        su "$EXEC_AS_USER" -c "export PATH=${PATH}:${HADOOP_DIR}/bin; yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade hdfscontents urllib3 requests jupyter pandas tqdm"
+	set -e
+	if [ $is_py3_env -eq 0 ]
+	then
+	    jupyterlab_version=$JUPYTERLAB_VERSION_PY3
+	else
+	    jupyterlab_version=$JUPYTERLAB_VERSION_PY2
+	fi
+        su "$EXEC_AS_USER" -c "export PATH=${PATH}:${HADOOP_DIR}/bin; yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade hdfscontents urllib3 requests jupyterlab==${jupyterlab_version} pandas tqdm"
+
+	## Downgrade notebook to 5.7.8 (HOPSWORKS-1251)
+	su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade notebook==5.7.8"
+	
+	su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade ipywidgets"
+	su "$EXEC_AS_USER" -c "${CONDA_DIR}/envs/${PROJECT}/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension"
+	
+	# Install wit-widget
+	su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade witwidget"
+
+	if [ $is_py3_env -eq 0 ]
+	then
+	    su "$EXEC_AS_USER" -c "source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build wit-widget; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build @jupyter-widgets/jupyterlab-manager; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build nbdime-jupyterlab; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter lab build"
+	    if [ $IS_ENTERPRISE_EDITION == "true" ]
+	    then
+		## Hopsworks version has one more digit, remove it to install the upstream labextension
+		OLD_IFS=$IFS
+		IFS='.' read -r -a array <<< "$JUPYTERLAB_GIT_VERSION"
+		IFS=$OLD_IFS
+		len=${#array[@]}
+		new_array=()
+		for (( i=0; i<$len-1; i++))
+		do
+		    new_array+=("${array[$i]}")
+		done
+		upstream_version=$(printf ".%s" "${new_array[@]}")
+		upstream_version=${upstream_version:1}
+
+		set +e
+		test -r "/home/${EXEC_AS_USER}/jupyterlab_git-${JUPYTERLAB_GIT_VERSION}-py3-none-any.whl"
+		if [ $? -eq 0 ]
+		then
+		    set -e
+		    su "$EXEC_AS_USER" -c "source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install @jupyterlab/git@${upstream_version}; yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade /home/${EXEC_AS_USER}/jupyterlab_git-${JUPYTERLAB_GIT_VERSION}-py3-none-any.whl; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter serverextension enable --sys-prefix --py jupyterlab_git"
+		else
+		    set -e
+		fi
+	    fi
+	else
+	    set -e
+	    su "$EXEC_AS_USER" -c "source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build wit-widget; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build @jupyter-widgets/jupyterlab-manager; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter lab build"
+	fi
+      
+	# DO NOT TOUCH THIS! Bad things are about to happen
+	su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade prompt-toolkit==1.0.16"
         if [ $? -ne 0 ] ; then
             exit 2
         fi
 
         if [ <%= node['conda']['hops-util-py']['install-mode'] %> == "git" ] ; then
-            su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${ENV}/bin/pip install git+https://github.com/<%= node['conda']['hops-util-py']['repo'] %>/hops-util-py@<%= node['conda']['hops-util-py']['branch'] %>"
+            su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install git+https://github.com/<%= node['conda']['hops-util-py']['repo'] %>/hops-util-py@<%= node['conda']['hops-util-py']['branch'] %>"
         else
-            su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${ENV}/bin/pip install hops==<%= node['conda']['hops-util-py']['version'] %>"
+            su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install hops==<%= node['conda']['hops-util-py']['version'] %>"
         fi
-
-        # Install packages to allow users to manage their jupyter extensions
-        su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade jupyter_contrib_nbextensions jupyter_nbextensions_configurator"
-        if [ $? -ne 0 ] ; then
-            exit 2
-        fi 
 
         su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade $SPARKMAGIC_DIR/hdijupyterutils $SPARKMAGIC_DIR/autovizwidget $SPARKMAGIC_DIR/sparkmagic"
         if [ $? -ne 0 ] ; then
@@ -85,10 +144,6 @@ if [ "$OP" == "YML" ] ; then
         if [ $? -ne 0 ] ; then
             exit 2
         fi 
-
-        # Enable jupyter notebook extensions 
-        su "$EXEC_AS_USER" -c "${CONDA_DIR}/envs/${PROJECT}/bin/jupyter contrib nbextension install --sys-prefix"
-        su "$EXEC_AS_USER" -c "${CONDA_DIR}/envs/${PROJECT}/bin/jupyter serverextension enable jupyter_nbextensions_configurator --sys-prefix"
    fi 
 
 elif [ "$OP" == "CREATE" ] ; then
