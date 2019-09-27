@@ -319,7 +319,7 @@ ruby_block "whereis_systemctl" do
   block do
     Chef::Resource::RubyBlock.send(:include, Chef::Mixin::ShellOut)
     systemctl_path = shell_out("which systemctl").stdout
-    node.set['kagent']['systemctl_path'] = systemctl_path.strip
+    node.override['kagent']['systemctl_path'] = systemctl_path.strip
   end
 end
 
