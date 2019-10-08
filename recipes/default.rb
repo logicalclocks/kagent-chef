@@ -217,7 +217,7 @@ template "#{node["kagent"]["home"]}/keystore.sh" do
 end
   
 
-if node["kagent"]["test"] == false && node['install']['upgrade'] == "false"
+if node["kagent"]["test"] == false && (not conda_helpers.is_upgrade)
     kagent_keys "sign-certs" do
        action :csr
     end
@@ -230,7 +230,7 @@ bash "convert private key to PKCS#1 format on update" do
        openssl rsa -in #{node['kagent']['certs_dir']}/priv.key -out #{node['kagent']['certs_dir']}/priv.key.rsa
        chmod 640 #{node['kagent']['certs_dir']}/priv.key.rsa
   EOH
-  only_if { node['install']['upgrade'].casecmp? "true" and File.exists?("#{node['kagent']['certs_dir']}/priv.key")}
+  only_if { conda_helpers.is_upgrade and File.exists?("#{node['kagent']['certs_dir']}/priv.key")}
 end
 
 execute "rm -f #{node["kagent"]["pid_file"]}"
