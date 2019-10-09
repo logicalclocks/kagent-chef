@@ -10,7 +10,7 @@ action :csr do
       export PYTHON_EGG_CACHE=/tmp
       #{node[:conda][:base_dir]}/envs/hops-system/bin/python #{node[:kagent][:certs_dir]}/csr.py \
       -c #{node[:kagent][:etc]}/config.ini init
-  EOF
+    EOF
     not_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key" ) }
   end
 
@@ -24,8 +24,8 @@ action :csr do
       chown root:#{node["kagent"]["certs_group"]} pub.pem priv.key priv.key.rsa hops_intermediate_ca.pem hops_root_ca.pem
       rm -f #{node["kagent"]["base_dir"]}/kagent.pid
     EOH
+    not_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key" ) }    
   end
-
 end
 
 

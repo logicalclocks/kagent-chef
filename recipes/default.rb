@@ -223,6 +223,16 @@ if node["kagent"]["test"] == false && node['install']['upgrade'] == "false"
     end
 end
 
+bash "convert private key to PKCS#1 format on update" do
+  user "root"
+  group node['kagent']['certs_group']
+  code <<-EOH                                                                                                       
+       openssl rsa -in #{node['kagent']['certs_dir']}/priv.key -out #{node['kagent']['certs_dir']}/priv.key.rsa
+       chmod 640 #{node['kagent']['certs_dir']}/priv.key.rsa
+  EOH
+  only_if { node['install']['upgrade'].casecmp? "true" and File.exists?("#{node['kagent']['certs_dir']}/priv.key")}
+end
+
 execute "rm -f #{node["kagent"]["pid_file"]}"
 
 if node["kagent"]["cleanup_downloads"] == 'true'
