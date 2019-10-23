@@ -229,6 +229,7 @@ bash "convert private key to PKCS#1 format on update" do
   code <<-EOH                                                                                                       
        openssl rsa -in #{node['kagent']['certs_dir']}/priv.key -out #{node['kagent']['certs_dir']}/priv.key.rsa
        chmod 640 #{node['kagent']['certs_dir']}/priv.key.rsa
+       chown root:#{node['kagent'['certs_group']]} #{node['kagent']['certs_dir']}/priv.key.rsa
   EOH
   only_if { conda_helpers.is_upgrade and File.exists?("#{node['kagent']['certs_dir']}/priv.key")}
 end

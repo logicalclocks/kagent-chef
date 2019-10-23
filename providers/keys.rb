@@ -21,10 +21,19 @@ action :csr do
       set -eo pipefail 
       cd #{node["kagent"]["certs_dir"]}
       chown -R root:#{node["kagent"]["certs_group"]} #{node["kagent"]["keystore_dir"]}
-      chown root:#{node["kagent"]["certs_group"]} pub.pem priv.key priv.key.rsa hops_intermediate_ca.pem hops_root_ca.pem
+      chown root:#{node["kagent"]["certs_group"]} pub.pem priv.key hops_intermediate_ca.pem hops_root_ca.pem
       rm -f #{node["kagent"]["base_dir"]}/kagent.pid
     EOH
-    not_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key" ) }    
+    only_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key" ) }    
+  end
+  
+  bash "chown private PKCS#1" do
+    user "root"
+    code <<-EOH
+      set -eo pipefail 
+      chown root:#{node["kagent"]["certs_group"]} #{node["kagent"]["certs_dir"]}/priv.key.rsa
+    EOH
+    only_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key.rsa" ) }
   end
 end
 
