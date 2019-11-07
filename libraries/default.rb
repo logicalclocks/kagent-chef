@@ -252,6 +252,9 @@ module Kagent
       # NOTE FOR YOU: Remember to add 'sensitive true' as remote_file property
       username = node['install']['enterprise']['username']
       password = node['install']['enterprise']['password']
+      if username.nil? and password.nil?
+        return {}
+      end
       credentials_b64 = Base64.encode64("#{username}:#{password}").gsub("\n", "")
       header = {}
       header['Authorization'] = "Basic #{credentials_b64}"
