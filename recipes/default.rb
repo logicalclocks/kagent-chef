@@ -51,6 +51,11 @@ when "ubuntu"
  end
 end
 
+deps = ""
+if exists_local("hopsworks","default")
+  deps = "glassfish-domain1.service"
+end
+
 if node[:systemd] == "true"
   service "#{service_name}" do
     provider Chef::Provider::Service::Systemd
@@ -71,6 +76,9 @@ if node[:systemd] == "true"
     owner "root"
     group "root"
     mode 0755
+    variables({
+              :deps => deps
+              })
     if node["services"]["enabled"] == "true"
      notifies :enable, resources(:service => service_name)
     end
