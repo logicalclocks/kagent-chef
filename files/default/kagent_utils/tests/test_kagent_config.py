@@ -51,6 +51,7 @@ class TestKConfig(unittest.TestCase):
     elk_key_file = 'path/to/certs_dir/elastic_admin.key'
     elk_certificate_file = 'path/to/certs_dir/elastic_admin.pem'
     elk_cn = 'ELkAdmin'
+    elastic_host_certificate = 'path/to/certs_dir/elastic_host.pem'
     
     def setUp(self):
         self.config_file = tempfile.mkstemp(prefix='kagent_config_')
@@ -104,6 +105,7 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.elk_key_file, config.elk_key_file)
         self.assertEqual(self.elk_certificate_file, config.elk_certificate_file)
         self.assertEqual(self.elk_cn, config.elk_cn)
+        self.assertEqual(self.elastic_host_certificate, config.elastic_host_certificate)
         
     # Let KConfig figure out values for these properties
     def test_parse_partial_config(self):
@@ -163,7 +165,8 @@ class TestKConfig(unittest.TestCase):
                 'public-ip': self.public_ip,
                 'elk-key-file' : self.elk_key_file,
                 'elk-certificate-file' : self.elk_certificate_file,
-                'elk-cn' : self.elk_cn
+                'elk-cn' : self.elk_cn,
+                'elastic-host-certificate': self.elastic_host_certificate
             }
         else:
             config['agent'] = {
@@ -194,7 +197,8 @@ class TestKConfig(unittest.TestCase):
                 'public-ip': self.public_ip,
                 'elk-key-file' : self.elk_key_file,
                 'elk-certificate-file' : self.elk_certificate_file,
-                'elk-cn' : self.elk_cn
+                'elk-cn' : self.elk_cn,
+                'elastic-host-certificate': self.elastic_host_certificate
             }
 
         with open(self.config_file[1], 'w') as config_fd:

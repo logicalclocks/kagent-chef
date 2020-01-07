@@ -116,6 +116,11 @@ class Certificate:
             with open(join(cert_dir, self._config.certificate_file), "wt") as fd:
                 fd.write(self._certificate)
 
+        if self._certificate is not None and self._intermediate_ca is not None:
+            with open(self._config.elastic_host_certificate, "wt") as target:
+                target.write(self._certificate)
+                target.write(self._intermediate_ca)
+
         self._LOG.info("Flushed crypto material to filesystem")
         
     def _generate_key(self):

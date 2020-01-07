@@ -37,4 +37,5 @@ conda-envs-blacklist = <%= @blacklisted_envs %>
 conda-gc-interval = <%= node[:kagent][:conda_gc_interval] %>
 elk-key-file= <%= node[:kagent][:certs][:elastic_admin_key] %>
 elk-certificate-file= <%= node["kagent"]["certs"]["elastic_admin_certificate"] %>
-elk-cn= <%= node["kagent"]["certs"]["elastic_admin_cn"] %>
+elk-cn = <%= node["kagent"]["certs"]["elastic_admin_cn"] %>
+elastic-host-certificate = <%= node["kagent"]["certs"]["elastic_host_certificate"] %>
