@@ -14,6 +14,7 @@ heartbeat-interval = <%= node["kagent"]["heartbeat_interval"] %>
 services-file = <%= node["kagent"]["services"] %>
 watch-interval = <%= node["kagent"]["watch_interval"] %>
 bin-dir = <%= node["kagent"]["base_dir"] %>/bin
+sbin-dir = <%= node["install"]["sudoers"]["scripts_dir"] %>
 pid-file = <%= node["kagent"]["pid_file"] %>
 agent-log-dir = <%= node["kagent"]["dir"] %>/logs
 csr-log-file = <%= node["kagent"]["dir"] %>/csr.log
@@ -25,6 +26,7 @@ hostname = <%= @hostname %>
 group-name = <%= node["kagent"]["group_name"] %>
 hadoop-home = <%= @hops_dir %>/hadoop
 certs-dir = <%= node["kagent"]["certs_dir"] %>
+certs-user = <%= node['kagent']['certs_user'] %>
 certificate-file = <%= node["kagent"]["certs_dir"] %>/pub.pem
 key-file = <%= node["kagent"]["certs_dir"] %>/priv.key
 hops_ca-cert-file = <%= node["kagent"]["certs"]["root_ca"] %>
@@ -34,6 +36,7 @@ keystore-script = <%= node["kagent"]["base_dir"] %>/keystore.sh
 state-store = <%= node["kagent"]["etc"]%>/state_store
 password = <%= @agent_password %>
 conda-dir = <%= node["conda"]["home"] %>
+conda-user = <%= node["conda"]["user"] %>
 conda-envs-blacklist = <%= @blacklisted_envs %>
 conda-gc-interval = <%= node["kagent"]["conda_gc_interval"] %>
 elk-key-file= <%= node["kagent"]["certs"]["elastic_admin_key"] %>

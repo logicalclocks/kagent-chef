@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ $# -lt 7  ]; then
+if [ $# -lt 6  ]; then
     echo "<user> <op> <proj> <arg> <offline> <hadoop_home> <install_jupyter>"
     echo "incorrect usage."
     echo "<arg> is the python version for 'create', the source env for 'clone' and the path to yml file for 'yml'."
@@ -10,14 +10,13 @@ fi
 # Force umask 022 as default for conda packages - See HOPSWORKS-880
 umask 022
 
-EXEC_AS_USER="${1//[^a-zA-Z0-9\.\-\_]/}"
-OP="${2//[^a-zA-Z0-9\.\-\_]/}"
-PROJECT="${3//[^a-zA-Z0-9\.\-\_]/}"
-ARG="${4//[^a-zA-Z0-9\.\-\_]/}"
-OFFLINE="${5//[^a-zA-Z0-9\.\-\_]/}"
-HADOOP_DIR="${6//[^a-zA-Z0-9\.\-\_/]/}"
-INSTALL_JUPYTER="${7//[^a-zA-Z0-9\.\-\_]/}"
-YML_FILE_PATH="${8//[^a-zA-Z0-9\.\-\_/]/}"
+OP="${1//[^a-zA-Z0-9\.\-\_]/}"
+PROJECT="${2//[^a-zA-Z0-9\.\-\_]/}"
+ARG="${3//[^a-zA-Z0-9\.\-\_]/}"
+OFFLINE="${4//[^a-zA-Z0-9\.\-\_]/}"
+HADOOP_DIR="${5//[^a-zA-Z0-9\.\-\_/]/}"
+INSTALL_JUPYTER="${6//[^a-zA-Z0-9\.\-\_]/}"
+YML_FILE_PATH="${7//[^a-zA-Z0-9\.\-\_/]/}"
 
 CLONE=
 CONDA_DIR=<%= node["conda"]["base_dir"] %>
@@ -34,7 +33,7 @@ if [ "$OP" == "CLONE" ] ; then
 fi
 
 function exists() {
-    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda info --envs | grep '^${PROJECT} '"
+    ${CONDA_DIR}/bin/conda info --envs | grep '^${PROJECT} '
     return $?
 }
 
@@ -44,17 +43,17 @@ function is_python3 {
 }
 
 if [ "$OP" == "YML" ] ; then
-   su "$EXEC_AS_USER" -c "export PATH=${PATH}:${HADOOP_DIR}/bin; ${CONDA_DIR}/bin/conda env create -f ${YML_FILE_PATH} -n ${PROJECT}"
-   
+   export PATH=${PATH}:${HADOOP_DIR}/bin; ${CONDA_DIR}/bin/conda env create -f ${YML_FILE_PATH} -n ${PROJECT}
+
    if [ $? -ne 0 ] ; then
        exit 2
-   fi 
+   fi
 
-   if [ "$INSTALL_JUPYTER" == "true" ] ; then 
+   if [ "$INSTALL_JUPYTER" == "true" ] ; then
         set +e
 	is_python3 "${CONDA_DIR}/envs/${PROJECT}"
 	is_py3_env=$?
-	
+
         # Install packages
 	set -e
 	if [ $is_py3_env -eq 0 ]
@@ -63,20 +62,20 @@ if [ "$OP" == "YML" ] ; then
 	else
 	    jupyterlab_version=$JUPYTERLAB_VERSION_PY2
 	fi
-        su "$EXEC_AS_USER" -c "export PATH=${PATH}:${HADOOP_DIR}/bin; yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade hdfscontents urllib3 requests jupyterlab==${jupyterlab_version} pandas tqdm"
+        export PATH=${PATH}:${HADOOP_DIR}/bin; yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade hdfscontents urllib3 requests jupyterlab==${jupyterlab_version} pandas tqdm
 
 	## Downgrade notebook to 5.7.8 (HOPSWORKS-1251)
-	su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade notebook==5.7.8"
-	
-	su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade ipywidgets"
-	su "$EXEC_AS_USER" -c "${CONDA_DIR}/envs/${PROJECT}/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension"
-	
+	yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade notebook==5.7.8
+
+	yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade ipywidgets
+	${CONDA_DIR}/envs/${PROJECT}/bin/jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
 	# Install wit-widget
-	su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade witwidget"
+	yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade witwidget
 
 	if [ $is_py3_env -eq 0 ]
 	then
-	    su "$EXEC_AS_USER" -c "source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build wit-widget; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build @jupyter-widgets/jupyterlab-manager; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build nbdime-jupyterlab; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter lab build"
+	    source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build wit-widget; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build @jupyter-widgets/jupyterlab-manager; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build nbdime-jupyterlab; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter lab build
 	    if [ $IS_ENTERPRISE_EDITION == "true" ]
 	    then
 		## Hopsworks version has one more digit, remove it to install the upstream labextension
@@ -97,57 +96,57 @@ if [ "$OP" == "YML" ] ; then
 		if [ $? -eq 0 ]
 		then
 		    set -e
-		    su "$EXEC_AS_USER" -c "source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install @jupyterlab/git@${upstream_version}; yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade /home/${EXEC_AS_USER}/jupyterlab_git-${JUPYTERLAB_GIT_VERSION}-py3-none-any.whl; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter serverextension enable --sys-prefix --py jupyterlab_git"
+		    source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install @jupyterlab/git@${upstream_version}; yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade /home/${EXEC_AS_USER}/jupyterlab_git-${JUPYTERLAB_GIT_VERSION}-py3-none-any.whl; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter serverextension enable --sys-prefix --py jupyterlab_git
 		else
 		    set -e
 		fi
 	    fi
 	else
 	    set -e
-	    su "$EXEC_AS_USER" -c "source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build wit-widget; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build @jupyter-widgets/jupyterlab-manager; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter lab build"
+	    source /usr/local/nvm/nvm.sh; nvm use 10.16.0; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build wit-widget; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter labextension install --no-build @jupyter-widgets/jupyterlab-manager; ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter lab build
 	fi
-      
+
 	# DO NOT TOUCH THIS! Bad things are about to happen
-	su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade prompt-toolkit==1.0.16"
+	yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade prompt-toolkit==1.0.16
         if [ $? -ne 0 ] ; then
             exit 2
         fi
 
         if [ <%= node['conda']['hops-util-py']['install-mode'] %> == "git" ] ; then
-            su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install git+https://github.com/<%= node['conda']['hops-util-py']['repo'] %>/hops-util-py@<%= node['conda']['hops-util-py']['branch'] %>"
+            yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install git+https://github.com/<%= node['conda']['hops-util-py']['repo'] %>/hops-util-py@<%= node['conda']['hops-util-py']['branch'] %>
         else
-            su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install hops==<%= node['conda']['hops-util-py']['version'] %>"
+            yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install hops==<%= node['conda']['hops-util-py']['version'] %>
         fi
 
-        su "$EXEC_AS_USER" -c "yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade $SPARKMAGIC_DIR/hdijupyterutils $SPARKMAGIC_DIR/autovizwidget $SPARKMAGIC_DIR/sparkmagic"
+        yes | ${CONDA_DIR}/envs/${PROJECT}/bin/pip install --no-cache-dir --upgrade $SPARKMAGIC_DIR/hdijupyterutils $SPARKMAGIC_DIR/autovizwidget $SPARKMAGIC_DIR/sparkmagic
         if [ $? -ne 0 ] ; then
             exit 2
-        fi 
+        fi
 
         # Enable kernels
-        su "$EXEC_AS_USER" -c "cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/sparkkernel --sys-prefix"
+        cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/sparkkernel --sys-prefix
         if [ $? -ne 0 ] ; then
             exit 2
-        fi 
+        fi
 
-        su "$EXEC_AS_USER" -c "cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/pysparkkernel --sys-prefix"
+        cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/pysparkkernel --sys-prefix
         if [ $? -ne 0 ] ; then
             exit 2
-        fi 
+        fi
 
-        su "$EXEC_AS_USER" -c "cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/pyspark3kernel --sys-prefix"
+        cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/pyspark3kernel --sys-prefix
         if [ $? -ne 0 ] ; then
             exit 2
-        fi 
+        fi
 
-        su "$EXEC_AS_USER" -c "cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/sparkrkernel --sys-prefix"
+        cd ${CONDA_DIR}/envs/${PROJECT}/lib/python*/site-packages && ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter-kernelspec install sparkmagic/kernels/sparkrkernel --sys-prefix
         if [ $? -ne 0 ] ; then
             exit 2
-        fi 
-   fi 
+        fi
+   fi
 
 elif [ "$OP" == "EXPORT" ] ; then
-     su "$EXEC_AS_USER" -c "export PATH=${PATH}:${HADOOP_DIR}/bin; ${CONDA_DIR}/bin/conda env export -n ${PROJECT}" > ${YML_FILE_PATH}
+     export PATH=${PATH}:${HADOOP_DIR}/bin; ${CONDA_DIR}/bin/conda env export -n ${PROJECT} > ${YML_FILE_PATH}
 
      if [ $? -ne 0 ] ; then
          exit 2
@@ -155,7 +154,7 @@ elif [ "$OP" == "EXPORT" ] ; then
 
 elif [ "$OP" == "CREATE" ] ; then
     exists
-    if [ $? -eq 0 ] ; then 
+    if [ $? -eq 0 ] ; then
        exit 0
     fi
 
@@ -164,30 +163,30 @@ elif [ "$OP" == "CREATE" ] ; then
        WITH_PYTHON_KERNEL="false"
     fi
     PY=${ARG//\./}
-    
+
     if [ "$PY" == "27" ] ; then
-      su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python27 -y -q $OFFLINE"
+      ${CONDA_DIR}/bin/conda create -n $PROJECT --clone python27 -y -q $OFFLINE
     else
-      su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone python36 -y -q $OFFLINE"	
+      ${CONDA_DIR}/bin/conda create -n $PROJECT --clone python36 -y -q $OFFLINE
     fi
 
-    
+
 elif [ "$OP" == "LIST_ENVS" ] ; then
-  su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda env list --json > /tmp/conda_envs.json"    
+  ${CONDA_DIR}/bin/conda env list --json > /tmp/conda_envs.json
 
 elif [ "$OP" == "LIST" ] ; then
-  su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda list -n $PROJECT --json > /tmp/${PROJECT}__conda_list.json"
+  ${CONDA_DIR}/bin/conda list -n $PROJECT --json > /tmp/${PROJECT}__conda_list.json
 
 elif [ "$OP" == "CLONE" ] ; then
-  su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda create -n $PROJECT --clone $CLONE -y -q $OFFLINE"
+  ${CONDA_DIR}/bin/conda create -n $PROJECT --clone $CLONE -y -q $OFFLINE
 
-  # Enable jupyter notebook extensions 
-  su "$EXEC_AS_USER" -c "${CONDA_DIR}/envs/${PROJECT}/bin/jupyter contrib nbextension install --sys-prefix"
-  su "$EXEC_AS_USER" -c "${CONDA_DIR}/envs/${PROJECT}/bin/jupyter serverextension enable jupyter_nbextensions_configurator --sys-prefix"
+  # Enable jupyter notebook extensions
+  ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter contrib nbextension install --sys-prefix
+  ${CONDA_DIR}/envs/${PROJECT}/bin/jupyter serverextension enable jupyter_nbextensions_configurator --sys-prefix
 
 elif [ "$OP" == "LIB_SYNC" ] ; then
 
-    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda list -n $1 --json > /tmp/${1}.json"
+    ${CONDA_DIR}/bin/conda list -n $1 --json > /tmp/${1}.json
     if [ $? -ne 0 ] ; then
 	echo "Problem listing conda libraries for project $1"
 	exit 2
@@ -209,34 +208,23 @@ elif [ "$OP" == "LIB_SYNC" ] ; then
 	# If i cannot find the library installed locally, install it in this project
 	grep "$i" "/tmp/${1}.libs"
 	if [ $? -ne 0 ] ; then
-	    su <%= node['conda']['user'] %> -c "${CONDA_DIR}/bin/conda install -n $1 -q -y $2 $i"
+	   ${CONDA_DIR}/bin/conda install -n $1 -q -y $2 $i
 	fi
     done
-    
+
 elif [ "$OP" == "REMOVE" ] ; then
     exists    # If the env has already been removed, return OK
     if [ $? -ne 0 ] ; then
        echo "Cannot remove environment that doesn't exist"
        exit 0
     fi
-    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda-env remove -n $PROJECT -y -q"
+    ${CONDA_DIR}/bin/conda-env remove -n $PROJECT -y -q
     rm -rf "${CONDA_DIR}/envs/${PROJECT}"
-    if [ "${WITH_PYTHON_KERNEL}" == "true" ] ; then
-	kernelsToDelete=$(sudo jupyter-kernelspec list | grep "${PROJECT}__" | sed -e 's/.*\/usr\/local\/share\/jupyter\/kernels\///g')
-        echo "Kernels to delete:"
-        echo "$kernelsToDelete"
-        if [ "$kernelsToDelete" != "" ] ; then
-	  while read -r kernel; do
-             echo "sudo jupyter-kernelspec remove -y -f ${kernel}"
-             sudo jupyter-kernelspec remove -y -f "${kernel}" || 0
-	  done <<< "$kernelsToDelete"
-        fi
-    fi
 
 elif [ "$OP" == "CLEAN" ] ; then
-    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda clean --all -y"
+    ${CONDA_DIR}/bin/conda clean --all -y
 elif [ "$OP" == "UPDATE" ] ; then
-    su "$EXEC_AS_USER" -c "${CONDA_DIR}/bin/conda update conda -y"
+    ${CONDA_DIR}/bin/conda update conda -y
 else
     exit -1
 fi

@@ -313,13 +313,7 @@ class Host:
         response = session.post(self._conf.register_url, headers=self.json_headers, data=json.dumps(payload), verify=False)
 
         if (response.status_code != requests.codes.ok):
-            raise Exception('Could not register: Unknown host id or internal error on the dashboard (Status code: {0} - {1}).'
-                            .format(response.status_code, response.text))
-        
-        json_response = json.loads(response.content)
-        hadoopHome = json_response["hadoopHome"]
-        self._conf.set_conf_value('agent', 'hadoop-home', hadoopHome)
-        self._conf.dump_to_file()
+            raise Exception('Could not register: Unknown host id or internal error on the dashboard (Status code: {0} - {1}).'.format(response.status_code, response.text))
 
     def _store_new_crypto_state(self):
         previous_crypto_version = self._state_store.get_crypto_material_state().get_version()
@@ -390,10 +384,6 @@ if __name__ == '__main__':
     LOG.info("Register URL: {0}".format(config.register_url))
     LOG.info("Public IP: {0}".format(config.public_ip))
     LOG.info("Private IP: {0}".format(config.private_ip))
-
-    agent_pid = str(os.getpid())
-    file(config.agent_pidfile, 'w').write(agent_pid)
-    LOG.info("Hops CSR-agent PID: {0}".format(agent_pid))
 
     LOG.info("Restoring state from state-store")
     state_store_factory = StateStoreFactory(config.state_store_location)

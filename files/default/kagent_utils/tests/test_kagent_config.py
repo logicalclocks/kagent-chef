@@ -27,6 +27,7 @@ class TestKConfig(unittest.TestCase):
     services_file = 'path/to/services/file'
     watch_interval = '4s'
     bin_dir = 'path/to/bin/dir'
+    sbin_dir = 'path/to/sbin/dir'
     pid_file = 'path/to/pid/file'
     agent_log_dir = 'path/to/agent/logs'
     csr_log_file = 'path/to/csr/log_file'
@@ -36,6 +37,7 @@ class TestKConfig(unittest.TestCase):
     group_name = 'group'
     hadoop_home = 'path/to/hadoop_home'
     certs_dir = 'path/to/certs_dir'
+    certs_user = 'cert_user'
     certificate_file = 'path/to/certificate'
     key_file = 'path/to/key'
     hops_ca_cert_file = 'path/to/file'
@@ -45,6 +47,7 @@ class TestKConfig(unittest.TestCase):
     state_store = 'path/to/state_store'
     agent_password = 'agent_password'
     conda_dir = 'path/to/conda'
+    conda_user = 'conda_user'
     conda_envs_blacklist = 'python27,python35,hops-system'
     conda_gc_interval = '2h'
     private_ip = '127.0.0.1'
@@ -79,6 +82,7 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.services_file, config.services_file)
         self.assertEqual(self.watch_interval, config.watch_interval)
         self.assertEqual(self.bin_dir, config.bin_dir)
+        self.assertEqual(self.sbin_dir, config.sbin_dir)
         self.assertEqual(self.pid_file, config.agent_pidfile)
         self.assertEqual(self.agent_log_dir, config.agent_log_dir)
         self.assertEqual(self.csr_log_file, config.csr_log_file)
@@ -90,6 +94,7 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.group_name, config.group_name)
         self.assertEqual(self.hadoop_home, config.hadoop_home)
         self.assertEqual(self.certs_dir, config.certs_dir)
+        self.assertEqual(self.certs_user, config.certs_user)
         self.assertEqual(self.certificate_file, config.certificate_file)
         self.assertEqual(self.key_file, config.key_file)
         self.assertEqual(self.server_keystore, config.server_keystore)
@@ -98,7 +103,9 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.state_store, config.state_store_location)
         self.assertEqual(self.agent_password, config.agent_password)
         self.assertEqual(self.conda_dir, config.conda_dir)
-        self.assertEqual(self.conda_envs_blacklist, config.conda_envs_blacklist)
+        self.assertEqual(self.conda_user, config.conda_user)
+        self.assertEqual(self.conda_envs_blacklist,
+                         config.conda_envs_blacklist)
         self.assertEqual(self.conda_gc_interval, config.conda_gc_interval)
         self.assertEqual(self.elk_key_file, config.elk_key_file)
         self.assertEqual(self.elk_certificate_file, config.elk_certificate_file)
@@ -141,6 +148,7 @@ class TestKConfig(unittest.TestCase):
                 'services-file': self.services_file,
                 'watch-interval': self.watch_interval,
                 'bin-dir': self.bin_dir,
+                'sbin-dir': self.sbin_dir,
                 'pid-file': self.pid_file,
                 'agent-log-dir': self.agent_log_dir,
                 'csr-log-file': self.csr_log_file,
@@ -150,6 +158,7 @@ class TestKConfig(unittest.TestCase):
                 'group-name': self.group_name,
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,
+                'certs-user': self.certs_user,
                 'certificate-file': self.certificate_file,
                 'key-file': self.key_file,
                 'server-keystore': self.server_keystore,
@@ -158,6 +167,7 @@ class TestKConfig(unittest.TestCase):
                 'state-store': self.state_store,
                 'password': self.agent_password,
                 'conda-dir': self.conda_dir,
+                'conda-user': self.conda_user,
                 'conda-envs-blacklist': self.conda_envs_blacklist,
                 'conda-gc-interval': self.conda_gc_interval,
                 'private-ip': self.private_ip,
@@ -175,6 +185,7 @@ class TestKConfig(unittest.TestCase):
                 'services-file': self.services_file,
                 'watch-interval': self.watch_interval,
                 'bin-dir': self.bin_dir,
+                'sbin-dir': self.sbin_dir,
                 'pid-file': self.pid_file,
                 'agent-log-dir': self.agent_log_dir,
                 'csr-log-file': self.csr_log_file,
@@ -183,6 +194,7 @@ class TestKConfig(unittest.TestCase):
                 'group-name': self.group_name,
                 'hadoop-home': self.hadoop_home,
                 'certs-dir': self.certs_dir,
+                'certs-user': self.certs_user,
                 'certificate-file': self.certificate_file,
                 'key-file': self.key_file,
                 'server-keystore': self.server_keystore,
@@ -191,6 +203,7 @@ class TestKConfig(unittest.TestCase):
                 'state-store': self.state_store,
                 'password': self.agent_password,
                 'conda-dir': self.conda_dir,
+                'conda-user': self.conda_user,
                 'conda-envs-blacklist': self.conda_envs_blacklist,
                 'conda-gc-interval': self.conda_gc_interval,
                 'private-ip': self.private_ip,

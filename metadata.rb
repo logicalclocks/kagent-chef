@@ -34,6 +34,14 @@ attribute "kagent/group",
           :description => "group to run kagent as",
           :type => 'string'
 
+attribute "kagent/certs_user",
+          :description => "User managing the host certificates",
+          :type => 'string'
+
+attribute "kagent/certs_group",
+          :description => "Group having access to the host certificates",
+          :type => 'string'
+
 attribute "kagent/dir",
           :description => "Installation directory for kagent",
           :type => 'string'

@@ -4,7 +4,9 @@ include_attribute "conda"
 default["kagent"]["version"]                       = node["install"]["version"]
 default["kagent"]["user"]                          = node["install"]["user"].empty? ? "kagent" : node["install"]["user"]
 default["kagent"]["group"]                         = node["install"]["user"].empty? ? "kagent" : node["install"]["user"]
+
 default["kagent"]["certs_group"]                   = "certs"
+default["kagent"]["certs_user"]                    = "certs"
 
 
 default["kagent"]["dir"]                           = node["install"]["dir"].empty? ? "/var/lib/kagent" : node["install"]["dir"] + "/kagent"
