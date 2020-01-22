@@ -38,6 +38,7 @@ class TestKConfig(unittest.TestCase):
     certs_dir = 'path/to/certs_dir'
     certificate_file = 'path/to/certificate'
     key_file = 'path/to/key'
+    hops_ca_cert_file = 'path/to/file'
     server_keystore = 'path/to/server_keystore'
     server_truststore = 'path/to/server_truststore'
     keystore_script = 'path/to/keystore_script'
@@ -69,14 +70,12 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self._toUrl(self.path_login), config.login_url)
         self.assertEqual(self._toUrl(self.path_register), config.register_url)
         self.assertEqual(self._toUrl(self.path_ca_host), config.ca_host_url)
-        self.assertEqual(self._toUrl(self.path_heartbeat),
-                         config.heartbeat_url)
+        self.assertEqual(self._toUrl(self.path_heartbeat), config.heartbeat_url)
         self.assertEqual(self.username, config.server_username)
         self.assertEqual(self.server_password, config.server_password)
         self.assertEqual(self.host_id, config.host_id)
         self.assertEqual(int(self.restport), config.rest_port)
-        self.assertEqual(int(self.heartbeat_interval),
-                         config.heartbeat_interval)
+        self.assertEqual(int(self.heartbeat_interval), config.heartbeat_interval)
         self.assertEqual(self.services_file, config.services_file)
         self.assertEqual(self.watch_interval, config.watch_interval)
         self.assertEqual(self.bin_dir, config.bin_dir)
@@ -99,13 +98,13 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(self.state_store, config.state_store_location)
         self.assertEqual(self.agent_password, config.agent_password)
         self.assertEqual(self.conda_dir, config.conda_dir)
-        self.assertEqual(self.conda_envs_blacklist,
-                         config.conda_envs_blacklist)
+        self.assertEqual(self.conda_envs_blacklist, config.conda_envs_blacklist)
         self.assertEqual(self.conda_gc_interval, config.conda_gc_interval)
         self.assertEqual(self.elk_key_file, config.elk_key_file)
         self.assertEqual(self.elk_certificate_file, config.elk_certificate_file)
         self.assertEqual(self.elk_cn, config.elk_cn)
         self.assertEqual(self.elastic_host_certificate, config.elastic_host_certificate)
+        self.assertEqual(self.hops_ca_cert_file, config.hops_ca_cert_file)
         
     # Let KConfig figure out values for these properties
     def test_parse_partial_config(self):
@@ -166,7 +165,8 @@ class TestKConfig(unittest.TestCase):
                 'elk-key-file' : self.elk_key_file,
                 'elk-certificate-file' : self.elk_certificate_file,
                 'elk-cn' : self.elk_cn,
-                'elastic-host-certificate': self.elastic_host_certificate
+                'elastic-host-certificate': self.elastic_host_certificate,
+                'hops_ca-cert-file': self.hops_ca_cert_file
             }
         else:
             config['agent'] = {
@@ -198,7 +198,8 @@ class TestKConfig(unittest.TestCase):
                 'elk-key-file' : self.elk_key_file,
                 'elk-certificate-file' : self.elk_certificate_file,
                 'elk-cn' : self.elk_cn,
-                'elastic-host-certificate': self.elastic_host_certificate
+                'elastic-host-certificate': self.elastic_host_certificate,
+                'hops_ca-cert-file': self.hops_ca_cert_file
             }
 
         with open(self.config_file[1], 'w') as config_fd:

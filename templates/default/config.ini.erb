@@ -1,41 +1,42 @@
 [server]
 url = <%= @rest_url %>
-path-login = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:login] %>
-path-register = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:register] %>
-path-heartbeat = <%= node[:kagent][:dashboard_app] %>/<%= node[:kagent][:dashboard][:api][:heartbeat] %>
-path-ca-host = <%= node[:kagent][:ca_app] %>/<%= node[:kagent][:dashboard][:api][:ca_host] %>
-username = <%= node[:kagent][:dashboard][:user] %>
-password = <%= node[:kagent][:dashboard][:password] %>
+path-login = <%= node["kagent"]["dashboard_app"] %>/<%= node["kagent"]["dashboard"]["api"]["login"] %>
+path-register = <%= node["kagent"]["dashboard_app"] %>/<%= node["kagent"]["dashboard"]["api"]["register"] %>
+path-heartbeat = <%= node["kagent"]["dashboard_app"] %>/<%= node["kagent"]["dashboard"]["api"]["heartbeat"] %>
+path-ca-host = <%= node["kagent"]["ca_app"] %>/<%= node["kagent"]["dashboard"]["api"]["ca_host"] %>
+username = <%= node["kagent"]["dashboard"]["user"] %>
+password = <%= node["kagent"]["dashboard"]["password"] %>
 
 [agent]
 host-id = <%= @hostname %>
-restport = <%= node[:kagent][:port] %>
-heartbeat-interval = <%= node[:kagent][:heartbeat_interval] %>
-services-file = <%= node[:kagent][:services] %>
-watch-interval = <%= node[:kagent][:watch_interval] %>
-bin-dir = <%= node[:kagent][:base_dir] %>/bin
-pid-file = <%= node[:kagent][:pid_file] %>
-agent-log-dir = <%= node[:kagent][:dir] %>/logs
-csr-log-file = <%= node[:kagent][:dir] %>/csr.log
-logging-level = <%= node[:kagent][:logging_level] %>
-max-log-size = <%= node[:kagent][:max_log_size] %>
+restport = <%= node["kagent"]["port"] %>
+heartbeat-interval = <%= node["kagent"]["heartbeat_interval"] %>
+services-file = <%= node["kagent"]["services"] %>
+watch-interval = <%= node["kagent"]["watch_interval"] %>
+bin-dir = <%= node["kagent"]["base_dir"] %>/bin
+pid-file = <%= node["kagent"]["pid_file"] %>
+agent-log-dir = <%= node["kagent"]["dir"] %>/logs
+csr-log-file = <%= node["kagent"]["dir"] %>/csr.log
+logging-level = <%= node["kagent"]["logging_level"] %>
+max-log-size = <%= node["kagent"]["max_log_size"] %>
 public-ip = <%= @public_ip %>
 private-ip = <%= @private_ip %>
 hostname = <%= @hostname %>
-group-name = <%= node[:kagent][:group_name] %>
+group-name = <%= node["kagent"]["group_name"] %>
 hadoop-home = <%= @hops_dir %>/hadoop
-certs-dir = <%= node[:kagent][:certs_dir] %>
-certificate-file = <%= node[:kagent][:certs_dir] %>/pub.pem
-key-file = <%= node[:kagent][:certs_dir] %>/priv.key
+certs-dir = <%= node["kagent"]["certs_dir"] %>
+certificate-file = <%= node["kagent"]["certs_dir"] %>/pub.pem
+key-file = <%= node["kagent"]["certs_dir"] %>/priv.key
+hops_ca-cert-file = <%= node["kagent"]["certs"]["root_ca"] %>
 server-keystore = <%= @kstore %>
 server-truststore = <%= @tstore %>
-keystore-script = <%= node[:kagent][:base_dir] %>/keystore.sh
-state-store = <%= node[:kagent][:etc]%>/state_store
+keystore-script = <%= node["kagent"]["base_dir"] %>/keystore.sh
+state-store = <%= node["kagent"]["etc"]%>/state_store
 password = <%= @agent_password %>
-conda-dir = <%= node[:conda][:home] %>
+conda-dir = <%= node["conda"]["home"] %>
 conda-envs-blacklist = <%= @blacklisted_envs %>
-conda-gc-interval = <%= node[:kagent][:conda_gc_interval] %>
-elk-key-file= <%= node[:kagent][:certs][:elastic_admin_key] %>
+conda-gc-interval = <%= node["kagent"]["conda_gc_interval"] %>
+elk-key-file= <%= node["kagent"]["certs"]["elastic_admin_key"] %>
 elk-certificate-file= <%= node["kagent"]["certs"]["elastic_admin_certificate"] %>
 elk-cn = <%= node["kagent"]["certs"]["elastic_admin_cn"] %>
 elastic-host-certificate = <%= node["kagent"]["certs"]["elastic_host_certificate"] %>

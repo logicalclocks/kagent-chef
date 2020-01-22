@@ -101,6 +101,7 @@ class KConfig:
             self.elk_certificate_file = self._config.get('agent', 'elk-certificate-file')
             self.elk_cn = self._config.get('agent', 'elk-cn')
             self.elastic_host_certificate = self._config.get('agent', 'elastic-host-certificate')
+            self.hops_ca_cert_file = self._config.get('agent', 'hops_ca-cert-file')
         except Exception, e:
             print("Exception while reading {0}: {1}".format(
                 self._configFile, e))

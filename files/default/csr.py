@@ -121,6 +121,16 @@ class Certificate:
                 target.write(self._certificate)
                 target.write(self._intermediate_ca)
 
+        # Write Hops CA file
+        if self._intermediate_ca is not None and self._root_ca is not None:
+            with open(self._config.hops_ca_cert_file, "wt") as fd:
+                fd.write("Hops Root CA\n")
+                fd.write("============\n")
+                fd.write(self._root_ca)
+                fd.write("Hops Intermediate CA\n")
+                fd.write("====================\n")
+                fd.write(self._intermediate_ca)
+
         self._LOG.info("Flushed crypto material to filesystem")
         
     def _generate_key(self):

@@ -36,6 +36,16 @@ action :csr do
     only_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key.rsa" ) }
   end  
   
+  # Bundle is created by csr.py init or rotate process
+  bash "chown Hops CA bundle" do
+    user "root"
+    group "root"
+    code <<-EOH
+      chown root:#{node["kagent"]["certs_group"]} #{node["kagent"]["certs"]["root_ca"]}
+      chmod 640 #{node["kagent"]["certs"]["root_ca"]}
+    EOH
+    only_if { ::File.exists?( node["kagent"]["certs"]["root_ca"] ) }
+  end
 end
 
 action :combine_certs do 
@@ -52,25 +62,6 @@ action :combine_certs do
       cat #{node["kagent"]["certs_dir"]}/hops_intermediate_ca.pem >> /opt/chefdk/embedded/ssl/certs/cacert.pem
     EOH
     only_if { ::File.exists?( "/opt/chefdk/embedded/ssl/certs/cacert.pem" ) }
-  end
-
-  bash "create #{node["kagent"]["certs"]["root_ca"]} by concatenating hops_root_ca and hops_intermediate_ca " do
-    user "root"
-    code <<-EOH
-      set -eo pipefail
-      
-      echo "Hops Root CA " > #{node["kagent"]["certs"]["root_ca"]}
-      echo "==================" >>  #{node["kagent"]["certs"]["root_ca"]}
-      cat #{node["kagent"]["certs_dir"]}/hops_root_ca.pem >> #{node["kagent"]["certs"]["root_ca"]}
-
-      echo "Hops Intermediate CA " >> #{node["kagent"]["certs"]["root_ca"]}
-      echo "==================" >>  #{node["kagent"]["certs"]["root_ca"]}
-      cat #{node["kagent"]["certs_dir"]}/hops_intermediate_ca.pem >>#{node["kagent"]["certs"]["root_ca"]}
-
-      chown root:#{node["kagent"]["certs_group"]} #{node["kagent"]["certs"]["root_ca"]}
-      chmod 640 #{node["kagent"]["certs"]["root_ca"]}
-    EOH
-    not_if { ::File.exists?( node["kagent"]["certs"]["root_ca"] ) }
   end
 
   bash "create #{node["kagent"]["certs"]["elastic_host_certificate"]} by concatenating pub.pem and hops_intermediate_ca " do
