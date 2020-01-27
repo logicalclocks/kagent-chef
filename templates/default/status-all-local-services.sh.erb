@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-/srv/hops/anaconda/envs/hops-system/bin/python /srv/hops/kagent/kagent/agent.py -c /srv/hops/kagent/etc/config.ini --services status
+<%= node[:conda][:base_dir] %>/envs/hops-system/bin/python <%= node[:kagent][:base_dir] %>/agent.py \
+	--config <%= node[:kagent][:etc] %>/config.ini --services status
