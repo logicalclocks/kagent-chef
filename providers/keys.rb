@@ -58,6 +58,26 @@ action :combine_certs do
     EOH
     not_if { ::File.exists?( node["kagent"]["certs"]["elastic_host_certificate"] ) }
   end
+
+  # This is normaly done in csr.py during an 'init' or 'rotate' operation. During upgrades, neither happen
+  # so we need to generate it here
+  bash "concatenate Hops Root CA certificate with Hops Intermediate CA certificate into #{node["kagent"]["certs"]["root_ca"]}" do
+    user node["kagent"]["certs_user"]
+    group node["kagent"]["certs_group"]
+    code <<-EOH
+      set -eo pipefail
+      echo "Hops Root CA" > #{node["kagent"]["certs"]["root_ca"]}
+      echo "============" >>  #{node["kagent"]["certs"]["root_ca"]}
+      cat #{node["kagent"]["certs_dir"]}/hops_root_ca.pem >> #{node["kagent"]["certs"]["root_ca"]}
+
+      echo "Hops Intermediate CA" >> #{node["kagent"]["certs"]["root_ca"]}
+      echo "====================" >>  #{node["kagent"]["certs"]["root_ca"]}
+      cat #{node["kagent"]["certs_dir"]}/hops_intermediate_ca.pem >> #{node["kagent"]["certs"]["root_ca"]}
+
+      chmod 750 #{node["kagent"]["certs"]["root_ca"]}
+    EOH
+    not_if { ::File.exists?(node["kagent"]["certs"]["root_ca"]) }
+  end
 end 
 
 action :generate_elastic_admin_certificate do
