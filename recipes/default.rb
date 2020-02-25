@@ -254,7 +254,13 @@ end
 
 # Default to hostname found in /etc/hosts, but allow user to override it.
 # First with DNS. Highest priority if user supplies the actual hostname
-hostname = node['fqdn']
+
+if node['install']['cloud'].eql? "azure"
+  my_ip = my_private_ip()
+  hostname = resolve_hostname(my_ip)
+else
+  hostname = node['fqdn']
+end
 
 if node['install']['localhost'].casecmp?("true")
   hostname = "localhost"

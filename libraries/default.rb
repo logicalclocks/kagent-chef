@@ -118,7 +118,7 @@ module Kagent
       end
     end
 
-    
+
     def private_recipe_ips(cookbook, recipe)
       valid_recipe(cookbook,recipe)
       return node[cookbook][recipe][:private_ips]
@@ -131,10 +131,11 @@ module Kagent
       # Hosts in Azure will have 2 hostnames - a global one and a private DNS one.
       if node['install']['cloud'].eql? "azure"
         hostnames = Resolv.getnames(ip)
-        hostnames=hostnames.reject { |x| x.include?(".internal.cloudapp.net") }
+        # all Azure hosts get this base DNS domain - this is not the private DNS name, exclude it
+        hostnames = hostnames.reject { |x| x.include?(".internal.cloudapp.net") }
         # return the last of the hostnames - this is the private DNS Zone hostname in Azure
         hostname = hostnames[-1]
-      else  
+      else
         # Try and resolve hostname first using /etc/hosts, then use DNS
         begin
           hostname = hostf.getname(ip)
@@ -145,9 +146,9 @@ module Kagent
             raise "Cannot resolve the hostname for IP address: #{ip}"
           end
         end
-      end  
+      end
     end
-    
+
     def private_recipe_hostnames(cookbook, recipe)
       valid_recipe(cookbook,recipe)
       hostf = Resolv::Hosts.new
