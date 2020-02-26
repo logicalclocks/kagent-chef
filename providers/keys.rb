@@ -1,5 +1,10 @@
 action :csr do
 
+  hopsworks_alt_url = ""
+  unless new_resource.hopsworks_alt_url.nil?
+    hopsworks_alt_url = "--alt-url #{new_resource.hopsworks_alt_url}"
+  end
+
   bash "sign-local-csr-key" do
     user node['kagent']['certs_user']
     group node['kagent']['group']
@@ -10,7 +15,7 @@ action :csr do
       set -eo pipefail
       export PYTHON_EGG_CACHE=/tmp
       #{node[:conda][:base_dir]}/envs/hops-system/bin/python #{node[:kagent][:certs_dir]}/csr.py \
-      -c #{node[:kagent][:etc]}/config.ini init
+      -c #{node[:kagent][:etc]}/config.ini #{hopsworks_alt_url} init
     EOF
     not_if { ::File.exists?( "#{node['kagent']['certs_dir']}/priv.key" ) }
   end
@@ -81,6 +86,11 @@ action :combine_certs do
 end 
 
 action :generate_elastic_admin_certificate do
+  hopsworks_alt_url = ""
+  unless new_resource.hopsworks_alt_url.nil?
+    hopsworks_alt_url = "--alt-url #{new_resource.hopsworks_alt_url}"
+  end
+
   bash "sign-admin-elastic-key" do
     user node['kagent']['certs_user']
     group node['kagent']['group']
@@ -91,7 +101,7 @@ action :generate_elastic_admin_certificate do
       set -eo pipefail
       export PYTHON_EGG_CACHE=/tmp
       #{node["conda"]["base_dir"]}/envs/hops-system/bin/python #{node["kagent"]["certs_dir"]}/csr.py \
-      -c #{node["kagent"]["etc"]}/config.ini elkadmin
+      -c #{node["kagent"]["etc"]}/config.ini #{hopsworks_alt_url} elkadmin
       chown #{node['kagent']['certs_user']}:#{node["kagent"]["certs_group"]} #{node["kagent"]["certs"]["elastic_admin_key"]}
       chmod 640 #{node["kagent"]["certs"]["elastic_admin_key"]}
       chown #{node['kagent']['certs_user']}:#{node["kagent"]["certs_group"]} #{node["kagent"]["certs"]["elastic_admin_certificate"]}

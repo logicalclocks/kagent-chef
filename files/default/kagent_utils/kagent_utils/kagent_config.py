@@ -21,6 +21,17 @@ class KConfig:
     def __init__(self, configFile):
         self._configFile = configFile
 
+    @property
+    def server_url(self):
+        if hasattr(self, "_server_url"):
+            return self._server_url
+        return None
+    
+    @server_url.setter
+    def server_url(self, server_url):
+        self._server_url = server_url
+
+
     def set_conf_value(self, section, name, value):
         """Set a new configuration property"""
         if self._config is not None:
@@ -31,12 +42,18 @@ class KConfig:
         with open(self._configFile, 'wb') as fd:
             self._config.write(fd)
 
+    def load(self):
+        self._config = ConfigParser.ConfigParser()
+        self._config.read(self._configFile)
+
     def read_conf(self):
         """Load configuration from file"""
+        if self._config is None:
+            raise Exception("Configuration file is not loaded!")
+
         try:
-            self._config = ConfigParser.ConfigParser()
-            self._config.read(self._configFile)
-            self.server_url = self._config.get('server', 'url')
+            if self.server_url is None:
+                self.server_url = self._config.get('server', 'url')
             self.register_url = self.server_url + \
                 self._config.get('server', 'path-register')
             self.ca_host_url = self.server_url + \

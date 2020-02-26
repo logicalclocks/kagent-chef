@@ -223,12 +223,20 @@ end
 private_ip = my_private_ip()
 public_ip = my_public_ip()
 
-dashboard_endpoint = private_recipe_ip("hopsworks","default")  + ":8181" 
+## We can't add Consul dependency in kagent, it leads to cyclic dep
+consul_domain = "consul"
+if node.attribute?('consul') && node['consul'].attribute?('domain')
+  consul_domain = node['consul']['domain']
+end
+
+hopsworks_port = "8181"
 if node.attribute? "hopsworks"
-  if node["hopsworks"].attribute? "https" and node["hopsworks"]['https'].attribute? ('port')
-    dashboard_endpoint = private_recipe_ip("hopsworks","default")  + ":" + node['hopsworks']['https']['port']
+  if node["hopsworks"].attribute? "https" and node["hopsworks"]["https"].attribute? "port"
+    hopsworks_port = node["hopsworks"]["https"]["port"]
   end
 end
+
+dashboard_endpoint = "hopsworks.glassfish.service.#{consul_domain}:#{hopsworks_port}"
 
 # Default to hostname found in /etc/hosts, but allow user to override it.
 # First with DNS. Highest priority if user supplies the actual hostname
@@ -323,9 +331,16 @@ template "#{node["kagent"]["certs_dir"]}/keystore.sh" do
 end
 
 if node["kagent"]["test"] == false && (not conda_helpers.is_upgrade)
-    kagent_keys "sign-certs" do
-       action :csr
+  hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:8181" 
+  if node.attribute? "hopsworks"
+    if node["hopsworks"].attribute? "https" and node["hopsworks"]['https'].attribute? ('port')
+      hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:#{node['hopsworks']['https']['port']}"
     end
+  end
+  kagent_keys "sign-certs" do
+    hopsworks_alt_url hopsworks_alt_url
+    action :csr
+  end
 end
 
 kagent_keys "combine_certs" do 

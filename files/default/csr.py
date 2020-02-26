@@ -368,6 +368,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Register host with Hopsworks and get certificate.')
 
     parser.add_argument('-c', '--config', default='config.ini', help='Configuration file')
+    parser.add_argument('--alt-url', help='Alternative Hopsworks URL')
 
     subparser = parser.add_subparsers(dest='operation', help='Operations')
     subparser.add_parser('init', help='Initialize agent')
@@ -377,6 +378,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config = KConfig(args.config)
+    config.load()
+
+    if args.alt_url:
+        if not args.alt_url.endswith("/"):
+            args.alt_url = args.alt_url + "/"
+        config.server_url = args.alt_url
+
     config.read_conf()
     setup_logging(config.csr_log_file, config.max_log_size, config.logging_level)
     LOG = logging.getLogger(__name__)

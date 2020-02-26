@@ -125,9 +125,24 @@ module Kagent
     end
 
     def resolve_hostname(ip)
+      max_attempts = 10
+      while true
+        begin
+          return resolve_hostname_internal(ip)
+        rescue StandardError => ex
+          max_attempts -= 1
+          if max_attempts < 0
+            raise ex
+          end
+          sleep(0.5)
+        end
+      end
+    end
+
+    def resolve_hostname_internal(ip)
       require 'resolv'
-      hostf = Resolv::Hosts.new
-      dns = Resolv::DNS.new
+      resolver = Resolv.new(resolvers=[Resolv::Hosts.new, Resolv::DNS.new])
+      hostnames = resolver.getnames(ip)
 
       # Hosts in Azure will have 2 hostnames - a global one and a private DNS one.
       if node['install']['cloud'].eql? "azure"
@@ -135,54 +150,31 @@ module Kagent
         # all Azure hosts get this base DNS domain - this is not the private DNS name, exclude it
         hostnames = hostnames.reject { |x| x.include?(".internal.cloudapp.net") }
         # return the last of the hostnames - this is the private DNS Zone hostname in Azure
-        hostname = hostnames[-1]
-      else  
-        # Try and resolve hostname first using /etc/hosts, then use DNS
-        begin
-          hostname = hostf.getname(ip)
-        rescue
-          begin
-            hostname = dns.getname(ip)
-          rescue
-            raise "Cannot resolve the hostname for IP address: #{ip}"
-          end
+        hostnames[-1]
+      else
+        if hostnames.empty?
+          raise StandardError.new "Cannot resolve the hostname for IP address: #{ip}"
         end
+      	hostnames[0]
       end
     end
     
     def private_recipe_hostnames(cookbook, recipe)
       valid_recipe(cookbook,recipe)
-      hostf = Resolv::Hosts.new
-      dns = Resolv::DNS.new
-
       hostnames = Array.new
-      for host in node[cookbook][recipe][:private_ips]
+      for ip in node[cookbook][recipe][:private_ips]
         # resolve the hostname first in /etc/hosts, then using DNS
-        # If not found, then write an entry for it in /etc/hosts
         begin
-          h = hostf.getname("#{host}")
+          hostname = resolve_hostname(ip)
         rescue
-          begin
-            h = dns.getname("#{host}")
-          rescue
-            if (node["vagrant"])
-              # gsub() returns a copy of the modified str with replacements
-              # gsub!() makes the replacements in-place
-              # hostName = host.gsub("\.","_")
-              # h = "vagrant_#{hostName}"
-              # hostsfile_entry "#{host}" do
-              #   hostname  "#{h}"
-              #   unique    true
-              #   action    :create
-              # end
-              h = host
-              #h = "10.0.2.15"
-            else
-              raise "You need to supply a valid list  of ips for #{cookbook}/#{recipe}"
-            end
+          if (node["vagrant"])
+            hostname = ip
+          else
+            raise "You need to supply a valid list  of ips for #{cookbook}/#{recipe}"
           end
         end
-        hostnames << h
+
+        hostnames << hostname
       end
       hostnames
     end

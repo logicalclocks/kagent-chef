@@ -838,6 +838,7 @@ if __name__ == '__main__':
 
     global kconfig
     kconfig = KConfig(args.config)
+    kconfig.load()
     kconfig.read_conf()
 
     create_log_dir_if_not(kconfig)

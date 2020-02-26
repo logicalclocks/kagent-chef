@@ -67,6 +67,7 @@ class TestKConfig(unittest.TestCase):
         self._prepare_config_file(True)
 
         config = KConfig(self.config_file[1])
+        config.load()
         config.read_conf()
 
         self.assertEqual(self.url, config.server_url)
@@ -117,6 +118,7 @@ class TestKConfig(unittest.TestCase):
     def test_parse_partial_config(self):
         self._prepare_config_file(False)
         config = KConfig(self.config_file[1])
+        config.load()
         config.read_conf()
 
         self.assertIsNotNone(config.agent_password)
@@ -126,6 +128,18 @@ class TestKConfig(unittest.TestCase):
         self.assertEqual(my_hostname, config.hostname)
 
         self.assertEqual(my_hostname, config.host_id)
+
+    def test_alternate_host(self):
+        alternate_host = "https://alternate.url:443/"
+        self._prepare_config_file(False)
+        config = KConfig(self.config_file[1])
+        config.load()
+        config.server_url = alternate_host
+        config.read_conf()
+
+        self.assertEqual(alternate_host, config.server_url)
+        register_path = config._config.get('server', 'path-register')
+        self.assertEqual(alternate_host + register_path, config.register_url)
 
     def _prepare_config_file(self, all_keys):
         config = configparser.ConfigParser()
