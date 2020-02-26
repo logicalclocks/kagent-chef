@@ -16,7 +16,7 @@ if node['install']['enterprise']['install'].casecmp? "true"
   end
   if node['install']['enterprise']['password'] and not node['install']['enterprise']['username']
     raise "Installing Hopsworks EE, password is set but not username"
-  end    
+  end
 end
 
 case node["platform_family"]
@@ -37,8 +37,21 @@ when "rhel"
     package "epel-release"
   end
 
-# gcc, gcc-c++, kernel-devel are the equivalent of "build-essential" from apt.
-  package ["gcc", "gcc-c++", "kernel-devel", "openssl", "openssl-devel", "openssl-libs", "python", "python-pip", "python-devel", "jq"]
+  # gcc, gcc-c++, kernel-devel are the equivalent of "build-essential" from apt.
+  # see the comment in tensorflow::install for the explanation on what's going on here.
+  package 'kernel-devel' do
+    version node['kernel']['release'].sub(/\.#{node['kernel']['machine']}/, "")
+    arch node['kernel']['machine']
+    action :install
+    ignore_failure true
+  end
+
+  package 'kernel-devel' do
+    action :install
+    not_if  "ls -l /usr/src/kernels/$(uname -r)"
+  end
+
+  package ["gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "python", "python-pip", "python-devel", "jq"]
 
   # Change lograte policy
   cookbook_file '/etc/logrotate.d/syslog' do
@@ -64,7 +77,7 @@ end
 user node["kagent"]["certs_user"] do
   gid node["kagent"]["certs_group"]
   action :create
-  manage_home false 
+  manage_home false
   system true
   shell "/bin/nologin"
   not_if "getent passwd #{node["kagent"]["certs_user"]}"
@@ -84,7 +97,7 @@ end
 
 group node["kagent"]["group"] do
   action :modify
-  # Certs user is in the kagnet group so it can also modify the Kagent state store. 
+  # Certs user is in the kagnet group so it can also modify the Kagent state store.
   members [node["kagent"]["user"], node["kagent"]["certs_user"]]
   append true
   not_if { node['install']['external_users'].casecmp("true") == 0 }
@@ -114,7 +127,7 @@ end
 
 chef_gem "inifile" do
   action :install
-end  
+end
 
 directory node["kagent"]["dir"]  do
   owner node["kagent"]["user"]
