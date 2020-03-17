@@ -4,6 +4,7 @@ include_attribute "conda"
 default["kagent"]["version"]                       = node["install"]["version"]
 default["kagent"]["user"]                          = node["install"]["user"].empty? ? "kagent" : node["install"]["user"]
 default["kagent"]["group"]                         = node["install"]["user"].empty? ? "kagent" : node["install"]["user"]
+default["kagent"]["user-home"]                     = "/home/#{node["kagent"]["user"]}"
 
 default["kagent"]["certs_group"]                   = "certs"
 default["kagent"]["certs_user"]                    = "certs"
@@ -62,8 +63,6 @@ default["kagent"]["hostid"]                        = 100
 
 default["kagent"]["password"]                      = ""
 
-default["kagent"]["keystore_dir"] 		   = node["kagent"]["certs_dir"] + "/keystores"
-
 default["kagent"]["dns"]                           = "false"
 
 default["public_ips"]                              = ['10.0.2.15']
@@ -83,10 +82,6 @@ normal["ntp"]["peers"]                        = ['time0.int.example.org', 'time1
 
 default["kagent"]["test"]                          = false
 
-
-default["kagent"]["keystore"]                      = "#{node["kagent"]["base_dir"]}/node_server_keystore.jks"
-default["kagent"]["keystore_password"]             = "changeit"
-
 default["services"]["enabled"]                     = "true"
 
 default["certs"]["dir"]                            = node["install"]["dir"].empty? ? node["kagent"]["dir"] + "/certs-dir" : node["install"]["dir"] + "/certs-dir"
@@ -94,9 +89,16 @@ default["certs"]["dir"]                            = node["install"]["dir"].empt
 default["java"]["install_flavor"]                  = "openjdk"
 default["java"]["jdk_version"]                     = 8
 
-default["kagent"]["certs"]["root_ca"]                   = "#{node["kagent"]["certs_dir"]}/hops_ca.pem"
-default["kagent"]["certs"]["elastic_host_certificate"]  = "#{node["kagent"]["certs_dir"]}/elastic_host.pem"
-default["kagent"]["certs"]["host_key"]                  = "#{node["kagent"]["certs_dir"]}/priv.key"
-default["kagent"]["certs"]["elastic_admin_key"]         = "#{node["kagent"]["certs_dir"]}/elastic_admin.key"
-default["kagent"]["certs"]["elastic_admin_certificate"] = "#{node["kagent"]["certs_dir"]}/elastic_admin.pem"
-default["kagent"]["certs"]["elastic_admin_cn"]          = node['install']['localhost'].casecmp?("true") ? "ELkAdmin-localhost" : "ELkAdmin-#{node['fqdn']}"
+default["kagent"]["hopsify"]["version"]            = "0.3.0"
+default["kagent"]["hopsify"]["bin_url"]            = "#{node['download_url']}/hopsify/amd64/#{node['kagent']['hopsify']['version']}/hopsify"
+default['x509']['super-crypto']['base-dir']        = "/srv/hops/super_crypto"
+default['x509']['super-crypto']['dir']             = "#{node['x509']['super-crypto']['base-dir']}/${USER}"
+default['x509']['keystores']['keystore']           = "${USERNAME}__kstore.jks"
+default['x509']['keystores']['truststore']         = "${USERNAME}__tstore.jks"
+default['x509']['private']['pkcs8']                = "${USERNAME}_priv.pem"
+default['x509']['private']['pkcs1']                = "${USERNAME}_priv.pem.rsa"
+default['x509']['public']                          = "${USERNAME}_pub.pem"
+default['x509']['certificate-bundle']              = "${USERNAME}_certificate_bundle.pem"
+default['x509']['ca']['root']                      = "hops_root_ca.pem"
+default['x509']['ca']['intermediate']              = "hops_intermediate_ca.pem"
+default['x509']['ca']['bundle']                    = "hops_ca_bundle.pem"

@@ -88,7 +88,7 @@ user node["kagent"]["user"] do
   gid node["kagent"]["group"]
   action :create
   manage_home true
-  home "/home/#{node['kagent']['user']}"
+  home node['kagent']['user-home']
   shell "/bin/bash"
   system true
   not_if "getent passwd #{node["kagent"]["user"]}"
@@ -181,13 +181,6 @@ directory "#{node["kagent"]["home"]}/bin" do
   action :create
 end
 
-directory node["kagent"]["keystore_dir"] do
-  owner node["kagent"]["certs_user"]
-  group node["kagent"]["certs_group"]
-  mode "750"
-  action :create
-end
-
 file node["kagent"]["services"] do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
@@ -216,13 +209,21 @@ cookbook_file "#{node["kagent"]["home"]}/agent.py" do
   mode 0710
 end
 
-cookbook_file "#{node["kagent"]["certs_dir"]}/csr.py" do
-  source 'csr.py'
+directory "#{node['x509']['super-crypto']['base-dir']}" do
   owner node["kagent"]["certs_user"]
   group node["kagent"]["certs_group"]
-  mode 0710
+  mode 0755
+  action :create
 end
 
+basename = File.basename(node['kagent']['hopsify']['bin_url'])
+remote_file "#{node["kagent"]["certs_dir"]}/#{basename}" do
+    user node['kagent']['certs_user']
+    group node['kagent']['certs_group']
+    source node['kagent']['hopsify']['bin_url']
+    mode 0550
+    action :create
+end
 
 template "#{node["kagent"]["home"]}/bin/start-all-local-services.sh" do
   source "start-all-local-services.sh.erb"
@@ -230,7 +231,6 @@ template "#{node["kagent"]["home"]}/bin/start-all-local-services.sh" do
   group node["kagent"]["group"]
   mode 0740
 end
-
 
 template "#{node["kagent"]["home"]}/bin/shutdown-all-local-services.sh" do
   source "shutdown-all-local-services.sh.erb"

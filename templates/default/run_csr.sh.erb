@@ -1,16 +1,5 @@
 #!/usr/bin/env bash
 
-function _help {
-    echo "Helper script to run csr.py"
-    echo "Usage: run_csr.sh KAGENT_CONFIG {init,rotate}"
-}
+#TODO(Antonis): Maybe remove completely this script?
 
-if [ $# -ne 2 ]
-then
-    _help
-    exit 2
-fi
-
-CONFIG=$1
-OP=$2
-<%= node['conda']['base_dir'] %>/envs/hops-system/bin/python <%= node['kagent']['certs_dir'] %>/csr.py --config "$CONFIG" "$OP"
+<%= node["kagent"]["certs_dir"] %>/hopsify $@

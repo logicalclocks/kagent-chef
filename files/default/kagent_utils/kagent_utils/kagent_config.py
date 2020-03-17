@@ -70,20 +70,12 @@ class KConfig:
             self.csr_log_file = self._config.get('agent', 'csr-log-file')
             self.max_log_size = self._config.getint('agent', 'max-log-size')
             self.agent_pidfile = self._config.get('agent', 'pid-file')
-            self.certificate_file = self._config.get(
-                'agent', 'certificate-file')
-            self.key_file = self._config.get('agent', 'key-file')
-            self.server_keystore = self._config.get('agent', 'server-keystore')
-            self.server_truststore = self._config.get(
-                'agent', 'server-truststore')
             self.keystore_script = self._config.get('agent', 'keystore-script')
             self.services_file = self._config.get('agent', 'services-file')
             self.watch_interval = self._config.get('agent', 'watch-interval')
             self.bin_dir = self._config.get('agent', 'bin-dir')
             self.sbin_dir = self._config.get('agent', 'sbin-dir')
-            self.group_name = self._config.get('agent', 'group-name')
             self.hadoop_home = self._config.get('agent', 'hadoop-home')
-            self.certs_dir = self._config.get('agent', 'certs-dir')
             self.certs_user = self._config.get('agent', 'certs-user')
             self.state_store_location = self._config.get(
                 'agent', 'state-store')
@@ -107,11 +99,7 @@ class KConfig:
             else:
                 self.host_id = self.hostname
 
-            self.elk_key_file = self._config.get('agent', 'elk-key-file')
-            self.elk_certificate_file = self._config.get('agent', 'elk-certificate-file')
-            self.elk_cn = self._config.get('agent', 'elk-cn')
-            self.elastic_host_certificate = self._config.get('agent', 'elastic-host-certificate')
-            self.hops_ca_cert_file = self._config.get('agent', 'hops_ca-cert-file')
+            self.crypto_dir = self._config.get('agent', 'crypto-dir')
         except Exception, e:
             print("Exception while reading {0}: {1}".format(
                 self._configFile, e))

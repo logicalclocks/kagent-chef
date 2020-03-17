@@ -23,19 +23,9 @@ max-log-size = <%= node["kagent"]["max_log_size"] %>
 public-ip = <%= @public_ip %>
 private-ip = <%= @private_ip %>
 hostname = <%= @hostname %>
-group-name = <%= node["kagent"]["group_name"] %>
 hadoop-home = <%= @hops_dir %>/hadoop
-certs-dir = <%= node["kagent"]["certs_dir"] %>
 certs-user = <%= node['kagent']['certs_user'] %>
-certificate-file = <%= node["kagent"]["certs_dir"] %>/pub.pem
-key-file = <%= node["kagent"]["certs_dir"] %>/priv.key
-hops_ca-cert-file = <%= node["kagent"]["certs"]["root_ca"] %>
-server-keystore = <%= @kstore %>
-server-truststore = <%= @tstore %>
 keystore-script = <%= node["kagent"]["certs_dir"] %>/keystore.sh
 state-store = <%= node["kagent"]["etc"]%>/state_store
 password = <%= @agent_password %>
-elk-key-file= <%= node["kagent"]["certs"]["elastic_admin_key"] %>
-elk-certificate-file= <%= node["kagent"]["certs"]["elastic_admin_certificate"] %>
-elk-cn = <%= node["kagent"]["certs"]["elastic_admin_cn"] %>
-elastic-host-certificate = <%= node["kagent"]["certs"]["elastic_host_certificate"] %>
+crypto-dir = <%= node['x509']['super-crypto']['dir'] %>

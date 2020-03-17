@@ -32,6 +32,7 @@ from cheroot.ssl.builtin import BuiltinSSLAdapter
 import re
 import argparse
 from hops import devices
+import getpass
 
 import kagent_utils
 from kagent_utils import KConfig
@@ -252,12 +253,22 @@ class SystemCommandsHandler:
         try:
             logger.debug("Calling certificate rotation script")
             csr_helper_script = os.path.join(kconfig.sbin_dir, "run_csr.sh")
-            subprocess.check_call(["sudo", "-u", kconfig.certs_user, csr_helper_script, self._config_file_path, "rotate"])
-            
+            hopsify_state_store = os.path.join(kconfig.state_store_location, "crypto_material_state.json")
+            if os.path.exists(hopsify_state_store):
+                with open(hopsify_state_store, "r") as fd:
+                    hopsify_state = json.load(fd)
+                crypto_state = hopsify_state['crypto_state_store']
+                users = [u.strip() for u in crypto_state]
+                for user in users:
+                    logger.info("Rotating X.509 for user {0}".format(user))
+                    subprocess.check_call(["sudo", "-u", kconfig.certs_user, csr_helper_script, "--config", self._config_file_path, \
+                        "x509", "--rotation", "--username", user])
+                    logger.info("Rotated X.509 for user {0}".format(user))
+
             command['status'] = 'FINISHED'
-            logger.info("Successfully rotated service certificates")
+            logger.info("Successfully rotated certificates for all system users")
         except CalledProcessError as e:
-            logger.error("Error while calling csr script: {0}".format(e))
+            logger.error("Error while rotating X.509 for user: <{0}> Reason: {1}".format(user, e))
             command['status'] = 'FAILED'
         except Exception as e:
             logger.error("General error while rotating certificates {0}".format(e))
@@ -527,14 +538,28 @@ class RESTCommandHandler():
 
 
     def refresh(self):
-        Heartbeat.send(False);
+        Heartbeat.send(False)
         return "OK"
 
+HOME_DIR_PATTERN = re.compile('.*(\${HOME}).*')
+USER_DIR_PATTERN = re.compile('.*(\${USER}).*')
+def get_x509_material():
+    cryptoDir = kconfig.crypto_dir
+    user = getpass.getuser()
+    if HOME_DIR_PATTERN.match(cryptoDir):
+        home = os.path.expanduser('~')
+        cryptoDir = re.sub("\${HOME}", home, cryptoDir)
+    if USER_DIR_PATTERN.match(cryptoDir):
+        cryptoDir = re.sub("\${USER}", user, cryptoDir)
+    certificate = os.path.join(cryptoDir, user + "_pub.pem")
+    private = os.path.join(cryptoDir, user + "_priv.pem")
+    return certificate, private
 
 class SSLCherryPy(ServerAdapter):
     def run(self, handler):
         server = wsgi.Server((self.host, self.port), handler)
-        server.ssl_adapter = BuiltinSSLAdapter(kconfig.certificate_file, kconfig.key_file)
+        certificate, key = get_x509_material()
+        server.ssl_adapter = BuiltinSSLAdapter(certificate, key)
         try:
             server.start()
         finally:

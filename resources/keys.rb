@@ -1,4 +1,4 @@
-actions :generate, :return_publickey, :get_publickey, :csr, :combine_certs, :generate_elastic_admin_certificate
+actions :generate, :return_publickey, :get_publickey, :append2ChefTrustAnchors
 
 attribute :homedir, :kind_of => String, :name_attribute => true, :required => true
 attribute :cb_name, :kind_of => String
