@@ -13,12 +13,11 @@ source_url       "https://github.com/karamelchef/kagent-chef"
   supports os
 end
 
-depends 'openssl'
-depends 'sudo'
-depends 'hostsfile'
-depends 'ntp'
-depends 'conda'
-depends 'magic_shell'
+depends 'openssl', '~> 4.4.0'
+depends 'hostsfile', '~> 2.4.5'
+depends 'ntp', '~> 2.0.0'
+depends 'sudo', '~> 4.0.0'
+depends 'magic_shell', '~> 1.0.0'
 
 
 recipe "kagent::install", "Installs the Karamel agent and python dependencies"
