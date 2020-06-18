@@ -99,4 +99,5 @@ default["kagent"]["certs"]["elastic_host_certificate"]  = "#{node["kagent"]["cer
 default["kagent"]["certs"]["host_key"]                  = "#{node["kagent"]["certs_dir"]}/priv.key"
 default["kagent"]["certs"]["elastic_admin_key"]         = "#{node["kagent"]["certs_dir"]}/elastic_admin.key"
 default["kagent"]["certs"]["elastic_admin_certificate"] = "#{node["kagent"]["certs_dir"]}/elastic_admin.pem"
-default["kagent"]["certs"]["elastic_admin_cn"]          = node['install']['localhost'].casecmp?("true") ? "ELkAdmin-localhost" : "ELkAdmin-#{node['fqdn']}"
+default["kagent"]["certs"]["elastic_admin_prefix"]      = "ELkAdmin"
+default["kagent"]["certs"]["elastic_admin_cn"]          = node['install']['localhost'].casecmp?("true") ? "#{node["kagent"]["certs"]["elastic_admin_prefix"]}-localhost" : "#{node["kagent"]["certs"]["elastic_admin_prefix"]}-#{node['fqdn']}"
