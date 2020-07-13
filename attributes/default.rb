@@ -9,6 +9,8 @@ default["kagent"]["user-home"]                     = "/home/#{node["kagent"]["us
 default["kagent"]["certs_group"]                   = "certs"
 default["kagent"]["certs_user"]                    = "certs"
 
+# Less privileged group for accessing users certificates in transient/
+default["kagent"]["userscerts_group"]              = "userscerts"
 
 default["kagent"]["dir"]                           = node["install"]["dir"].empty? ? "/var/lib/kagent" : node["install"]["dir"] + "/kagent"
 default["kagent"]["base_dir"]                      = "#{node["kagent"]["dir"]}/kagent"

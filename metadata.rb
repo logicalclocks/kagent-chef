@@ -38,11 +38,15 @@ attribute "kagent/user-home",
           :type => 'string'
 
 attribute "kagent/certs_user",
-          :description => "User managing the host certificates",
+          :description => "User managing PKI and service certificates",
           :type => 'string'
 
 attribute "kagent/certs_group",
-          :description => "Group having access to the host certificates",
+          :description => "Group having access to service certificates",
+          :type => 'string'
+
+attribute "kagent/userscerts_group",
+          :description => "Less privileged group than certs to access users' only certificates",
           :type => 'string'
 
 attribute "kagent/dir",
