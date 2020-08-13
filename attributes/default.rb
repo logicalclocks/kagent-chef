@@ -82,8 +82,6 @@ normal["ntp"]["servers"]                      = ['0.europe.pool.ntp.org', '1.eur
 
 normal["ntp"]["peers"]                        = ['time0.int.example.org', 'time1.int.example.org']
 
-default["kagent"]["test"]                          = false
-
 default["services"]["enabled"]                     = "true"
 
 default["certs"]["dir"]                            = node["install"]["dir"].empty? ? node["kagent"]["dir"] + "/certs-dir" : node["install"]["dir"] + "/certs-dir"
