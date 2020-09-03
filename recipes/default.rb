@@ -202,7 +202,7 @@ end
 kagent_hopsify "Register Host" do
   hopsworks_alt_url hopsworks_alt_url
   action :register_host
-  not_if { conda_helpers.is_upgrade || node["kagent"]["enabled"] == "false" }
+  not_if { node["kagent"]["enabled"] == "false" }
 end
 
 kagent_hopsify "Generate x.509" do
@@ -210,7 +210,7 @@ kagent_hopsify "Generate x.509" do
   crypto_directory x509_helper.get_crypto_dir(node['kagent']['user'])
   hopsworks_alt_url hopsworks_alt_url
   action :generate_x509
-  not_if { conda_helpers.is_upgrade || node["kagent"]["enabled"] == "false" }
+  not_if { node["kagent"]["enabled"] == "false" }
 end
 
 if exists_local("hopsworks", "default")
@@ -228,7 +228,7 @@ if exists_local("hopsworks", "default")
     hopsworks_alt_url hopsworks_alt_url
     common_name "glassfish.service.#{consul_domain}"
     action :generate_x509
-    not_if { conda_helpers.is_upgrade || node["kagent"]["enabled"] == "false" }
+    not_if { node["kagent"]["enabled"] == "false" }
   end
 end
 
