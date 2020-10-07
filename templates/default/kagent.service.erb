@@ -1,10 +1,12 @@
 [Unit]
 Description = Kagent, monitors/controls Hops services
 After = syslog.target network.target remote-fs.target <%= @deps %>
+StartLimitIntervalSec=30
+StartLimitBurst=20
 
 [Service]
 User = <%= node['kagent']['user'] %>
-Restart=always
+Restart=on-failure
 RestartSec=5
 PIDFile = <%= node['kagent']['pid_file'] %>
 # Prefixing a command with '-' means that you should still continue, even if it fails.
