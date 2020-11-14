@@ -28,7 +28,7 @@ action :generate do
     code <<-EOF
      ssh-keygen -b 2048 -f #{homedir}/.ssh/id_rsa -t rsa -q -N ''
   EOF
-    not_if { ::File.exists?( "#{homedir}/.ssh/id_rsa" ) }
+    not_if { node['install']['dev_ssh_keys'].casecmp?('false') || ::File.exists?( "#{homedir}/.ssh/id_rsa" ) }
   end
 end
 
@@ -39,19 +39,20 @@ end
 # authorized_keys of another user
 #
 action :return_publickey do
- homedir = "#{new_resource.homedir}"
- contents = ::IO.read("#{homedir}/.ssh/id_rsa.pub")
-
- raise if contents.empty?
+  homedir = "#{new_resource.homedir}"
+  contents = ''
+  cb = "#{new_resource.cb_name}"
+  recipeName = "#{new_resource.cb_recipe}"
+  cb_user = "#{new_resource.cb_user}"
+  cb_group = "#{new_resource.cb_group}"
+  recipeName = "#{new_resource.cb_recipe}"
+  if node['install']['dev_ssh_keys'].casecmp?('true')
+    contents = ::IO.read("#{homedir}/.ssh/id_rsa.pub")
+    raise if contents.empty?
+    Chef::Log.info "Public key read is: #{contents}"
+  end
  
- Chef::Log.info "Public key read is: #{contents}"
- cb = "#{new_resource.cb_name}"
- recipeName = "#{new_resource.cb_recipe}"
- cb_user = "#{new_resource.cb_user}"
- cb_group = "#{new_resource.cb_group}"
-
- node.default["#{cb}"]["#{recipeName}"][:public_key] = contents
-
+  node.default["#{cb}"]["#{recipeName}"][:public_key] = contents
   template "#{homedir}/.ssh/config" do
     source "ssh_config.erb" 
     owner cb_user
@@ -59,16 +60,18 @@ action :return_publickey do
     mode 0600
     cookbook "kagent"
     action :create_if_missing
+    not_if { node['install']['dev_ssh_keys'].casecmp?('false') }
   end
  
- kagent_param "/tmp" do
-   executing_cookbook cb
-   executing_recipe  recipeName
-   cookbook cb
-   recipe recipeName
-   param "public_key"
-   value  "#{contents}"
- end
+  kagent_param "/tmp" do
+    executing_cookbook cb
+    executing_recipe  recipeName
+    cookbook cb
+    recipe recipeName
+    param "public_key"
+    value  "#{contents}"
+    not_if { node['install']['dev_ssh_keys'].casecmp?('false') }
+  end
 end
 
 #
@@ -97,5 +100,6 @@ action :get_publickey do
       chown -R #{cb_user}:#{cb_group} #{homedir}/.ssh
   EOF
      not_if "grep #{key_contents} #{homedir}/.ssh/authorized_keys"
+     not_if { node['install']['dev_ssh_keys'].casecmp?('false') }
   end
 end
