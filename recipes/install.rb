@@ -31,6 +31,18 @@ when "debian"
     mode '0644'
   end
 
+  # Ubuntu comes with unattended-upgrades package pre-install which
+  # automatically upgrades installed packages
+  # Disable it as it can/will upgrade a package to a version we don't
+  # support.
+  # Also, as a side-effect when run it stops the docker daemon
+  systemd_unit "apt-daily-upgrade.timer" do
+    action [:stop, :disable]
+  end
+  package 'unattended-upgrades' do
+    action :remove
+  end
+
 when "rhel"
 
   if node['rhel']['epel'].downcase == "true"
