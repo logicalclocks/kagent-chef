@@ -13,6 +13,7 @@ action :add do
         group  new_resource.group 
         mode   '0750'
         action :create
+        variables(new_resource.variables)
     end
 
     sudo new_resource.name do 
