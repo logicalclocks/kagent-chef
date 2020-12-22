@@ -192,48 +192,47 @@ template "#{node["kagent"]["certs_dir"]}/keystore.sh" do
   variables({:fqdn => hostname})
 end
 
-hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:8181" 
-if node.attribute? "hopsworks"
-  if node["hopsworks"].attribute? "https" and node["hopsworks"]['https'].attribute? ('port')
-    hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:#{node['hopsworks']['https']['port']}"
-  end
-end
-
-kagent_hopsify "Register Host" do
-  hopsworks_alt_url hopsworks_alt_url
-  action :register_host
-  not_if { node["kagent"]["enabled"] == "false" }
-end
-
-kagent_hopsify "Generate x.509" do
-  user node['kagent']['user']
-  crypto_directory x509_helper.get_crypto_dir(node['kagent']['user'])
-  hopsworks_alt_url hopsworks_alt_url
-  action :generate_x509
-  not_if { node["kagent"]["enabled"] == "false" }
-end
-
-if exists_local("hopsworks", "default")
-  hopsworks_user = "glassfish"
-  if node.attribute?("hopsworks")
-    if node['hopsworks'].attribute?("user")
-      hopsworks_user = node['hopsworks']['user']
+if node["kagent"]["enabled"].casecmp?("true")
+  hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:8181" 
+  if node.attribute? "hopsworks"
+    if node["hopsworks"].attribute? "https" and node["hopsworks"]['https'].attribute? ('port')
+      hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:#{node['hopsworks']['https']['port']}"
     end
   end
-  # Generate glassfish user certificates here
-  # Cannot do it in hopsworks::default as hopsify is not setup yet
-  kagent_hopsify "Generate x.509" do
-    user hopsworks_user
-    crypto_directory x509_helper.get_crypto_dir(hopsworks_user)
-    hopsworks_alt_url hopsworks_alt_url
-    common_name "glassfish.service.#{consul_domain}"
-    action :generate_x509
-    not_if { node["kagent"]["enabled"] == "false" }
-  end
-end
 
-kagent_keys "combine_certs" do 
-  action :append2ChefTrustAnchors
+  kagent_hopsify "Register Host" do
+    hopsworks_alt_url hopsworks_alt_url
+    action :register_host
+  end
+
+  kagent_hopsify "Generate x.509" do
+    user node['kagent']['user']
+    crypto_directory x509_helper.get_crypto_dir(node['kagent']['user'])
+    hopsworks_alt_url hopsworks_alt_url
+    action :generate_x509
+  end
+
+  if exists_local("hopsworks", "default")
+    hopsworks_user = "glassfish"
+    if node.attribute?("hopsworks")
+      if node['hopsworks'].attribute?("user")
+        hopsworks_user = node['hopsworks']['user']
+      end
+    end
+    # Generate glassfish user certificates here
+    # Cannot do it in hopsworks::default as hopsify is not setup yet
+    kagent_hopsify "Generate x.509" do
+      user hopsworks_user
+      crypto_directory x509_helper.get_crypto_dir(hopsworks_user)
+      hopsworks_alt_url hopsworks_alt_url
+      common_name "glassfish.service.#{consul_domain}"
+      action :generate_x509
+    end
+  end
+
+  kagent_keys "combine_certs" do 
+    action :append2ChefTrustAnchors
+  end
 end
 
 service "#{service_name}" do
@@ -288,4 +287,5 @@ kagent_keys "#{homedir}" do
   cb_name "hopsworks"
   cb_recipe "default"  
   action :get_publickey
+  only_if { node['kagent']['enabled'].casecmp? "true" }
 end  
