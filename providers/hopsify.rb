@@ -12,7 +12,7 @@ action :register_host do
     end
 end
 
-action :generate_x509 do
+action :create_user_directory do
     if new_resource.user.nil? || new_resource.crypto_directory.nil?
         raise "User/Crypto directory are required to generate X509"
     end
@@ -33,6 +33,14 @@ action :generate_x509 do
             setfacl -m u:#{new_resource.user}:rx #{new_resource.crypto_directory}
         EOH
         action :nothing
+    end
+end
+
+action :generate_x509 do
+    kagent_hopsify 'Generate user directory' do
+        user new_resource.user
+        crypto_directory new_resource.crypto_directory
+        action :create_user_directory
     end
 
     if new_resource.password.nil?

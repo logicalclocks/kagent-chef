@@ -233,6 +233,14 @@ if node["kagent"]["enabled"].casecmp?("true")
   kagent_keys "combine_certs" do 
     action :append2ChefTrustAnchors
   end
+else
+  # Create just the user directory without generating the certificates
+  # It is needed when joining managed NDB nodes in Hopsworks cluster
+  kagent_hopsify "Create user x.509 directory" do
+    user node['kagent']['user']
+    crypto_directory x509_helper.get_crypto_dir(node['kagent']['user'])
+    action :create_user_directory
+  end
 end
 
 service "#{service_name}" do
