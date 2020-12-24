@@ -121,10 +121,10 @@ if node.attribute?('consul') && node['consul'].attribute?('domain')
   consul_domain = node['consul']['domain']
 end
 
-hopsworks_port = "8181"
+hopsworks_port = "8182"
 if node.attribute? "hopsworks"
-  if node["hopsworks"].attribute? "https" and node["hopsworks"]["https"].attribute? "port"
-    hopsworks_port = node["hopsworks"]["https"]["port"]
+  if node["hopsworks"].attribute? "internal" and node["hopsworks"]["internal"].attribute? "port"
+    hopsworks_port = node["hopsworks"]["internal"]["port"]
   end
 end
 
