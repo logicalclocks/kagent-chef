@@ -1,4 +1,4 @@
-actions :register_host, :generate_x509
+actions :register_host, :generate_x509, :create_user_directory
 
 attribute :user, :kind_of => String, :required => false, default: nil
 attribute :password, :kind_of => String, :required => false, default: nil
