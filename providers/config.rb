@@ -32,12 +32,10 @@ action :add do
   bash "restart-kagent-after-update" do
     user "root"
     code <<-EOH
-     set -e
-     service kagent restart
+     systemctl restart kagent
     EOH
     not_if {new_resource.restart_agent == false}
   end
-
   
   new_resource.updated_by_last_action(true)
 end
@@ -45,7 +43,6 @@ end
 
 
 action :systemd_reload do
-  
   bash "start-if-not-running-#{new_resource.name}" do
     user "root"
     ignore_failure true
@@ -56,6 +53,5 @@ action :systemd_reload do
      systemctl start #{new_resource.name}
     EOH
   end
-
 end
 
