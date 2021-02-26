@@ -21,7 +21,7 @@ end
 
 case node["platform_family"]
 when "debian"
-  package ["python2.7", "python2.7-dev", "build-essential", "libssl-dev", "jq"]
+  package ["python3", "python3-dev", "build-essential", "libssl-dev", "jq"]
 
 # Change lograte policy
   cookbook_file '/etc/logrotate.d/rsyslog' do
@@ -63,7 +63,7 @@ when "rhel"
     not_if  "ls -l /usr/src/kernels/$(uname -r)"
   end
 
-  package ["gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "python", "python-pip", "python-devel", "jq"]
+  package ["gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "python3", "python3-pip", "python3-devel", "jq"]
 
   # Change lograte policy
   cookbook_file '/etc/logrotate.d/syslog' do
