@@ -16,6 +16,18 @@ default["kagent"]["dir"]                           = node["install"]["dir"].empt
 default["kagent"]["base_dir"]                      = "#{node["kagent"]["dir"]}/kagent"
 default["kagent"]["home"]                          = "#{node["kagent"]["dir"]}/kagent-#{node["kagent"]["version"]}"
 default["kagent"]["etc"]                           = "#{node["kagent"]["dir"]}/etc"
+default['kagent']['state_store']                   = "#{node['kagent']['etc']}/state_store"
+default['kagent']['logs']                          = "#{node['kagent']['dir']}/logs"
+default['csr']['log-file']                         = "#{node["kagent"]["certs_dir"]}/csr.log"
+
+# Data volume directories
+default['kagent']['data_volume']['root_dir']       = "#{node['data']['dir']}/kagent"
+default['kagent']['data_volume']['state_store']    = "#{node['kagent']['data_volume']['root_dir']}/state_store"
+default['kagent']['data_volume']['logs']           = "#{node['kagent']['data_volume']['root_dir']}/logs"
+default['csr']['data_volume']['logs']              = "#{node['data']['dir']}/csr_logs"
+default['csr']['data_volume']['log-file']          = "#{node['csr']['data_volume']['logs']}/csr.log"
+default['certs']['data_volume']['dir']             = "#{node['data']['dir']}/certs-dir"
+default['x509']['data_volume']['super-crypto-dir'] = "#{node['data']['dir']}/super_crypto"
 
 default["kagent"]["enabled"]                       = "true"
 

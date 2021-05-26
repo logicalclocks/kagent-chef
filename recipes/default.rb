@@ -283,7 +283,7 @@ kagent_config service_name do
   service "kagent"
   
   config_file "#{node["kagent"]["etc"]}/config.ini"
-  log_file "#{node["kagent"]["dir"]}/logs/agent.log"
+  log_file "#{node["kagent"]["logs"]}/agent.log"
   restart_agent false
   only_if { node['kagent']['enabled'].casecmp? "true" }
 end
