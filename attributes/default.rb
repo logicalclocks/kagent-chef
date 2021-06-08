@@ -102,3 +102,7 @@ default['x509']['certificate-bundle']              = "${USERNAME}_certificate_bu
 default['x509']['ca']['root']                      = "hops_root_ca.pem"
 default['x509']['ca']['intermediate']              = "hops_intermediate_ca.pem"
 default['x509']['ca']['bundle']                    = "hops_ca_bundle.pem"
+
+
+default['kagent']['cloud']['monitor_interval']     = 3
+default['kagent']['cloud']['monitor_url']          = ""

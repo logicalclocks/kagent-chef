@@ -116,3 +116,11 @@ attribute "kagent/hopsify/version",
 attribute "kagent/hopsify/bin_url",
           :description => "Download URL of hopsify tool",
           :type => "string"
+
+attribute "kagent/cloud/monitor_interval",
+          :description => "interval in seconds to check for cloud events",
+          :type => "string"
+
+attribute "kagent/cloud/monitor_url",
+          :description => "URL from which to pull cloud events",
+          :type => "string"
