@@ -100,6 +100,18 @@ class KConfig:
                 self.host_id = self.hostname
 
             self.crypto_dir = self._config.get('agent', 'crypto-dir')
+
+            if (self._config.has_section('cloud')):
+                self.monitor_cloud = self._config.getboolean('cloud', 'monitor-cloud')
+                if self.monitor_cloud:
+                    self.cloud_provider = self._config.get('cloud', 'provider')
+                    self.cloud_monitor_interval = self._config.getfloat('cloud', 'monitor-interval')
+                    self.cloud_monitor_url = self._config.get('cloud', 'monitor_url')
+                    self.api_key = self._config.get('cloud', 'api-key')
+                    self.gateway = self._config.get('cloud', 'gateway')
+                    self.uid = self._config.get('cloud', 'uid')
+                    self.instance_id = self._config.get('cloud', 'instance-id')
+                    self.node_id = self._config.get('cloud', 'node-id')
         except Exception, e:
             print("Exception while reading {0}: {1}".format(
                 self._configFile, e))

@@ -133,7 +133,7 @@ class Heartbeat():
         try:
             session = requests.Session()
             resp = session.post(kconfig.login_url, data={'email': kconfig.server_username, 'password': kconfig.server_password}, headers=form_headers, verify=False)
-#            resp = session.put(kconfig.register_url, data=json.dumps(payload), headers=json_headers, verify=False)
+            #resp = session.put(kconfig.register_url, data=json.dumps(payload), headers=json_headers, verify=False)
             if not resp.status_code == HTTP_OK:
                 logged_in = False
                 logger.warn('Could not login agent to Hopsworks (Status code: {0}).'.format(resp.status_code))
@@ -231,6 +231,73 @@ class Heartbeat():
             except Exception as err:
                 logger.error("{0}. Retrying in {1} seconds...".format(err, kconfig.heartbeat_interval))
                 logged_in = False
+
+
+class Cloud():
+    daemon_threads = True
+    def __init__(self):
+
+        while True:
+            self.monitor()
+            time.sleep(kconfig.cloud_monitor_interval)
+
+    @staticmethod
+    def isPreemtedAzure():
+        headers = {'Metadata': 'true'}
+        try:
+            resp = requests.request("GET", kconfig.cloud_monitor_url, timeout=10, headers=headers)
+            events = json.loads(resp.content)['Events']
+            for event in events:
+                if event['EventType'] == "Preempt":
+                    return True    
+        except Exception as err:
+            logger.warn('Could not get events from the cloud {0}'.format(err))
+        return False
+    
+    token = ""
+
+    @staticmethod
+    def getAWSToken():
+        headers = {'X-aws-ec2-metadata-token-ttl-seconds': '21600'}
+        resp = requests.request("PUT", "{0}/api/token".format(kconfig.cloud_monitor_url) , timeout=10, headers=headers)
+        Cloud.token = resp.content
+
+    @staticmethod
+    def isPreemtedAWS():
+        try:
+            if Cloud.token == "":
+                Cloud.getAWSToken()
+            headers = {'X-aws-ec2-metadata-token': Cloud.token}
+            resp = requests.request("GET", "{0}/meta-data/spot/instance-action".format(kconfig.cloud_monitor_url) , timeout=10, headers=headers)
+            if resp.status_code == 401:
+                Cloud.getAWSToken()
+            elif resp.status_code == 200:
+                return True
+        except Exception as err:
+            logger.warn('Could not get events from the cloud {0}'.format(err))
+        return False
+
+    def monitor(self):
+        preempted = False
+        if(kconfig.cloud_provider.lower()=="azure"):
+            preempted = Cloud.isPreemtedAzure()
+        if(kconfig.cloud_provider.lower()=="aws"):
+            preempted = Cloud.isPreemtedAWS()
+        if preempted:
+            # call back to hopsworks-cloud to signal preemption
+            headers = {"x-api-key": kconfig.api_key}
+            url = "{gateway}/eventsv2/ops/users/{uid}/instances/{instance_id}/preempted"
+            url = url.format(gateway=kconfig.gateway, uid=kconfig.uid, instance_id=kconfig.instance_id)
+
+            data = {
+                "nodeId": kconfig.node_id
+            }
+            try:
+                requests.request("POST", url, json=data, timeout=10, headers=headers)
+            except Exception as err:
+                logger.warn('Could not send events to hopsworks-cloud {0}'.format(err))
+
+
 
 class SystemCommandsHandler:
     def __init__(self, system_commands_status, system_commands_status_mutex, config_file_path):
@@ -696,6 +763,13 @@ if __name__ == '__main__':
     hb_thread = threading.Thread(target=Heartbeat, args=(commands_queue, system_commands_status, system_commands_status_mutex, host_services))
     hb_thread.setDaemon(True)
     hb_thread.start()
+
+    ## Start cloud thread
+    if hasattr(kconfig, 'monitor_cloud') and kconfig.monitor_cloud:
+        cloud_thread = threading.Thread(target=Cloud, args=())
+        cloud_thread.setDaemon(True)
+        cloud_thread.start()
+
 
     # The REST code uses a CherryPy webserver, but Bottle for the REST endpoints
     # WSGI server for SSL

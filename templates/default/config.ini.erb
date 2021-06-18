@@ -29,3 +29,11 @@ keystore-script = <%= node["kagent"]["certs_dir"] %>/keystore.sh
 state-store = <%= node["kagent"]["etc"]%>/state_store
 password = <%= @agent_password %>
 crypto-dir = <%= node['x509']['super-crypto']['dir'] %>
+
+<% if not node['kagent']['cloud']['monitor_url'].casecmp? "" -%>
+[cloud]
+monitor-cloud = false
+provider = <%= node['install']['cloud'] %>
+monitor-interval = <%= node['kagent']['cloud']['monitor_interval'] %>
+monitor_url = <%= node['kagent']['cloud']['monitor_url'] %>
+<% end -%>
