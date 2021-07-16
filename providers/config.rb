@@ -55,8 +55,8 @@ action :systemd_reload do
     user "root"
     ignore_failure true
     code <<-EOH
-     systemctl stop #{new_resource.name}
      systemctl daemon-reload
+     systemctl stop #{new_resource.name}
      systemctl reset-failed
      systemctl start #{new_resource.name}
     EOH
