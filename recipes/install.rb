@@ -206,7 +206,7 @@ bash 'Move CSR log file to data volume' do
   user 'root'
   code <<-EOH
     set -e
-    mv -f #{node['csr']['log-file']}/* #{node['csr']['data_volume']['log-file']}
+    mv -f #{node['csr']['log-file']} #{node['csr']['data_volume']['log-file']}
   EOH
   only_if { conda_helpers.is_upgrade }
   only_if { File.exist?(node['csr']['log-file'])}
