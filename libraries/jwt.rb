@@ -8,13 +8,11 @@ module Kagent
         def get_service_jwt()
             
             hopsworks_hostname = private_recipe_hostnames("hopsworks", "default")[0]
-            port = 8181
-            if node.attribute?("hopsworks")
-                if node['hopsworks'].attribute?("https")
-                  if node['hopsworks']['https'].attribute?("port")
-                    port = node['hopsworks']['https']['port']
-                  end
-                end
+            port = 8182
+            if node.attribute?("hopsworks") &&
+                node['hopsworks'].attribute?("internal") &&
+                node['hopsworks']['internal'].attribute?("port")
+                    port = node['hopsworks']['internal']['port']
             end
 
             url = URI("https://#{hopsworks_hostname}:#{port}/hopsworks-api/api/auth/service")
