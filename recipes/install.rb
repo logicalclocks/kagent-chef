@@ -162,7 +162,6 @@ directory node['kagent']['data_volume']['root_dir']  do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode "755"
-  recursive true
   action :create
   not_if { File.directory?("#{node['kagent']['data_volume']['root_dir']}") }
 end
