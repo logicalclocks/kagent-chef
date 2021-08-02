@@ -16,8 +16,8 @@ watch-interval = <%= node["kagent"]["watch_interval"] %>
 bin-dir = <%= node["kagent"]["base_dir"] %>/bin
 sbin-dir = <%= node["install"]["sudoers"]["scripts_dir"] %>
 pid-file = <%= node["kagent"]["pid_file"] %>
-agent-log-dir = <%= node["kagent"]["dir"] %>/logs
-csr-log-file = <%= node["kagent"]["certs_dir"] %>/csr.log
+agent-log-dir = <%= node["kagent"]["logs"] %>
+csr-log-file = <%= node['csr']['log-file'] %>
 logging-level = <%= node["kagent"]["logging_level"] %>
 max-log-size = <%= node["kagent"]["max_log_size"] %>
 public-ip = <%= @public_ip %>
