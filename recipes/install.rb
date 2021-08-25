@@ -75,18 +75,21 @@ when "rhel"
 end
 
 group node["kagent"]["group"] do
+  gid node['kagent']['group_id']
   action :create
   not_if "getent group #{node["kagent"]["group"]}"
   not_if { node['install']['external_users'].casecmp("true") == 0 }
 end
 
 group node["kagent"]["certs_group"] do
+  gid node['kagent']['certs_group_id']
   action :create
   not_if "getent group #{node["kagent"]["certs_group"]}"
   not_if { node['install']['external_users'].casecmp("true") == 0 }
 end
 
 user node["kagent"]["certs_user"] do
+  uid node['kagent']['certs_user_id']
   gid node["kagent"]["certs_group"]
   action :create
   manage_home false
@@ -97,6 +100,7 @@ user node["kagent"]["certs_user"] do
 end
 
 user node["kagent"]["user"] do
+  uid node['kagent']['user_id']
   gid node["kagent"]["group"]
   action :create
   manage_home true
