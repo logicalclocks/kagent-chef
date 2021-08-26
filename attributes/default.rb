@@ -3,14 +3,18 @@ include_attribute "conda"
 # Default values for configuration parameters
 default["kagent"]["version"]                       = node["install"]["version"]
 default["kagent"]["user"]                          = node["install"]["user"].empty? ? "kagent" : node["install"]["user"]
+default["kagent"]["user_id"]                       = '1514'
 default["kagent"]["group"]                         = node["install"]["user"].empty? ? "kagent" : node["install"]["user"]
 default["kagent"]["user-home"]                     = "/home/#{node["kagent"]["user"]}"
-
+default["kagent"]["group_id"]                      = '1510'
 default["kagent"]["certs_group"]                   = "certs"
+default["kagent"]["certs_group_id"]                = '1511'
 default["kagent"]["certs_user"]                    = "certs"
+default["kagent"]["certs_user_id"]                 = '1515'
 
 # Less privileged group for accessing users certificates in transient/
 default["kagent"]["userscerts_group"]              = "userscerts"
+default["kagent"]["userscerts_group_id"]           = '1512'
 
 default["kagent"]["dir"]                           = node["install"]["dir"].empty? ? "/var/lib/kagent" : node["install"]["dir"] + "/kagent"
 default["kagent"]["base_dir"]                      = "#{node["kagent"]["dir"]}/kagent"

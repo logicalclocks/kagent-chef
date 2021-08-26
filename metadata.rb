@@ -29,8 +29,16 @@ attribute "kagent/user",
           :description => "Username to run kagent as",
           :type => 'string'
 
+attribute "kagent/user_id",
+          :description => "kagent user id. Default: 1514",
+          :type => 'string'
+
 attribute "kagent/group",
           :description => "group to run kagent as",
+          :type => 'string'
+
+attribute "kagent/group_id",
+          :description => "kagent group id. Default: 1510",
           :type => 'string'
 
 attribute "kagent/user-home",
@@ -41,12 +49,24 @@ attribute "kagent/certs_user",
           :description => "User managing PKI and service certificates",
           :type => 'string'
 
+attribute "kagent/certs_user_id",
+          :description => "certs user id. Default: 1515",
+          :type => 'string'
+
 attribute "kagent/certs_group",
           :description => "Group having access to service certificates",
           :type => 'string'
 
+attribute "kagent/certs_group_id",
+          :description => "certs group id. Default: 1511",
+          :type => 'string'
+
 attribute "kagent/userscerts_group",
           :description => "Less privileged group than certs to access users' only certificates",
+          :type => 'string'
+
+attribute "kagent/userscerts_group_id",
+          :description => "Less privileged group id. Default: 1512",
           :type => 'string'
 
 attribute "kagent/dir",
