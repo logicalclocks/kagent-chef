@@ -36,6 +36,7 @@ action :add do
         systemctl restart kagent
       EOH
       not_if {new_resource.restart_agent == false}
+      ignore_failure node['kagent']['enabled'].casecmp?("false")
     end
   rescue Exception => ex
     if node['kagent']['enabled'].casecmp?("true")
