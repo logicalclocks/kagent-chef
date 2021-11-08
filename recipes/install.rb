@@ -21,7 +21,7 @@ end
 
 case node["platform_family"]
 when "debian"
-  package ["python3", "python3-dev", "build-essential", "libssl-dev", "jq"]
+  package ["build-essential", "libssl-dev", "jq"]
 
 # Change lograte policy
   cookbook_file '/etc/logrotate.d/rsyslog' do
@@ -63,7 +63,7 @@ when "rhel"
     not_if  "ls -l /usr/src/kernels/$(uname -r)"
   end
 
-  package ["gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "python3", "python3-pip", "python3-devel", "jq"]
+  package ["gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "jq"]
 
   # Change lograte policy
   cookbook_file '/etc/logrotate.d/syslog' do
@@ -131,14 +131,6 @@ group "video"  do
   members ["#{node["kagent"]["user"]}"]
   append true
   not_if { node['install']['external_users'].casecmp("true") == 0 }
-end
-
-bash "make_gemrc_file" do
-  user "root"
-  code <<-EOF
-   echo "gem: --no-ri --no-rdoc" > ~/.gemrc
- EOF
-  not_if "test -f ~/.python_libs_installed"
 end
 
 chef_gem "inifile" do
