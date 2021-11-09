@@ -288,7 +288,7 @@ kagent_config service_name do
   only_if { node['kagent']['enabled'].casecmp? "true" }
 end
 
-homedir = node['kagent']['user'].eql?("root") ? "/root" : "/home/#{node['kagent']['user']}"
+homedir = node['kagent']['user'].eql?("root") ? "/root" : ::Dir.home(node['kagent']['user'])
 kagent_keys "#{homedir}" do
   cb_user "#{node['kagent']['user']}"
   cb_group "#{node['kagent']['group']}"
