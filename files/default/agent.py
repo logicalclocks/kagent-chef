@@ -29,6 +29,7 @@ import json
 from bottle import Bottle, run, get, post, request, HTTPResponse, server_names, ServerAdapter, response
 from cheroot import wsgi
 from cheroot.ssl.builtin import BuiltinSSLAdapter
+import ssl
 import re
 import argparse
 from hops import devices
@@ -652,7 +653,12 @@ class SSLCherryPy(ServerAdapter):
     def run(self, handler):
         server = wsgi.Server((self.host, self.port), handler)
         certificate, key = get_x509_material()
-        server.ssl_adapter = BuiltinSSLAdapter(certificate, key)
+        ssl_adapter = BuiltinSSLAdapter(certificate, key)
+        ssl_adapter.context.options |= ssl.OP_NO_SSLv2
+        ssl_adapter.context.options |= ssl.OP_NO_SSLv3
+        ssl_adapter.context.options |= ssl.OP_NO_TLSv1
+        ssl_adapter.context.options |= ssl.OP_NO_TLSv1_1
+        server.ssl_adapter = ssl_adapter
         try:
             server.start()
         finally:
