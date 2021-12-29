@@ -12,10 +12,6 @@ default["kagent"]["certs_group_id"]                = '1511'
 default["kagent"]["certs_user"]                    = "certs"
 default["kagent"]["certs_user_id"]                 = '1515'
 
-# Less privileged group for accessing users certificates in transient/
-default["kagent"]["userscerts_group"]              = "userscerts"
-default["kagent"]["userscerts_group_id"]           = '1512'
-
 default["kagent"]["dir"]                           = node["install"]["dir"].empty? ? "/var/lib/kagent" : node["install"]["dir"] + "/kagent"
 default["kagent"]["base_dir"]                      = "#{node["kagent"]["dir"]}/kagent"
 default["kagent"]["home"]                          = "#{node["kagent"]["dir"]}/kagent-#{node["kagent"]["version"]}"
