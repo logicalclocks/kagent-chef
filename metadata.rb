@@ -61,14 +61,6 @@ attribute "kagent/certs_group_id",
           :description => "certs group id. Default: 1511",
           :type => 'string'
 
-attribute "kagent/userscerts_group",
-          :description => "Less privileged group than certs to access users' only certificates",
-          :type => 'string'
-
-attribute "kagent/userscerts_group_id",
-          :description => "Less privileged group id. Default: 1512",
-          :type => 'string'
-
 attribute "kagent/dir",
           :description => "Installation directory for kagent",
           :type => 'string'
