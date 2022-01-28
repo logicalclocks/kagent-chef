@@ -193,12 +193,7 @@ template "#{node["kagent"]["certs_dir"]}/keystore.sh" do
 end
 
 if node["kagent"]["enabled"].casecmp?("true")
-  hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:8181" 
-  if node.attribute? "hopsworks"
-    if node["hopsworks"].attribute? "https" and node["hopsworks"]['https'].attribute? ('port')
-      hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:#{node['hopsworks']['https']['port']}"
-    end
-  end
+  hopsworks_alt_url = "https://#{private_recipe_ip("hopsworks","default")}:#{node['hopsworks']['internal']['port']}"
 
   kagent_hopsify "Register Host" do
     hopsworks_alt_url hopsworks_alt_url
