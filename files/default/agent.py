@@ -278,12 +278,24 @@ class Cloud():
             logger.warn('Could not get events from the cloud {0}'.format(err))
         return False
 
+    @staticmethod
+    def isPreemtedGCP():
+        headers = {'Metadata-Flavor': 'Google'}
+        try:
+            resp = requests.request("GET", kconfig.cloud_monitor_url, timeout=10, headers=headers)
+            return resp.content == 'TRUE'
+        except Exception as err:
+            logger.warn('Could not get events from the cloud {0}'.format(err))
+        return False
+
     def monitor(self):
         preempted = False
         if(kconfig.cloud_provider.lower()=="azure"):
             preempted = Cloud.isPreemtedAzure()
         if(kconfig.cloud_provider.lower()=="aws"):
             preempted = Cloud.isPreemtedAWS()
+        if(kconfig.cloud_provider.lower()=="gcp"):
+            preempted = Cloud.isPreemtedGCP()
         if preempted:
             # call back to hopsworks-cloud to signal preemption
             headers = {"x-api-key": kconfig.api_key}
@@ -885,4 +897,3 @@ if __name__ == '__main__':
 
     logger.info("RESTful service started.")
     run(host='0.0.0.0', port=kconfig.rest_port, server='sslcherrypy')
-
