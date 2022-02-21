@@ -283,7 +283,7 @@ class Cloud():
         headers = {'Metadata-Flavor': 'Google'}
         try:
             resp = requests.request("GET", kconfig.cloud_monitor_url, timeout=10, headers=headers)
-            return resp.content == 'TRUE'
+            return resp.content == "TRUE"
         except Exception as err:
             logger.warn('Could not get events from the cloud {0}'.format(err))
         return False
@@ -787,6 +787,7 @@ if __name__ == '__main__':
         cloud_thread = threading.Thread(target=Cloud, args=())
         cloud_thread.setDaemon(True)
         cloud_thread.start()
+        cloud_thread.join()
 
 
     # The REST code uses a CherryPy webserver, but Bottle for the REST endpoints
