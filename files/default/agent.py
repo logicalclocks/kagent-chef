@@ -787,7 +787,6 @@ if __name__ == '__main__':
         cloud_thread = threading.Thread(target=Cloud, args=())
         cloud_thread.setDaemon(True)
         cloud_thread.start()
-        cloud_thread.join()
 
 
     # The REST code uses a CherryPy webserver, but Bottle for the REST endpoints
