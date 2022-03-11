@@ -47,7 +47,7 @@ action :add do
 
   # We will overwrite the file with a new json object.
   file = ::File.new(filename, "w+")
-  file.puts(JSON.pretty_generate(data_hash))
+  file.puts(JSON.pretty_generate(data_hash, ascii_only: true))
   file.close
 end
 
