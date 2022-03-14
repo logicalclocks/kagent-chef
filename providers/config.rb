@@ -81,17 +81,8 @@ action :remove do
     end
 
     ini_file.save
-    Chef::Log.info "Saved an updated copy of SERVICES file at the kagent after updating #{group}-#{service}"
+    Chef::Log.info "Saved an updated SERVICES file at kagent after updating #{group}-#{service}"
 
-    bash "restart-kagent-after-update" do
-      user "root"
-      code <<-EOH
-        systemctl restart kagent
-      EOH
-      not_if {new_resource.restart_agent == false}
-      ignore_failure node['kagent']['enabled'].casecmp?("false")
-    end
-    
   rescue Exception => ex
     if node['kagent']['enabled'].casecmp?("true")
       raise ex
