@@ -64,3 +64,32 @@ action :systemd_reload do
   end
 end
 
+
+action :remove do
+
+  begin
+    ini_file = IniFile.load("#{new_resource.services_file}", :comment => ';#') # 
+    group = "#{new_resource.service}"
+    service = "#{new_resource.role}"
+
+    section="#{group}-#{service}"
+    Chef::Log.info "Loaded kagent groups ini-file #{ini_file} with : #{section}"
+
+    if ini_file.has_section?(section)
+      Chef::Log.info "Delete section from the SERVICES file: #{section}."
+      ini_file.delete_section(section)
+    end
+
+    ini_file.save
+    Chef::Log.info "Saved an updated SERVICES file at kagent after updating #{group}-#{service}"
+
+  rescue Exception => ex
+    if node['kagent']['enabled'].casecmp?("true")
+      raise ex
+    else
+      Chef::Log.warn "Problem removing #{new_resource.service} from kagent service file but IGNORED because kagent is NOT enabled. Original error: #{ex.message}"
+    end
+  ensure
+    new_resource.updated_by_last_action(true)
+  end
+end

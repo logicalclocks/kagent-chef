@@ -1,4 +1,4 @@
-actions :add, :systemd_reload
+actions :add, :systemd_reload, :remove
 
 attribute :services_file, :kind_of => String, :default => node["kagent"]["services"]
 attribute :role, :kind_of => String, :name_attribute => true, :required => true
