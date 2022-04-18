@@ -21,7 +21,7 @@ end
 
 case node["platform_family"]
 when "debian"
-  package ["build-essential", "libssl-dev", "jq"]
+  package ["build-essential", "libssl-dev", "jq", "acl"]
 
 # Change lograte policy
   cookbook_file '/etc/logrotate.d/rsyslog' do
