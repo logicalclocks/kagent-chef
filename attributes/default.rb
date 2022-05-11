@@ -18,6 +18,7 @@ default["kagent"]["home"]                          = "#{node["kagent"]["dir"]}/k
 default["kagent"]["etc"]                           = "#{node["kagent"]["dir"]}/etc"
 default['kagent']['state_store']                   = "#{node['kagent']['etc']}/state_store"
 default['kagent']['logs']                          = "#{node['kagent']['dir']}/logs"
+default["kagent"]["certs_dir"]                     = "#{node["kagent"]["dir"]}/host-certs"
 default['csr']['log-file']                         = "#{node["kagent"]["certs_dir"]}/csr.log"
 
 # Data volume directories
@@ -30,8 +31,6 @@ default['certs']['data_volume']['dir']             = "#{node['data']['dir']}/cer
 default['x509']['data_volume']['super-crypto-dir'] = "#{node['data']['dir']}/super_crypto"
 
 default["kagent"]["enabled"]                       = "true"
-
-default["kagent"]["certs_dir"]                     = "#{node["kagent"]["dir"]}/host-certs"
 
 # API calls
 default["kagent"]["dashboard"]["api"]["register"]  = "api/agentresource?action=register"
