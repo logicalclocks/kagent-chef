@@ -204,6 +204,13 @@ link '/csr.log' do
   only_if { File.symlink?('/csr.log') }
 end
 
+directory node["kagent"]["certs_dir"] do
+  owner node["kagent"]["certs_user"]
+  group node["kagent"]["certs_group"]
+  mode "750"
+  action :create
+end
+
 bash 'Move CSR log file to data volume' do
   user 'root'
   code <<-EOH
@@ -270,13 +277,6 @@ end
 directory node["kagent"]["home"] do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
-  mode "750"
-  action :create
-end
-
-directory node["kagent"]["certs_dir"] do
-  owner node["kagent"]["certs_user"]
-  group node["kagent"]["certs_group"]
   mode "750"
   action :create
 end
