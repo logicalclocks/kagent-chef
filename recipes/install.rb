@@ -197,6 +197,20 @@ directory node['csr']['data_volume']['logs']  do
   not_if { File.directory?(node['csr']['data_volume']['logs']) }
 end
 
+## Fix bug with wrong path to csr.log
+link '/csr.log' do
+  action :delete
+  only_if { conda_helpers.is_upgrade }
+  only_if { File.symlink?('/csr.log') }
+end
+
+directory node["kagent"]["certs_dir"] do
+  owner node["kagent"]["certs_user"]
+  group node["kagent"]["certs_group"]
+  mode "750"
+  action :create
+end
+
 bash 'Move CSR log file to data volume' do
   user 'root'
   code <<-EOH
@@ -263,13 +277,6 @@ end
 directory node["kagent"]["home"] do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
-  mode "750"
-  action :create
-end
-
-directory node["kagent"]["certs_dir"] do
-  owner node["kagent"]["certs_user"]
-  group node["kagent"]["certs_group"]
   mode "750"
   action :create
 end
