@@ -197,6 +197,13 @@ directory node['csr']['data_volume']['logs']  do
   not_if { File.directory?(node['csr']['data_volume']['logs']) }
 end
 
+## Fix bug with wrong path to csr.log
+link '/csr.log' do
+  action :delete
+  only_if { conda_helpers.is_upgrade }
+  only_if { File.symlink?('/csr.log') }
+end
+
 bash 'Move CSR log file to data volume' do
   user 'root'
   code <<-EOH
