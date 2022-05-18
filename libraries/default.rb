@@ -263,7 +263,11 @@ module Kagent
     def service_discovery_enabled()
        exists_local('consul', 'master') or exists_local('consul', 'slave')
     end
-    
+
+    ## Baking Images for hopsworks.ai
+    def is_managed_cloud
+      node['install']['enterprise']['install'].casecmp? "true" and exists_local("cloud", "default")
+    end
   end
 end
 
