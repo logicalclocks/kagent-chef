@@ -9,7 +9,7 @@ action :sign_csr do
         if node.attribute?("hopsworks")
           if node['hopsworks'].attribute?("internal")
             if node['hopsworks']['internal'].attribute?("port")
-              port = node['hopsworks']['internal']['port']
+              hopsworks_port = node['hopsworks']['internal']['port']
             end
           end
         end
