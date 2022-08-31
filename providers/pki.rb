@@ -5,11 +5,15 @@ action :sign_csr do
         require 'http-cookie'
         require 'json'
 
-        hopsworks_port = 8181
-        if node.attribute?("hopsworks")
-          if node['hopsworks'].attribute?("internal")
-            if node['hopsworks']['internal'].attribute?("port")
-              hopsworks_port = node['hopsworks']['internal']['port']
+        hopsworks_port = 8182
+        if !new_resource.http_port.nil?
+          hopsworks_port = new_resource.http_port
+        else
+          if node.attribute?("hopsworks")
+            if node['hopsworks'].attribute?("internal")
+              if node['hopsworks']['internal'].attribute?("port")
+                hopsworks_port = node['hopsworks']['internal']['port']
+              end
             end
           end
         end
