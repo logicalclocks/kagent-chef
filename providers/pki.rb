@@ -7,12 +7,12 @@ action :sign_csr do
 
         hopsworks_port = 8182
         if !new_resource.http_port.nil?
-          hopsworks_port = new_resource.http_port
+          hopsworks_port = new_resource.http_port.to_i
         else
           if node.attribute?("hopsworks")
             if node['hopsworks'].attribute?("internal")
               if node['hopsworks']['internal'].attribute?("port")
-                hopsworks_port = node['hopsworks']['internal']['port']
+                hopsworks_port = node['hopsworks']['internal']['port'].to_i
               end
             end
           end
