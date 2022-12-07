@@ -21,7 +21,10 @@ end
 
 case node["platform_family"]
 when "debian"
-  package ["build-essential", "libssl-dev", "jq"]
+  package ["build-essential", "libssl-dev", "jq"] do
+    retries 10
+    retry_delay 30
+  end
 
 # Change lograte policy
   cookbook_file '/etc/logrotate.d/rsyslog' do
@@ -40,13 +43,18 @@ when "debian"
     action [:stop, :disable]
   end
   package 'unattended-upgrades' do
+    retries 10
+    retry_delay 30
     action :remove
   end
 
 when "rhel"
 
   if node['rhel']['epel'].downcase == "true"
-    package "epel-release"
+    package "epel-release" do
+      retries 10
+      retry_delay 30
+    end
   end
 
   # gcc, gcc-c++, kernel-devel are the equivalent of "build-essential" from apt.
@@ -59,11 +67,16 @@ when "rhel"
   end
 
   package 'kernel-devel' do
+    retries 10
+    retry_delay 30
     action :install
     not_if  "ls -l /usr/src/kernels/$(uname -r)"
   end
 
-  package ["gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "jq"]
+  package ["gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "jq"] do
+    retries 10
+    retry_delay 30
+  end
 
   # Change lograte policy
   cookbook_file '/etc/logrotate.d/syslog' do
