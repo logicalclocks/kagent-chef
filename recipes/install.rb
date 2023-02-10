@@ -21,7 +21,7 @@ end
 
 case node["platform_family"]
 when "debian"
-  package ["build-essential", "libssl-dev", "jq"] do
+  package ["build-essential", "libssl-dev", "jq", "acl"] do
     retries 10
     retry_delay 30
   end
