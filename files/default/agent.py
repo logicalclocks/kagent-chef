@@ -131,6 +131,8 @@ class Heartbeat():
         payload = {}
         global logged_in
         global session
+        global master_token 
+        global renew_tokens
         try:
             session = requests.Session()
             resp = session.post(kconfig.login_url, data={'email': kconfig.server_username, 'password': kconfig.server_password}, headers=form_headers, verify=False)
@@ -141,9 +143,13 @@ class Heartbeat():
             else:
                 logger.info('Successful login of agent to Hopsworks (Status code: {0}).'.format(resp.status_code))
                 logged_in = True
+                master_token = resp.headers['Authorization'].split()[1]
+                jbody = resp.json()
+                renew_tokens = jbody['renewTokens']
         except Exception as err:
             logger.warn('Could not login agent to Hopsworks {0}'.format(err))
             logged_in = False
+        return master_token, renew_tokens
 
     def construct_services_status(self):
         services = []
@@ -158,9 +164,11 @@ class Heartbeat():
     def send(self):
         global logged_in
         global session
+        global master_token 
+        global renew_tokens
         if not logged_in:
            logger.info('Logging in to Hopsworks....')
-           Heartbeat.login()
+           master_token, renew_tokens = Heartbeat.login()
         else:
             system_status_to_delete = []
             try:
@@ -171,6 +179,7 @@ class Heartbeat():
                 services_list = self.construct_services_status()
                 now = long(time.mktime(datetime.now().timetuple()))
                 headers = {'content-type': 'application/json'}
+                headers['Authorization'] = "Bearer " + master_token
                 payload = {}
                 payload["num-gpus"] = devices.get_num_gpus()
                 payload["host-id"] = kconfig.host_id
@@ -885,4 +894,3 @@ if __name__ == '__main__':
 
     logger.info("RESTful service started.")
     run(host='0.0.0.0', port=kconfig.rest_port, server='sslcherrypy')
-
