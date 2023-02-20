@@ -24,8 +24,8 @@ action :sign_csr do
           ca_path = new_resource.ca_path
         end
   
-        url = URI.parse("https://127.0.0.1:#{hopsworks_port}/hopsworks-api/api/auth/service")
-        ca_url = URI.join("https://127.0.0.1:#{hopsworks_port}", ca_path)
+        url = URI.parse("https://#{new_resource.host}:#{hopsworks_port}/hopsworks-api/api/auth/service")
+        ca_url = URI.join("https://#{new_resource.host}:#{hopsworks_port}", ca_path)
   
         if new_resource.csr_file.nil?
           raise "csr_file attribute is mandatory"
