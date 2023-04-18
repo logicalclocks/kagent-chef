@@ -9,6 +9,7 @@ help() {
     exit 1
 }
 
+PATH="$PATH:/usr/local/bin"
 VALID_IMAGE_NAME='<%= node['conda']['docker']['image-validation-regex'] %>'
 # Sanity checks for injection attacks
 if ! [[ $2 =~ $VALID_IMAGE_NAME ]] ; then
