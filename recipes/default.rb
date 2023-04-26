@@ -220,7 +220,6 @@ if node["kagent"]["enabled"].casecmp?("true")
       user hopsworks_user
       crypto_directory x509_helper.get_crypto_dir(hopsworks_user)
       hopsworks_alt_url hopsworks_alt_url
-      common_name "glassfish.service.#{consul_domain}"
       action :generate_x509
     end
   end

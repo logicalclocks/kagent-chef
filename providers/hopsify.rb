@@ -71,4 +71,16 @@ action :generate_x509 do
         EOH
         not_if { ::File.exist?("#{new_resource.crypto_directory}/#{x509_helper.get_private_key_pkcs8_name(new_resource.user)}")}
     end
+
+    bash "Renew Hops TLS x.509 for user #{new_resource.user} with SAN" do
+        user "root"
+        group "root"
+        environment 'HOPSIFY_PASSWORD' => keystoresPassword
+        code <<-EOH
+            set -e
+            #{node["kagent"]["certs_dir"]}/hopsify --config #{node['kagent']['etc']}/config.ini x509 #{hopsworks_alt_url} --rotation --username #{new_resource.user} #{common_name}
+        EOH
+        only_if { conda_helpers.is_upgrade }
+        only_if { Gem::Version.new(node['install']['current_version']) <= Gem::Version.new('3.2.0')}
+    end
 end
