@@ -84,7 +84,7 @@ action :sign_csr do
                 ::File.write("#{output_dir}/root_ca.pem", rootCACert)
               else
                 puts "The Response -> #{response.body}"
-                raise "Error signing certificate"
+                raise "Error signing certificate. #{response.body}"
               end
           else
               puts response.body
