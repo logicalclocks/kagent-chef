@@ -24,8 +24,8 @@ action :sign_csr do
           ca_path = new_resource.ca_path
         end
   
-        url = URI.parse("https://127.0.0.1:#{hopsworks_port}/hopsworks-api/api/auth/service")
-        ca_url = URI.join("https://127.0.0.1:#{hopsworks_port}", ca_path)
+        url = URI.parse("https://#{private_recipe_ip("hopsworks","default")}:#{hopsworks_port}/hopsworks-api/api/auth/service")
+        ca_url = URI.join("https://#{private_recipe_ip("hopsworks","default")}:#{hopsworks_port}", ca_path)
   
         if new_resource.csr_file.nil?
           raise "csr_file attribute is mandatory"
@@ -84,7 +84,7 @@ action :sign_csr do
                 ::File.write("#{output_dir}/root_ca.pem", rootCACert)
               else
                 puts "The Response -> #{response.body}"
-                raise "Error signing certificate"
+                raise "Error signing certificate. #{response.body}"
               end
           else
               puts response.body

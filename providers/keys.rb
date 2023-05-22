@@ -26,9 +26,9 @@ action :generate do
     user cb_user
     group cb_group
     code <<-EOF
-     ssh-keygen -b 2048 -f #{homedir}/.ssh/id_rsa -t rsa -q -N ''
+     ssh-keygen -f #{homedir}/.ssh/id_ed25519 -t ed25519 -q -N ''
   EOF
-    not_if { node['install']['dev_ssh_keys'].casecmp?('false') || ::File.exists?( "#{homedir}/.ssh/id_rsa" ) }
+    not_if { node['install']['dev_ssh_keys'].casecmp?('false') || ::File.exists?( "#{homedir}/.ssh/id_ed25519" ) }
   end
 end
 
@@ -47,7 +47,7 @@ action :return_publickey do
   cb_group = "#{new_resource.cb_group}"
   recipeName = "#{new_resource.cb_recipe}"
   if node['install']['dev_ssh_keys'].casecmp?('true')
-    contents = ::IO.read("#{homedir}/.ssh/id_rsa.pub")
+    contents = ::IO.read("#{homedir}/.ssh/id_ed25519.pub")
     raise if contents.empty?
     Chef::Log.info "Public key read is: #{contents}"
   end
@@ -75,7 +75,7 @@ action :return_publickey do
 end
 
 #
-# Add this LWRP in the recipe of a user that wants to add the public_key (id_rsa.pub) of an
+# Add this LWRP in the recipe of a user that wants to add the public_key (id_ed25519.pub) of an
 # upstream user to its authorized_keys file
 #
 action :get_publickey do
