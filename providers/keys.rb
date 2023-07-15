@@ -5,15 +5,15 @@ action :append2ChefTrustAnchors do
     group "root" 
     code <<-EOH
       set -eo pipefail
-      echo "Hops Root CA " >>  /opt/chefdk/embedded/ssl/certs/cacert.pem
-      echo "==================" >>  /opt/chefdk/embedded/ssl/certs/cacert.pem
-      cat #{crypto_dir}/#{node['x509']['ca']['root']} >> /opt/chefdk/embedded/ssl/certs/cacert.pem
+      echo "Hops Root CA " >>  /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
+      echo "==================" >>  /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
+      cat #{crypto_dir}/#{node['x509']['ca']['root']} >> /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
 
-      echo "Hops Intermediate CA " >>  /opt/chefdk/embedded/ssl/certs/cacert.pem
-      echo "==================" >>  /opt/chefdk/embedded/ssl/certs/cacert.pem
-      cat #{crypto_dir}/#{node['x509']['ca']['intermediate']} >> /opt/chefdk/embedded/ssl/certs/cacert.pem
+      echo "Hops Intermediate CA " >>  /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
+      echo "==================" >>  /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
+      cat #{crypto_dir}/#{node['x509']['ca']['intermediate']} >> /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
     EOH
-    only_if { ::File.exists?( "/opt/chefdk/embedded/ssl/certs/cacert.pem" ) }
+    only_if { ::File.exists?( "/opt/cinc-workstation/embedded/ssl/certs/cacert.pem" ) }
   end
 end 
 
