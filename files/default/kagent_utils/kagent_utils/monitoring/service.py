@@ -56,12 +56,23 @@ class Service:
         finally:
             self.state_lock.release()
 
+    def parse_active_from_status(self, status_str):
+        for s in status_str.split("\n"):
+            s = s.strip()
+            if s.startswith("Active"):
+                l = s.split(" ")[1:]
+                return " ".join(l)
+        return ""
+    
     def alive(self, currently=False):
         try:
             self.LOG.debug("Checking status of %s", self.name)
             command = ['systemctl', 'is-active', '--quiet', self.name]
             self._exec_check_call(command, stderr=subprocess.STDOUT)
-            msg = "Service {0} is alive".format(self.name)
+            command = "systemctl status {0}".format(self.name)
+            unit_status = self._exec_check_output(command.split(" "))
+            active_line = self.parse_active_from_status(unit_status)
+            msg = "Service {0} is {1}".format(self.name, active_line)
             if currently:
                 self.LOG.info(msg)
             else:
@@ -129,7 +140,7 @@ class Service:
         subprocess.check_call(command, stdout=stdout, stderr=stderr)
 
     def _exec_check_output(self, command, stderr=None):
-        subprocess.check_output(command, stderr=stderr)
+        return subprocess.check_output(command, stderr=stderr).strip()
 
     def __str__(self):
         return "Service: {0}/{1} - State: {2}".format(self.group, self.name, self.get_state())
