@@ -261,7 +261,7 @@ module Kagent
     end
 
     def service_discovery_enabled()
-       exists_local('consul', 'master') or exists_local('consul', 'slave')
+       node['consul']['enabled'].casecmp?("true")
     end
 
     ## Baking Images for hopsworks.ai
