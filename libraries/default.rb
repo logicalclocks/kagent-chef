@@ -261,7 +261,7 @@ module Kagent
     end
 
     def service_discovery_enabled()
-       node['consul']['enabled'].eql?("true") 
+       node['consul']['enabled'].casecmp?("true")
     end
 
     ## Baking Images for hopsworks.ai
