@@ -1,5 +1,4 @@
 action :append2ChefTrustAnchors do
-  crypto_dir = x509_helper.get_crypto_dir(node['kagent']['user'])
   bash "append hops ca certificates to chef cacerts" do
     user "root" 
     group "root" 
@@ -7,11 +6,11 @@ action :append2ChefTrustAnchors do
       set -eo pipefail
       echo "Hops Root CA " >>  /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
       echo "==================" >>  /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
-      cat #{crypto_dir}/#{node['x509']['ca']['root']} >> /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
+      cat #{new_resource.crypto_dir}/#{node['x509']['ca']['root']} >> /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
 
       echo "Hops Intermediate CA " >>  /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
       echo "==================" >>  /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
-      cat #{crypto_dir}/#{node['x509']['ca']['intermediate']} >> /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
+      cat #{new_resource.crypto_dir}/#{node['x509']['ca']['intermediate']} >> /opt/cinc-workstation/embedded/ssl/certs/cacert.pem
     EOH
     only_if { ::File.exists?( "/opt/cinc-workstation/embedded/ssl/certs/cacert.pem" ) }
   end
