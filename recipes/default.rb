@@ -256,6 +256,7 @@ if node["kagent"]["enabled"].casecmp?("true")
   end
 
   kagent_keys "combine_certs" do 
+    crypto_dir kagent_crypto_dir
     action :append2ChefTrustAnchors
   end
 else
