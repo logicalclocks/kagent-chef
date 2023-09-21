@@ -1,4 +1,7 @@
 require 'resolv'
+require 'net/https'
+require 'http-cookie'
+require 'json'
 
 # http://serverfault.com/questions/331936/setting-the-hostname-fqdn-or-short-name
 # http://hardoop.blogspot.se/2013/02/hadoop-and-fqdn.html
@@ -298,6 +301,48 @@ module Kagent
       end
 
       return response
+    end
+
+    ## Generate API key
+    def create_api_key(email, password, api_key_parameters, hopsworks_ip="")
+      if hopsworks_ip.empty?
+        hopsworks_fqdn = consul_helper.get_service_fqdn("hopsworks.glassfish")
+      else
+        hopsworks_fqdn = hopsworks_ip
+      end
+      hopsworks_port = 8182
+      if node.attribute?('hopsworks') &&
+        node['hopsworks'].attribute?('internal') &&
+        node['hopsworks']['internal'].attribute?('port')
+            hopsworks_port = node['hopsworks']['internal']['port']
+      end
+
+      hopsworks_endpoint = "https://#{hopsworks_fqdn}:#{hopsworks_port}"
+      url = URI.parse("#{hopsworks_endpoint}/hopsworks-api/api/auth/service")
+      api_key_url = URI.parse("#{hopsworks_endpoint}/hopsworks-api/api/users/apiKey")
+
+      params =  {
+        :email => email,
+        :password => password
+      }
+
+      response = http_request_follow_redirect(url, form_params: params)
+
+      if (response.is_a?(Net::HTTPSuccess))
+        api_key_url.query = URI.encode_www_form(api_key_parameters)
+        response = http_request_follow_redirect(api_key_url, body: "", authorization: response['Authorization'])
+        if (response.is_a?(Net::HTTPSuccess))
+          json_response = ::JSON.parse(response.body)
+          api_key = json_response['key']
+          return api_key
+        else
+          puts response.body
+          raise "Error creating api-key for user #{email}. Code: #{response.code} Reason: #{response.message}"
+        end
+      else
+        puts response.body
+        raise "Error login for user"
+      end
     end
   end
 end

@@ -49,8 +49,7 @@ module Kagent
         def execute_shell_command(command)
           _, stdout, stderr, wait_thr = Open3.popen3(command)
           if not wait_thr.value.success?
-            Chef::Application.fatal!("Error executing command #{command}. STDERR: #{stderr.readlines}",
-                                     wait_thr.value.exitstatus)
+            raise "Error executing command #{command}. Return code: #{wait_thr.value.exitstatus} STDERR: #{stderr.readlines}"
           end
           Chef::Log.debug("Command: #{command} - STDOUT: #{stdout.readlines}")
         end
