@@ -13,7 +13,6 @@ source_url       "https://github.com/karamelchef/kagent-chef"
   supports os
 end
 
-depends 'openssl', '~> 4.4.0'
 depends 'hostsfile', '~> 2.4.5'
 depends 'ntp', '~> 2.0.0'
 depends 'sudo', '~> 4.0.0'
