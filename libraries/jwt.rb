@@ -15,25 +15,23 @@ module Kagent
                     port = node['hopsworks']['internal']['port']
             end
 
-            url = URI("https://#{hopsworks_hostname}:#{port}/hopsworks-api/api/auth/service")
-            
-            http = Net::HTTP.new(url.host, url.port)
-            # Don't verify the host certificate
-            http.use_ssl = true
-            http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-
-            request = Net::HTTP::Post.new(url)
-
-            request["Content-Type"] = 'application/x-www-form-urlencoded'
-            request.body = URI.encode_www_form([["email", node["kagent"]["dashboard"]["user"]], ["password", node["kagent"]["dashboard"]["password"]]])
+            url = URI.parse("https://#{hopsworks_hostname}:#{port}/hopsworks-api/api/auth/service")
 
             # Retry authenticating against Hopsworks in case of HTTP non-Success
             retries = 0
-            response = http.request(request)
+            response = http_request_follow_redirect(
+              url, 
+              body: URI.encode_www_form([["email", node["kagent"]["dashboard"]["user"]], ["password", node["kagent"]["dashboard"]["password"]]]),
+              contenttype: 'application/x-www-form-urlencoded'
+            ) 
             until response.kind_of? Net::HTTPSuccess or retries > 5 do
               Chef::Log.warn("Could not authenticate with Hopsworks, will retry in 30 sec.")
               sleep(30)
-              response = http.request(request)
+              response = http_request_follow_redirect(
+                url, 
+                body: URI.encode_www_form([["email", node["kagent"]["dashboard"]["user"]], ["password", node["kagent"]["dashboard"]["password"]]]),
+                contenttype: 'application/x-www-form-urlencoded'
+              ) 
               retries += 1
             end
             if !response.kind_of? Net::HTTPSuccess
