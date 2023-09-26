@@ -268,6 +268,37 @@ module Kagent
     def is_managed_cloud
       node['install']['enterprise']['install'].casecmp? "true" and exists_local("cloud", "default")
     end
+
+    def http_request_follow_redirect(url, form_params: nil, 
+                                     body: nil, authorization: nil, 
+                                     contenttype: nil)
+      require 'net/https'
+
+      request = Net::HTTP::Post.new(url)
+      unless body
+        request.set_form_data(form_params, '&')
+      else
+        request['Content-Type'] = contenttype ? contenttype : "application/json"
+        request['Authorization'] = authorization 
+        request.body = body
+      end
+
+      http = Net::HTTP.new(url.host, url.port)
+      http.read_timeout = 120
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+      response = http.request(request)
+
+      if( response.is_a?( Net::HTTPRedirection) )
+        return http_request_follow_redirect(URI.parse(response['location']), 
+                                            form_params: form_params, body: body, 
+                                            authorization: authorization,
+                                            contenttype: contenttype)
+      end
+
+      return response
+    end
   end
 end
 
