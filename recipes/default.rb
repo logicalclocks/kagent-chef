@@ -225,16 +225,32 @@ if node["kagent"]["enabled"].casecmp?("true")
     update_command = "update-ca-certificates"
   end
 
+  bash 'remove-system-trust-cert' do
+    user 'root'
+    code <<-EOH
+      set -e
+      rm -f #{cert_target}
+      #{update_command}
+    EOH
+    only_if ::File.exist?(cert_target)
+  end
+
   kagent_crypto_dir = x509_helper.get_crypto_dir(node['kagent']['user'])
-  hops_ca = "#{kagent_crypto_dir}/#{x509_helper.get_certificate_bundle_name(node['kagent']['user'])}"
-  if ::File.exist?("#{cert_target}") === false && "#{registry_host}" != "local"
-    bash 'add_trust_cert' do
-      user "root"
-      code <<-EOH
-           ln -s #{hops_ca} #{cert_target}
-           #{update_command}
-           EOH
-    end
+  hops_ca_bundle = "#{kagent_crypto_dir}/#{x509_helper.get_hops_ca_bundle_name()}"
+  registry_domain = consul_helper.get_service_fqdn("registry")
+
+  directory "/etc/docker/certs.d/#{registry_domain}:#{node['hops']['docker']['registry']['port']}" do
+    owner 'root'
+    group 'root'
+    mode '0755'
+    recursive :true
+  end
+
+  link "/etc/docker/certs.d/#{registry_domain}:#{node['hops']['docker']['registry']['port']}/ca.crt" do
+    owner 'root'
+    group 'root'
+    mode '0755'
+    to hops_ca_bundle
   end
 
   if exists_local("hopsworks", "default")
