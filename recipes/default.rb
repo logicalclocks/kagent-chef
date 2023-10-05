@@ -232,7 +232,7 @@ if node["kagent"]["enabled"].casecmp?("true")
       rm -f #{cert_target}
       #{update_command}
     EOH
-    only_if ::File.exist?(cert_target)
+    only_if { ::File.exist?(cert_target) }
   end
 
   kagent_crypto_dir = x509_helper.get_crypto_dir(node['kagent']['user'])
