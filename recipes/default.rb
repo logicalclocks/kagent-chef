@@ -237,7 +237,7 @@ if node["kagent"]["enabled"].casecmp?("true")
 
   kagent_crypto_dir = x509_helper.get_crypto_dir(node['kagent']['user'])
   hops_ca_bundle = "#{kagent_crypto_dir}/#{x509_helper.get_hops_ca_bundle_name()}"
-  registry_domain = consul_helper.get_service_fqdn("registry")
+  registry_domain = "registry.service.#{consul_domain}"
 
   directory "/etc/docker/certs.d/#{registry_domain}:#{node['hops']['docker']['registry']['port']}" do
     owner 'root'
