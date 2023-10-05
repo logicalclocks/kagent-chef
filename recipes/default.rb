@@ -238,15 +238,20 @@ if node["kagent"]["enabled"].casecmp?("true")
   kagent_crypto_dir = x509_helper.get_crypto_dir(node['kagent']['user'])
   hops_ca_bundle = "#{kagent_crypto_dir}/#{x509_helper.get_hops_ca_bundle_name()}"
   registry_domain = "registry.service.#{consul_domain}"
+  registry_port = 4443
+  if (node.attribute?("hops") && node["hops"].attribute?("docker") && 
+      node["hops"]["docker"].attribute?("registry") && node["hops"]["docker"]["registry"].attribute?("port"))
+    registry_port = node['hops']['docker']['registry']['port']
+  end
 
-  directory "/etc/docker/certs.d/#{registry_domain}:#{node['hops']['docker']['registry']['port']}" do
+  directory "/etc/docker/certs.d/#{registry_domain}:#{registry_port}" do
     owner 'root'
     group 'root'
     mode '0755'
-    recursive :true
+    recursive true
   end
 
-  link "/etc/docker/certs.d/#{registry_domain}:#{node['hops']['docker']['registry']['port']}/ca.crt" do
+  link "/etc/docker/certs.d/#{registry_domain}:#{registry_port}/ca.crt" do
     owner 'root'
     group 'root'
     mode '0755'
