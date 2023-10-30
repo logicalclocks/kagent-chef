@@ -116,9 +116,25 @@ private_ip = my_private_ip()
 public_ip = my_public_ip()
 
 ## We can't add Consul dependency in kagent, it leads to cyclic dep
+consul_region = ""
+if node.attribute?("consul") &&
+    node["consul"].attribute?("use_datacenter") &&
+    node["consul"]["use_datacenter"].casecmp?("true")
+
+  consul_region = "lc"
+  if node.attribute?("consul") &&
+    node["consul"].attribute?("datacenter")
+    consul_region = node['consul']['datacenter']
+  end
+end
+
 consul_domain = "consul"
 if node.attribute?('consul') && node['consul'].attribute?('domain')
-  consul_domain = node['consul']['domain']
+  if consul_region.eql?("")
+    consul_domain = node['consul']['domain']
+  else
+    consul_domain = "#{consul_region}.#{node['consul']['domain']}"
+  end
 end
 
 hopsworks_port = "8182"
@@ -156,18 +172,6 @@ end
 if hops_dir == "" 
  # Guess that it is the default value
  hops_dir = node['install']['dir'] + "/hadoop"
-end
-
-consul_region = ""
-if node.attribute?("consul") &&
-    node["consul"].attribute?("use_datacenter") &&
-    node["consul"]["use_datacenter"].casecmp?("true")
-
-  consul_region = "lc"
-  if node.attribute?("consul") &&
-    node["consul"].attribute?("datacenter")
-    consul_region = node['consul']['datacenter']
-  end
 end
 
 template "#{node["kagent"]["etc"]}/config.ini" do
