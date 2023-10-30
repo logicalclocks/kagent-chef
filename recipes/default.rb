@@ -158,6 +158,18 @@ if hops_dir == ""
  hops_dir = node['install']['dir'] + "/hadoop"
 end
 
+consul_region = ""
+if node.attribute?("consul") &&
+    node["consul"].attribute?("use_datacenter") &&
+    node["consul"]["use_datacenter"].casecmp?("true")
+
+  consul_region = "lc"
+  if node.attribute?("consul") &&
+    node["consul"].attribute?("datacenter")
+    consul_region = node['consul']['datacenter']
+  end
+end
+
 template "#{node["kagent"]["etc"]}/config.ini" do
   source "config.ini.erb"
   owner node["kagent"]["user"]
@@ -171,7 +183,8 @@ template "#{node["kagent"]["etc"]}/config.ini" do
               :public_ip => public_ip,
               :private_ip => private_ip,
               :hops_dir => hops_dir,
-              :agent_password => agent_password
+              :agent_password => agent_password,
+              :region => consul_region
             })
 end
 

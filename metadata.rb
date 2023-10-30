@@ -135,3 +135,7 @@ attribute "kagent/cloud/monitor_interval",
 attribute "kagent/cloud/monitor_url",
           :description => "URL from which to pull cloud events",
           :type => "string"
+
+attribute "x509/rotate",
+          :description => "Whether or not to rotate the X509 host certificates (Default: False)",
+          :type => "string"
