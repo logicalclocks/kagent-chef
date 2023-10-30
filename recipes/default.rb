@@ -134,7 +134,7 @@ if node.attribute?('consul') && node['consul'].attribute?('domain')
 end
 
 if !consul_region.eql?("")
-  consul_domain = "#{consul_region}.#{node['consul']['domain']}"
+  consul_domain = "#{consul_region}.#{consul_domain}"
 end
 
 hopsworks_port = "8182"
