@@ -130,11 +130,11 @@ end
 
 consul_domain = "consul"
 if node.attribute?('consul') && node['consul'].attribute?('domain')
-  if consul_region.eql?("")
-    consul_domain = node['consul']['domain']
-  else
-    consul_domain = "#{consul_region}.#{node['consul']['domain']}"
-  end
+  consul_domain = node['consul']['domain']
+end
+
+if !consul_region.eql?("")
+  consul_domain = "#{consul_region}.#{node['consul']['domain']}"
 end
 
 hopsworks_port = "8182"
