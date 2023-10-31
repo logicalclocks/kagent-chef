@@ -29,6 +29,7 @@ keystore-script = <%= node["kagent"]["certs_dir"] %>/keystore.sh
 state-store = <%= node["kagent"]["etc"]%>/state_store
 password = <%= @agent_password %>
 crypto-dir = <%= node['x509']['super-crypto']['dir'] %>
+region = <%= @region %>
 
 <% if not node['kagent']['cloud']['monitor_url'].casecmp? "" -%>
 [cloud]

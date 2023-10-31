@@ -116,9 +116,25 @@ private_ip = my_private_ip()
 public_ip = my_public_ip()
 
 ## We can't add Consul dependency in kagent, it leads to cyclic dep
+consul_region = ""
+if node.attribute?("consul") &&
+    node["consul"].attribute?("use_datacenter") &&
+    node["consul"]["use_datacenter"].casecmp?("true")
+
+  consul_region = "lc"
+  if node.attribute?("consul") &&
+    node["consul"].attribute?("datacenter")
+    consul_region = node['consul']['datacenter']
+  end
+end
+
 consul_domain = "consul"
 if node.attribute?('consul') && node['consul'].attribute?('domain')
   consul_domain = node['consul']['domain']
+end
+
+if !consul_region.eql?("")
+  consul_domain = "#{consul_region}.#{consul_domain}"
 end
 
 hopsworks_port = "8182"
@@ -171,7 +187,8 @@ template "#{node["kagent"]["etc"]}/config.ini" do
               :public_ip => public_ip,
               :private_ip => private_ip,
               :hops_dir => hops_dir,
-              :agent_password => agent_password
+              :agent_password => agent_password,
+              :region => consul_region
             })
 end
 
