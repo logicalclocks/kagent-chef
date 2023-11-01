@@ -49,8 +49,15 @@ action :sign_csr do
             puts "The Response -> #{response.body}"
   
             csr = ::File.read(new_resource.csr_file)
+            req_dict = {'csr' => csr}
+            if node.attribute?("consul") &&
+                node['consul'].attribute?('use_datacenter') &&
+                node['consul']['use_datacenter'].casecmp?("true")
+              req_dict['region'] = node['consul']['datacenter']
+            end
+
             response = http_request_follow_redirect(ca_url, 
-                                                    body: {'csr' => csr}.to_json,
+                                                    body: req_dict.to_json,
                                                     authorization: response['Authorization'])
   
             if ( response.is_a? (Net::HTTPSuccess))
