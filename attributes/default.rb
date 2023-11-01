@@ -100,7 +100,7 @@ default["certs"]["dir"]                            = node["install"]["dir"].empt
 default["java"]["install_flavor"]                  = "openjdk"
 default["java"]["jdk_version"]                     = 8
 
-default["kagent"]["hopsify"]["version"]            = "0.6.0"
+default["kagent"]["hopsify"]["version"]            = "0.7.0"
 default["kagent"]["hopsify"]["bin_url"]            = "#{node['download_url']}/hopsify/amd64/#{node['kagent']['hopsify']['version']}/hopsify"
 default['x509']['super-crypto']['base-dir']        = "/srv/hops/super_crypto"
 default['x509']['super-crypto']['dir']             = "#{node['x509']['super-crypto']['base-dir']}/${USER}"
@@ -113,6 +113,7 @@ default['x509']['certificate-bundle']              = "${USERNAME}_certificate_bu
 default['x509']['ca']['root']                      = "hops_root_ca.pem"
 default['x509']['ca']['intermediate']              = "hops_intermediate_ca.pem"
 default['x509']['ca']['bundle']                    = "hops_ca_bundle.pem"
+default['x509']['rotate']                          = "false"
 
 
 default['kagent']['cloud']['monitor_interval']     = 3

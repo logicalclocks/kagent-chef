@@ -81,6 +81,6 @@ action :generate_x509 do
             #{node["kagent"]["certs_dir"]}/hopsify --config #{node['kagent']['etc']}/config.ini x509 #{hopsworks_alt_url} --rotation --username #{new_resource.user} #{common_name}
         EOH
         only_if { conda_helpers.is_upgrade }
-        only_if { Gem::Version.new(node['install']['current_version']) <= Gem::Version.new('3.2.0')}
+        only_if { Gem::Version.new(node['install']['current_version']) <= Gem::Version.new('3.2.0') || node['x509']['rotate'].casecmp?("true") }
     end
 end
