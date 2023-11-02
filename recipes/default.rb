@@ -262,10 +262,10 @@ if node["kagent"]["enabled"].casecmp?("true")
 
   registry_domains = []
   if node['install']['regions']['primary'].empty? && node['install']['regions']['secondary'].empty?
-    registry_domain.push("registry.service.#{consul_domain}")
+    registry_domains.push("registry.service.#{consul_domain}")
   else
-    registry_domain.push("registry.service.#{node['install']['regions']['primary']}.#{consul_domain}")
-    registry_domain.push("registry.service.#{node['install']['regions']['secondary']}.#{consul_domain}")
+    registry_domains.push("registry.service.#{node['install']['regions']['primary']}.#{consul_domain}")
+    registry_domains.push("registry.service.#{node['install']['regions']['secondary']}.#{consul_domain}")
   end
 
   for registry_domain in registry_domains do
