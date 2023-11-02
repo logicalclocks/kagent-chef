@@ -254,25 +254,34 @@ if node["kagent"]["enabled"].casecmp?("true")
 
   kagent_crypto_dir = x509_helper.get_crypto_dir(node['kagent']['user'])
   hops_ca_bundle = "#{kagent_crypto_dir}/#{x509_helper.get_hops_ca_bundle_name()}"
-  registry_domain = "registry.service.#{consul_domain}"
   registry_port = 4443
   if (node.attribute?("hops") && node["hops"].attribute?("docker") && 
       node["hops"]["docker"].attribute?("registry") && node["hops"]["docker"]["registry"].attribute?("port"))
     registry_port = node['hops']['docker']['registry']['port']
   end
 
-  directory "/etc/docker/certs.d/#{registry_domain}:#{registry_port}" do
-    owner 'root'
-    group 'root'
-    mode '0755'
-    recursive true
+  registry_domains = []
+  if node['install']['regions']['primary'].empty? && node['install']['regions']['secondary'].empty?
+    registry_domain.push("registry.service.#{consul_domain}")
+  else
+    registry_domain.push("registry.service.#{node['install']['regions']['primary']}.#{consul_domain}")
+    registry_domain.push("registry.service.#{node['install']['regions']['secondary']}.#{consul_domain}")
   end
 
-  link "/etc/docker/certs.d/#{registry_domain}:#{registry_port}/ca.crt" do
-    owner 'root'
-    group 'root'
-    mode '0755'
-    to hops_ca_bundle
+  for registry_domain in registry_domains do
+    directory "/etc/docker/certs.d/#{registry_domain}:#{registry_port}" do
+      owner 'root'
+      group 'root'
+      mode '0755'
+      recursive true
+    end
+
+    link "/etc/docker/certs.d/#{registry_domain}:#{registry_port}/ca.crt" do
+      owner 'root'
+      group 'root'
+      mode '0755'
+      to hops_ca_bundle
+    end
   end
 
   if exists_local("hopsworks", "default")
