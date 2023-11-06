@@ -133,6 +133,8 @@ if node.attribute?('consul') && node['consul'].attribute?('domain')
   consul_domain = node['consul']['domain']
 end
 
+consul_domain_without_region = consul_domain
+
 if !consul_region.eql?("")
   consul_domain = "#{consul_region}.#{consul_domain}"
 end
@@ -264,8 +266,8 @@ if node["kagent"]["enabled"].casecmp?("true")
   if node['install']['regions']['primary'].empty? && node['install']['regions']['secondary'].empty?
     registry_domains.push("registry.service.#{consul_domain}")
   else
-    registry_domains.push("registry.service.#{node['install']['regions']['primary']}.#{consul_domain}")
-    registry_domains.push("registry.service.#{node['install']['regions']['secondary']}.#{consul_domain}")
+    registry_domains.push("registry.service.#{node['install']['regions']['primary']}.#{consul_domain_without_region}")
+    registry_domains.push("registry.service.#{node['install']['regions']['secondary']}.#{consul_domain_without_region}")
   end
 
   for registry_domain in registry_domains do
