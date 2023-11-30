@@ -57,6 +57,14 @@ sudo "kagent_systemctl" do
   only_if     { node["install"]["sudoers"]["rules"].casecmp("true") == 0 }
 end
 
+kagent_sudoers "run_csr" do
+    script_name "run_csr.sh"
+    template    "run_csr.sh.erb"
+    user        node["kagent"]["user"]
+    group       node["kagent"]["certs_group"]
+    run_as      node["kagent"]["certs_user"]
+end
+
 kagent_sudoers "dockerImageDelete" do
   user          node['kagent']['user']
   group         "root"
