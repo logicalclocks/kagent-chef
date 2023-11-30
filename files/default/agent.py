@@ -321,42 +321,10 @@ class SystemCommandsHandler:
         logger.debug("Handling System command: {0}".format(command))
         op = command['op']
 
-        if op == 'SERVICE_KEY_ROTATION':
-            self._service_key_rotation(command)
-        elif op == 'CONDA_GC':
+        if op == 'CONDA_GC':
             self._conda_gc(command)
         else:
             logger.error("Unknown OP {0} for system command {1}".format(op, command))
-
-    def _service_key_rotation(self, command):
-        try:
-            logger.debug("Calling certificate rotation script")
-            csr_helper_script = os.path.join(kconfig.sbin_dir, "run_csr.sh")
-            hopsify_state_store = os.path.join(kconfig.state_store_location, "crypto_material_state.json")
-            if os.path.exists(hopsify_state_store):
-                with open(hopsify_state_store, "r") as fd:
-                    hopsify_state = json.load(fd)
-                crypto_state = hopsify_state['crypto_state_store']
-                users = [u.strip() for u in crypto_state]
-                for user in users:
-                    logger.info("Rotating X.509 for user {0}".format(user))
-                    subprocess.check_call(["sudo", "-u", kconfig.certs_user, csr_helper_script, "--config", self._config_file_path, \
-                        "x509", "--rotation", "--username", user])
-                    logger.info("Rotated X.509 for user {0}".format(user))
-
-            command['status'] = 'FINISHED'
-            logger.info("Successfully rotated certificates for all system users")
-        except CalledProcessError as e:
-            logger.error("Error while rotating X.509 for user: <{0}> Reason: {1}".format(user, e))
-            command['status'] = 'FAILED'
-        except Exception as e:
-            logger.error("General error while rotating certificates {0}".format(e))
-            command['status'] = 'FAILED'
-
-        self._system_commands_status_mutex.acquire()
-        logger.debug("Adding status {0} for command ID {1} - {2}".format(command['status'], command['id'], command))
-        self._system_commands_status[command['id']] = command
-        self._system_commands_status_mutex.release()
 
     def _conda_gc(self, command):
         try:
