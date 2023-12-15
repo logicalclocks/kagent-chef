@@ -1,6 +1,5 @@
 require 'resolv'
 require 'net/https'
-require 'http-cookie'
 require 'json'
 
 # http://serverfault.com/questions/331936/setting-the-hostname-fqdn-or-short-name

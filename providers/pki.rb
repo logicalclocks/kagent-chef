@@ -2,7 +2,6 @@ action :sign_csr do
     ruby_block 'sign-csr' do
       block do
         require 'net/https'
-        require 'http-cookie'
         require 'json'
 
         hopsworks_port = 8182
