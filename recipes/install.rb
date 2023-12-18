@@ -41,11 +41,13 @@ when "debian"
   # Also, as a side-effect when run it stops the docker daemon
   systemd_unit "apt-daily-upgrade.timer" do
     action [:stop, :disable]
+    only_if { node['kagent']['disable_unattended_upgrades'].casecmp? 'true' }
   end
   package 'unattended-upgrades' do
     retries 10
     retry_delay 30
     action :remove
+    only_if { node['kagent']['disable_unattended_upgrades'].casecmp? 'true' }
   end
 
 when "rhel"

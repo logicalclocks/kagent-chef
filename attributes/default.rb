@@ -31,6 +31,7 @@ default['certs']['data_volume']['dir']             = "#{node['data']['dir']}/cer
 default['x509']['data_volume']['super-crypto-dir'] = "#{node['data']['dir']}/super_crypto"
 
 default["kagent"]["enabled"]                       = "true"
+default['kagent']['disable_unattended_upgrades']   = "true"
 
 # API calls
 default["kagent"]["dashboard"]["api"]["register"]  = "api/agentresource?action=register"
