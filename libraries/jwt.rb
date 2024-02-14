@@ -38,12 +38,7 @@ module Kagent
               raise "Error authenticating with Hopsworks"
             end
 
-            # Take only the token
-            master_token = response['Authorization'].split[1].strip
-            jbody = JSON.parse(response.body)
-            renew_tokens = jbody['renewTokens']
-
-            return master_token, renew_tokens
+            return response['Authorization'].split[1].strip
         end
 
         def execute_shell_command(command)
@@ -55,7 +50,7 @@ module Kagent
         end
 
         def get_elk_signing_key()
-          master_token, renew_tokens = get_service_jwt()
+          master_token = get_service_jwt()
           hopsworks_hostname = private_recipe_hostnames("hopsworks", "default")[0]
           port = 8181
           if node.attribute?("hopsworks")

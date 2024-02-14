@@ -132,7 +132,6 @@ class Heartbeat():
         global logged_in
         global session
         global master_token 
-        global renew_tokens
         try:
             session = requests.Session()
             resp = session.post(kconfig.login_url, data={'email': kconfig.server_username, 'password': kconfig.server_password}, headers=form_headers, verify=False)
@@ -144,12 +143,10 @@ class Heartbeat():
                 logger.info('Successful login of agent to Hopsworks (Status code: {0}).'.format(resp.status_code))
                 logged_in = True
                 master_token = resp.headers['Authorization'].split()[1]
-                jbody = resp.json()
-                renew_tokens = jbody['renewTokens']
         except Exception as err:
             logger.warn('Could not login agent to Hopsworks {0}'.format(err))
             logged_in = False
-        return master_token, renew_tokens
+        return master_token
 
     def construct_services_status(self):
         services = []
@@ -165,10 +162,9 @@ class Heartbeat():
         global logged_in
         global session
         global master_token 
-        global renew_tokens
         if not logged_in:
            logger.info('Logging in to Hopsworks....')
-           master_token, renew_tokens = Heartbeat.login()
+           master_token = Heartbeat.login()
         else:
             system_status_to_delete = []
             try:
