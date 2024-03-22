@@ -13,16 +13,10 @@
 # You should have received a copy of the GNU Affero General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 
-import os
 import logging
 import subprocess
-import time
 
 from threading import RLock
-from datetime import datetime
-
-from kagent_utils import http
-
 
 class Service:
     INIT_STATE = "INIT"
