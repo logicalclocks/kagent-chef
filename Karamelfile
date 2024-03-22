@@ -3,5 +3,4 @@ dependencies:
     global:  
   - recipe: kagent::default
     global:
-      - conda::default
       - hopsworks::default

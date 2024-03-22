@@ -32,7 +32,7 @@ class HostServicesWatcherAction(watcher_action.WatcherAction):
 
             if service.alive():
                 if service.get_state() == Service.STOPPED_STATE or service.get_state() == Service.INIT_STATE:
-                    self.LOG.info("Service %s started", service)
+                    self.LOG.info("Service %s started", name)
                     service.started()
             else:
                 if service.get_state() == Service.STARTED_STATE or service.get_state() == Service.INIT_STATE:

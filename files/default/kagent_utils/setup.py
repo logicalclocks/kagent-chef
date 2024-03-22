@@ -7,12 +7,6 @@ setup(name='kagent_utils',
       author='Antonios Kouzoupis',
       author_email='antonios@logicalclocks.com',
       packages=['kagent_utils', 'kagent_utils.monitoring'],
-      install_requires=[
-          'ConfigParser',
-          'logging',
-          'netifaces',
-          'ipy'
-      ],
       zip_safe=False
       #setup_requires=["pytest-runner"],
       #tests_require=["pytest"]

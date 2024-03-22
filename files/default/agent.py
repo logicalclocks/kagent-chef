@@ -5,8 +5,6 @@ Install:
  requests:    easy_install requests
  bottle:      easy_install bottle
  Cherrypy:    easy_install cherrypy
- Netifaces:   easy_install netifaces
- IPy:         easy_install ipy
  pyOpenSSL:   apt-get install python-openssl
 '''
 
@@ -32,7 +30,6 @@ from cheroot.ssl.builtin import BuiltinSSLAdapter
 import ssl
 import re
 import argparse
-from hops import devices
 import getpass
 
 import kagent_utils
@@ -126,16 +123,12 @@ class Heartbeat():
 
     @staticmethod
     def login():
-        json_headers = {'User-Agent': 'Agent', 'content-type': 'application/json'}
-        form_headers = {'User-Agent': 'Agent', 'content-type': 'application/x-www-form-urlencoded'}
-        payload = {}
         global logged_in
         global session
         global master_token 
         try:
             session = requests.Session()
-            resp = session.post(kconfig.login_url, data={'email': kconfig.server_username, 'password': kconfig.server_password}, headers=form_headers, verify=False)
-            #resp = session.put(kconfig.register_url, data=json.dumps(payload), headers=json_headers, verify=False)
+            resp = session.post(kconfig.login_url, data={'email': kconfig.server_username, 'password': kconfig.server_password}, verify=False)
             if not resp.status_code == HTTP_OK:
                 logged_in = False
                 logger.warn('Could not login agent to Hopsworks (Status code: {0}).'.format(resp.status_code))
@@ -169,15 +162,12 @@ class Heartbeat():
             system_status_to_delete = []
             try:
                 logger.debug("Creating heartbeat reply...")
-                disk_info = DiskInfo()
-                memory_info = MemoryInfo()
-                load_info = LoadInfo()
                 services_list = self.construct_services_status()
                 now = int(time.mktime(datetime.now().timetuple()))
                 headers = {'content-type': 'application/json'}
                 headers['Authorization'] = "Bearer " + master_token
                 payload = {}
-                payload["num-gpus"] = devices.get_num_gpus()
+                payload["num-gpus"] = 0
                 payload["host-id"] = kconfig.host_id
                 payload["agent-time"] = now
                 payload["services"] = services_list
@@ -202,7 +192,6 @@ class Heartbeat():
                     payload["private-ip"] = ""
 
                 payload["cores"] = cores
-                payload['memory-capacity'] = memory_info.total
                 logger.debug("Sending heartbeat...")
                 resp = session.post(kconfig.heartbeat_url, data=json.dumps(payload), headers=headers, verify=False)
                 logger.debug("Received heartbeat response")
@@ -378,7 +367,7 @@ class Command:
 class Handler(threading.Thread):
     def __init__(self, commands_queue, systemCommandsHandler, group=None, target=None, name=None, args=(),
                  kwargs=None, verbose=None):
-        threading.Thread.__init__(self, group=group, target=target, name=name, verbose=verbose)
+        threading.Thread.__init__(self, group=group, target=target, name=name)
         self.args = args
         self.kwargs = kwargs
         self._commands_queue = commands_queue
@@ -400,37 +389,6 @@ class Handler(threading.Thread):
             except Exception as e:
                 logger.error(">>> Error while handling command {0} - Error: {1}".format(c.get_command(), e))
 
-
-class MemoryInfo(object):
-    def __init__(self):
-        process = subprocess.Popen("free", shell=True, stdout=subprocess.PIPE)
-        stdout_list = process.communicate()[0].split('\n')
-        for line in stdout_list:
-            data = line.split()
-            try:
-                if data[0] == "Mem:":
-                    self.total = int(data[1]) * 1024
-                    self.used = int(data[2]) * 1024
-                    self.free = int(data[3]) * 1024
-                    self.buffers = int(data[5]) * 1024
-                    self.cached = int(data[6]) * 1024
-                    break
-            except IndexError:
-                continue
-
-
-class DiskInfo(object):
-    def __init__(self):
-        disk = os.statvfs("/")
-        self.capacity = disk.f_bsize * disk.f_blocks
-        self.used = disk.f_bsize * (disk.f_blocks - disk.f_bavail)
-
-
-class LoadInfo(object):
-    def __init__(self):
-        self.load1 = os.getloadavg()[0]
-        self.load5 = os.getloadavg()[1]
-        self.load15 = os.getloadavg()[2]
 
 ## Antonis: Used only in RESTCommandHandler execute method. It should be
 ## *removed* along with the method!
@@ -713,7 +671,8 @@ if __name__ == '__main__':
     host_services = construct_services(kconfig, hw_http_client)
 
     agent_pid = str(os.getpid())
-    file(kconfig.agent_pidfile, 'w').write(agent_pid)
+    with open(kconfig.agent_pidfile, 'w') as f:
+        f.write(agent_pid)
     logger.info("Hops Kagent PID: {0}".format(agent_pid))
     
     interval_parser = IntervalParser()

@@ -2,6 +2,10 @@
 ## Do sanity checks here, fail fast ##
 ######################################
 
+if node['kernel']['machine'] != 'x86_64'
+  Chef::Log.fatal!("Unrecognized node.kernel.machine=#{node['kernel']['machine']}; Only x86_64", 1)
+end
+
 # If FQDN is longer than 63 characters fail HOPSWORKS-1075
 fqdn = node['fqdn']
 raise "FQDN #{fqdn} is too long! It should not be longer than 60 characters" unless fqdn.length < 61
@@ -21,7 +25,7 @@ end
 
 case node["platform_family"]
 when "debian"
-  package ["build-essential", "libssl-dev", "jq", "acl"] do
+  package ["python3-virtualenv", "build-essential", "libssl-dev", "jq", "acl"] do
     retries 10
     retry_delay 30
   end
@@ -75,7 +79,7 @@ when "rhel"
     not_if  "ls -l /usr/src/kernels/$(uname -r)"
   end
 
-  package ["gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "jq"] do
+  package ["python3-virtualenv", "gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "jq"] do
     retries 10
     retry_delay 30
   end
@@ -392,3 +396,44 @@ template "#{node["kagent"]["home"]}/bin/status-all-local-services.sh" do
   mode 0740
 end
 
+directory "#{node["kagent"]["user-home"]}/.pip" do
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  mode '0700'
+  action :create
+end
+
+template "#{node["kagent"]["user-home"]}/.pip/pip.conf" do
+  source "pip.conf.erb"
+  cookbook "conda"
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  mode 0750
+  action :create
+end
+
+cookbook_file "#{node["kagent"]["dir"]}/requirements.txt"  do
+  source "requirements.txt"
+  owner node["kagent"]["user"]
+  group node["kagent"]["group"]
+  mode "755"
+end
+
+directory node["kagent"]["virtualenv"] do 
+  user node["kagent"]["user"]
+  recursive true
+  action :delete
+  only_if { File.directory?(node["kagent"]["virtualenv"]) }
+end
+
+bash 'Create Kagent virtualenv' do 
+  user node["kagent"]["user"]
+  cwd node["kagent"]["base_dir"]
+  code <<-EOH
+    set -e
+    python3 -m venv #{node["kagent"]["virtualenv"]}
+    #{node["kagent"]["virtualenv"]}/bin/pip install -r #{node["kagent"]["dir"]}/requirements.txt
+    #{node["kagent"]["virtualenv"]}/bin/pip install #{Chef::Config['file_cache_path']}/kagent_utils
+  EOH
+end
+  
