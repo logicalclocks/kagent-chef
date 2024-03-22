@@ -16,7 +16,7 @@
 import logging
 
 from kagent_utils import watcher_action
-from service import Service
+from .service import Service
 
 class HostServicesWatcherAction(watcher_action.WatcherAction):
     def __init__(self, host_services):
@@ -27,7 +27,7 @@ class HostServicesWatcherAction(watcher_action.WatcherAction):
         pass
 
     def action(self, *args, **kwargs):
-        for name, service in self.host_services.iteritems():
+        for name, service in self.host_services.items():
             self.LOG.debug("Polling status for %s", name)
 
             if service.alive():

@@ -73,7 +73,7 @@ class TestWatcher(unittest.TestCase):
         time.sleep(6)
 
         self.assertFalse(watcher.is_alive())
-        self.assertEquals(6, watcher.failures)
+        self.assertEqual(6, watcher.failures)
 
     def test_recover_after_failure(self):
         action = MockFailOnceWatcherAction()
@@ -83,7 +83,7 @@ class TestWatcher(unittest.TestCase):
 
         time.sleep(2)
 
-        self.assertEquals(0, watcher.failures)
+        self.assertEqual(0, watcher.failures)
         self.assertTrue(watcher.is_alive())
         watcher.stop()
         time.sleep(3)

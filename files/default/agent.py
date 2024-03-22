@@ -15,13 +15,13 @@ from datetime import datetime
 import multiprocessing
 from threading import Lock
 import threading
-import Queue
+import queue
 import subprocess
 from subprocess import Popen
 from subprocess import CalledProcessError
 import os
 import sys
-import ConfigParser
+import configparser
 import requests
 import logging.handlers
 import coloredlogs
@@ -99,11 +99,11 @@ def setupLogging(kconfig):
 def readServicesFile():
     try:
         global services
-        services = ConfigParser.ConfigParser()
+        services = configparser.ConfigParser()
         services.read(kconfig.services_file)
 
-    except Exception, e:
-        print "Error in the services file. Check its formatting: {0}: {1}".format(kconfig.services_file, e)
+    except Exception as e:
+        print("Error in the services file. Check its formatting: {0}: {1}".format(kconfig.services_file, e))
         logger.error("Exception while reading {0} file: {1}".format(kconfig.services_file, e))
         sys.exit(1)
 
@@ -150,7 +150,7 @@ class Heartbeat():
 
     def construct_services_status(self):
         services = []
-        for name, service in self._host_services.iteritems():
+        for name, service in self._host_services.items():
             srv_status = {}
             srv_status['group'] = service.group
             srv_status['service'] = service.name
@@ -173,7 +173,7 @@ class Heartbeat():
                 memory_info = MemoryInfo()
                 load_info = LoadInfo()
                 services_list = self.construct_services_status()
-                now = long(time.mktime(datetime.now().timetuple()))
+                now = int(time.mktime(datetime.now().timetuple()))
                 headers = {'content-type': 'application/json'}
                 headers['Authorization'] = "Bearer " + master_token
                 payload = {}
@@ -186,7 +186,7 @@ class Heartbeat():
                 self._system_commands_status_mutex.acquire()
                 system_commands_response = []
                 # Append command status to response
-                for k, v in self._system_commands_status.iteritems():
+                for k, v in self._system_commands_status.items():
                     system_commands_response.append(v)
                     system_status_to_delete.append(v)
 
@@ -351,7 +351,7 @@ class Command:
     def __init__(self, command_type, command):
         self._command_type = command_type
         self._command = command
-        if command.has_key('priority'):
+        if 'priority' in command:
             self._priority = command['priority']
         else:
             self._priority = 0
@@ -722,11 +722,11 @@ if __name__ == '__main__':
     host_services_watcher_interval = interval_parser.get_interval_in_s(kconfig.watch_interval)
     host_services_monitor_action = kagent_utils.HostServicesWatcherAction(host_services)
     host_services_monitor = kagent_utils.Watcher(host_services_monitor_action, max(1, host_services_watcher_interval),
-                                                 fail_after=sys.maxint, name="host_services_monitor")
+                                                 fail_after=sys.maxsize, name="host_services_monitor")
     host_services_monitor.setDaemon(True)
     host_services_monitor.start()
     
-    commands_queue = Queue.PriorityQueue(maxsize=100)
+    commands_queue = queue.PriorityQueue(maxsize=100)
     system_commands_status = {}
     system_commands_status_mutex = Lock()
     config_file_path = os.path.abspath(args.config)
