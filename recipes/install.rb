@@ -25,7 +25,7 @@ end
 
 case node["platform_family"]
 when "debian"
-  package ["python3-virtualenv", "build-essential", "libssl-dev", "jq", "acl"] do
+  package ["python3-venv", "build-essential", "libssl-dev", "jq", "acl"] do
     retries 10
     retry_delay 30
   end
