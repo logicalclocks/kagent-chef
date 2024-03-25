@@ -165,6 +165,14 @@ directory node["kagent"]["dir"]  do
   not_if { File.directory?("#{node["kagent"]["dir"]}") }
 end
 
+directory node['install']['dir'] do
+  owner 'root'
+  group 'root'
+  mode '0755'
+  action :create
+  not_if { ::File.directory?(node['install']['dir']) }
+end
+
 directory node['data']['dir'] do
   owner 'root'
   group 'root'
