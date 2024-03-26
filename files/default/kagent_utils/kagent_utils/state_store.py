@@ -1,10 +1,6 @@
 import abc
 
-class StateStore:
-    __metaclass__=abc.ABCMeta
-
-    ## Increment the version if the layout is changed
-    ## State stores should check if the version matches during recovery
+class StateStore(metaclass=abc.ABCMeta):
     crypto_material_state_layout_version = 1
     
     def __init__(self, state_store_location):
