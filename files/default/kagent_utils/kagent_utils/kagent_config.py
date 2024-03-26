@@ -1,5 +1,5 @@
 import sys
-import ConfigParser
+import configparser
 import logging
 import socket
 
@@ -39,7 +39,7 @@ class KConfig:
             self._config.write(fd)
 
     def load(self):
-        self._config = ConfigParser.ConfigParser()
+        self._config = configparser.ConfigParser()
         self._config.read(self._configFile)
 
     def read_conf(self):
@@ -112,9 +112,9 @@ class KConfig:
                     self.uid = self._config.get('cloud', 'uid')
                     self.instance_id = self._config.get('cloud', 'instance-id')
                     self.node_id = self._config.get('cloud', 'node-id')
-        except Exception, e:
-            print("Exception while reading {0}: {1}".format(
-                self._configFile, e))
+        except Exception as e:
+            print(("Exception while reading {0}: {1}".format(
+                self._configFile, e)))
             sys.exit(1)
 
     def _get_logging_level(self, log_level_str):

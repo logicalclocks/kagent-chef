@@ -4,10 +4,10 @@ import shutil
 
 from threading import Lock
 
-import state_store
-from state_store import CryptoMaterialState
-from state_store_exceptions import StateLayoutVersionMismatchException
-from state_store_exceptions import StateNotLoadedException
+from . import state_store
+from .state_store import CryptoMaterialState
+from .state_store_exceptions import StateLayoutVersionMismatchException
+from .state_store_exceptions import StateNotLoadedException
 
 class FileStateStore(state_store.StateStore):
 
@@ -54,7 +54,7 @@ class FileStateStore(state_store.StateStore):
         self._chmod(file)
         
     def _chmod(self, file):
-        os.chmod(file, 0700)
+        os.chmod(file, 0o700)
 
     def _load_crypto_material_state(self):
         if (os.path.isfile(self.crypto_material_state_file)):
