@@ -3,9 +3,7 @@ import abc
 """
 Abstract class to be implemented by different actions passed to Watcher thread
 """
-class WatcherAction:
-    __metaclass__=abc.ABCMeta
-
+class WatcherAction(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def preAction(self, *args, **kwargs):
         pass

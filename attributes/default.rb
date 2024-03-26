@@ -15,6 +15,7 @@ default["kagent"]["certs_user_id"]                 = '1515'
 default["kagent"]["dir"]                           = node["install"]["dir"].empty? ? "/var/lib/kagent" : node["install"]["dir"] + "/kagent"
 default["kagent"]["base_dir"]                      = "#{node["kagent"]["dir"]}/kagent"
 default["kagent"]["home"]                          = "#{node["kagent"]["dir"]}/kagent-#{node["kagent"]["version"]}"
+default["kagent"]["virtualenv"]                    = "#{node["kagent"]["dir"]}/venv"
 default["kagent"]["etc"]                           = "#{node["kagent"]["dir"]}/etc"
 default['kagent']['state_store']                   = "#{node['kagent']['etc']}/state_store"
 default['kagent']['logs']                          = "#{node['kagent']['dir']}/logs"

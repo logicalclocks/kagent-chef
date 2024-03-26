@@ -13,16 +13,10 @@
 # You should have received a copy of the GNU Affero General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 
-import os
 import logging
 import subprocess
-import time
 
 from threading import RLock
-from datetime import datetime
-
-from kagent_utils import http
-
 
 class Service:
     INIT_STATE = "INIT"
@@ -57,7 +51,7 @@ class Service:
             self.state_lock.release()
 
     def parse_active_from_status(self, status_str):
-        for s in status_str.split("\n"):
+        for s in status_str.split('\n'):
             s = s.strip()
             if s.startswith("Active"):
                 l = s.split(" ")[1:]
@@ -140,7 +134,7 @@ class Service:
         subprocess.check_call(command, stdout=stdout, stderr=stderr)
 
     def _exec_check_output(self, command, stderr=None):
-        return subprocess.check_output(command, stderr=stderr).strip()
+        return subprocess.check_output(command, stderr=stderr).decode("utf-8").strip()
 
     def __str__(self):
         return "Service: {0}/{1} - State: {2}".format(self.group, self.name, self.get_state())

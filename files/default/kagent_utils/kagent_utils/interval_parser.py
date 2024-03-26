@@ -1,6 +1,6 @@
 import re
 
-from interval_parser_exceptions import UnrecognizedIntervalException
+from .interval_parser_exceptions import UnrecognizedIntervalException
 
 """
 Utility class to parse human readable time units such as 3h or 2m

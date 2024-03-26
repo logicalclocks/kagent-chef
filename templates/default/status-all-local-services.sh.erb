@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-<%= node[:conda][:base_dir] %>/envs/hops-system/bin/python <%= node[:kagent][:base_dir] %>/agent.py \
+<%= node[:kagent][:virtualenv] %>/bin/python <%= node[:kagent][:base_dir] %>/agent.py \
 	--config <%= node[:kagent][:etc] %>/config.ini --services status
