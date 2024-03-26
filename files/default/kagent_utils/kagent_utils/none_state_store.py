@@ -1,4 +1,4 @@
-import state_store
+from . import state_store
 
 class NoneStateStore(state_store.StateStore):
     def __init__(self, state_store_location):

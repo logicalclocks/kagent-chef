@@ -16,7 +16,7 @@ class Watcher(threading.Thread):
         watcher_interval: Interval in seconds
         """
         
-        threading.Thread.__init__(self, group=group, target=target, name=name, verbose=verbose)
+        threading.Thread.__init__(self, group=group, target=target, name=name)
         self.action = action
         self.watcher_interval = watcher_interval
         self._stop_flag = threading.Event()

@@ -1,7 +1,7 @@
-from file_state_store import FileStateStore
-from none_state_store import NoneStateStore
+from .file_state_store import FileStateStore
+from .none_state_store import NoneStateStore
 
-from state_store_exceptions import UnknownStateStoreException
+from .state_store_exceptions import UnknownStateStoreException
     
 class StateStoreFactory:
 
