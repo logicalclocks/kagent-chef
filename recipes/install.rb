@@ -79,11 +79,21 @@ when "rhel"
     not_if  "ls -l /usr/src/kernels/$(uname -r)"
   end
 
-  package ["python3-virtualenv", "gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "jq"] do
+  package ["python3.11", "python3.11-devel", "python3.11-pip", "gcc", "gcc-c++", "openssl", "openssl-devel", "openssl-libs", "jq"] do
     retries 10
     retry_delay 30
   end
 
+  bash 'Install virtualenv' do
+    user 'root'
+    group 'root'
+    code <<-EOH
+      set -e
+      # virtualenv coming from CentOS is quite old, install it through pip
+      pip3.11 install virtualenv
+    EOH
+  end
+  
   # Change lograte policy
   cookbook_file '/etc/logrotate.d/syslog' do
     source 'syslog.centos'
