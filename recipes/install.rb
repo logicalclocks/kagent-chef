@@ -402,7 +402,9 @@ template "#{node["kagent"]["home"]}/bin/status-all-local-services.sh" do
   mode 0740
 end
 
-directory "#{node["kagent"]["user-home"]}/.pip" do
+kagent_home = conda_helpers.get_user_home(node['kagent']['user'])
+
+directory "#{kagent_home}/.pip" do
   owner node["kagent"]["user"]
   group node["kagent"]["group"]
   mode '0700'
@@ -435,6 +437,7 @@ end
 bash 'Create Kagent virtualenv' do 
   user node["kagent"]["user"]
   cwd node["kagent"]["base_dir"]
+  environment ({'HOME' => kagent_home})
   code <<-EOH
     set -e
     python3 -m venv #{node["kagent"]["virtualenv"]}
