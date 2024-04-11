@@ -411,7 +411,7 @@ directory "#{kagent_home}/.pip" do
   action :create
 end
 
-template "#{node["kagent"]["user-home"]}/.pip/pip.conf" do
+template "#{kagent_home}/.pip/pip.conf" do
   source "pip.conf.erb"
   cookbook "conda"
   owner node["kagent"]["user"]
